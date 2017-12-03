@@ -1,4 +1,3 @@
-
 # Elastic Beanstalk Files
 .elasticbeanstalk/*
 !.elasticbeanstalk/*.cfg.yml
@@ -12,4 +11,6 @@ __pycache__
 
 config.py
 db.sqlite3
+geckodriver.log
 venv
+
