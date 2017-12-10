@@ -9,6 +9,7 @@ __pycache__
 /static
 .DS_Store
 
+config.json
 config.py
 db.sqlite3
 geckodriver.log

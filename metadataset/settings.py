@@ -11,8 +11,18 @@ https://docs.djangoproject.com/en/2.0/ref/settings/
 """
 
 import os
-import config
+import json
 
+
+# Load the configuration file
+try:
+    config_file = "config.json"
+    with open(config_file, 'r') as f:
+        config = json.load(f)
+except:
+    config_file = "/tmp/config.json"
+    with open(config_file, 'r') as f:
+        config = json.load(f)
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -22,12 +32,12 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # See https://docs.djangoproject.com/en/2.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = config.SECRET_KEY
+SECRET_KEY = config['SECRET_KEY']
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['127.0.0.1', 'localhost']
+ALLOWED_HOSTS = ['127.0.0.1', 'localhost', '.elasticbeanstalk.com']
 
 
 # Application definition
@@ -39,6 +49,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'publications',
 ]
 
 MIDDLEWARE = [
@@ -89,11 +100,11 @@ if 'RDS_DB_NAME' in os.environ:
 else:
     DATABASES = {
         'default': {
-            'ENGINE': config.DB_ENGINE,
-            'NAME': config.DB_NAME,
-            'USER': config.DB_USER,
-            'PASSWORD': config.DB_PASSWORD,
-            'HOST': config.DB_HOST
+            'ENGINE': config['DB_ENGINE'],
+            'NAME': config['DB_NAME'],
+            'USER': config['DB_USER'],
+            'PASSWORD': config['DB_PASSWORD'],
+            'HOST': config['DB_HOST']
         }
     }
 
