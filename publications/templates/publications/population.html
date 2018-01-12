@@ -1,0 +1,57 @@
+{% extends 'publications/base.html' %}
+
+{% block title %}
+  Population | MetaDataSet.com
+{% endblock %}
+
+{% block css %}
+  {% load staticfiles %}
+{% endblock %}
+
+{% block content %}
+
+<h1>
+  {{ experiment.intervention }}: Effects on {{ experiment_population.population|lower }}
+</h1>
+
+<form method="post" action="">{% csrf_token %}
+  <table>
+    {{ experiment_population_outcome_formset.management_form }}
+    {% for form in experiment_population_outcome_formset %}
+      {{ form.non_field_errors }}
+      <tr>
+        <th colspan="2">
+          {% if form.instance.outcome %}
+            {{ form.instance.outcome }}
+          {% else %}
+            Outcome {{ forloop.counter }}
+          {% endif %}
+          {% for hidden_field in form.hidden_fields %}
+            {{ hidden_field }}
+          {% endfor %}
+        </th>
+      </tr>
+      {% for field in form.visible_fields %}
+        <tr>
+          <td>{{ field.label }}:</td>
+          <td>{{ field }} {{ field.help_text }} {{ field.errors }}</td>
+        </tr>
+      {% endfor %}
+    {% endfor %}
+
+    <tr>
+      <th colspan="2"></th>
+    </tr>
+
+    <tr>
+      <td class="button bottom"><input type="submit" name="save" value="Save all changes" /></td>
+      <td></td>
+      <td class="button bottom centered"><input type="submit" name="delete" value="Delete selected" /></td>
+    </tr>
+
+  </table>
+</form>
+
+<p><a href="{% url 'experiment' publication_pk=publication.pk experiment_index=experiment_index %}">Back to the intervention</a></p>
+
+{% endblock %}

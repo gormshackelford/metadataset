@@ -1,0 +1,51 @@
+{% extends 'publications/base.html' %}
+
+{% block title %}
+  Publication | MetaDataSet.com
+{% endblock %}
+
+{% block css %}
+  {% load staticfiles %}
+{% endblock %}
+
+{% block content %}
+
+<p><a href="{% url 'add_publication' %}">Add a publication</a></p>
+
+{% for publication in publications %}
+  <h1>{{ publication.title|default:'[title not available]' }}</h1>
+  <p>{{ publication.authors|default:'[authors not available]' }} ({{ publication.year|default:'[year not available]' }}) <span class="italic">{{ publication.journal|default:'[journal not available]' }}</span> {{ publication.volume|default:'[volume not available]'}}, {{ publication.pages|default:'[pages not available]' }}.</p>
+  <p><a href="{% url 'publication' publication_pk=publication.pk %}">Edit metadata</a></p>
+  <p class="hr"></p>
+{% empty %}
+  <h1>No publications</h1>
+{% endfor %}
+
+{% if publications.has_other_pages %}
+  <p>
+    {% if publications.has_previous %}
+      <a class="button" href="?page={{ publications.previous_page_number }}">Previous page</a>
+    {% else %}
+      <a class="button" href="?page={{ publications.paginator.num_pages }}">Previous page</a>
+    {% endif %}
+    {% if publications.has_next %}
+      <a class="button" href="?page={{ publications.next_page_number }}">Next page</a>
+    {% else %}
+      <a class="button" href="?page=1">Next page</a>
+    {% endif %}
+  </p>
+  <p>
+    Page number:
+    {% for i in publications.paginator.page_range %}
+      {% if i == publications.number %}
+        <span class="warning">{{ i }}</span>,
+      {% elif i == publications.paginator.num_pages %}
+        <a href="?page={{ i }}">{{ i }}</a>
+      {% else %}
+        <a href="?page={{ i }}">{{ i }}</a>,
+      {% endif %}
+    {% endfor %}
+  </p>
+{% endif %}
+
+{% endblock %}

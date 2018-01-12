@@ -1,0 +1,89 @@
+{% extends 'publications/base.html' %}
+
+{% block title %}
+  Publication | MetaDataSet.com
+{% endblock %}
+
+{% block css %}
+  {% load staticfiles %}
+{% endblock %}
+
+{% block content %}
+
+<h1>{{ publication.title|default:'[title not available]' }}</h1>
+<p>Search for the full text: <a target="_blank"
+  href="http://www.google.com/search?q={{ publication.google_string }}">Google</a>
+  {% if publication.doi != '' %}
+     | <a target="_blank" href="http://dx.doi.org/{{ publication.doi }}">DOI</a>
+  {% endif %}</p>
+
+<h1>Abstract</h1>
+<p>{{ publication.abstract|default:'[abstract not available]' }}</p>
+
+<form method="post" action="">{% csrf_token %}
+
+  <h1>Relevance</h1>
+  <p>Based on its title and abstract, is this publication relevant to any of your systematic reviews?</p>
+  <table>
+    <tr>
+    </tr>
+  </table>
+
+  <h1>Experiments</h1>
+  <p>We use the "PICO" terminology for describing experiments ("P" = "Population", "I" = "Intervention", "C" = "Comparison", and "O" = "Outcome"). Please select one or more interventions (the "I" in "PICO"). Then click "Save all changes". You will then see a link to the metadata for each intervention, which will allow you to select one or more populations, comparisons, and outcomes for each intervention.</p>
+  <table>
+    <tr>
+      <td class="top" colspan="2"></td>
+      <td class="centered top">Select</td>
+    </tr>
+    {{ experiment_formset.management_form }}
+    {% for form in experiment_formset %}
+    <tr>
+      <td>
+        {% for hidden_field in form.hidden_fields %}
+          {{ hidden_field }}
+        {% endfor %}
+        {% if forloop.first %}
+          {{ form.intervention.label }}:
+        {% endif %}
+      </td>
+      <td>{{ form.intervention }}
+        {% if form.instance.intervention %}
+          <a href="{% url 'experiment' publication_pk=publication.pk experiment_index=forloop.counter0 %}">Edit metadata</a>
+        {% endif %}
+      </td>
+      <td class="centered">{{ form.DELETE }}</td>
+    </tr>
+    {% endfor %}
+    <tr>
+      <td class="bottom"></td>
+      <td class="button bottom"><input type="submit" name="save" value="Save all changes" /></td>
+      <td class="bottom button"><input type="submit" name="delete" value="Delete selected" /></td>
+    </tr>
+  </table>
+
+  <h1>Publication Metadata</h1>
+  <table>
+    <tr><td>Title:</td><td>{{ publication_form.title }}</td></tr>
+    <tr><td>Abstract:</td><td>{{ publication_form.abstract }}</td></tr>
+    <tr><td>Authors:</td><td>{{ publication_form.authors }}</td></tr>
+    <tr><td>Year:</td><td>{{ publication_form.year }}</td></tr>
+    <tr><td>Journal:</td><td>{{ publication_form.journal }}</td></tr>
+    <tr><td>Volume:</td><td>{{ publication_form.volume }}</td></tr>
+    <tr><td>Issue:</td><td>{{ publication_form.issue }}</td></tr>
+    <tr><td>Pages:</td><td>{{ publication_form.pages }}</td></tr>
+    <tr><td>DOI:</td><td>{{ publication_form.doi }}</td></tr>
+    <tr><td>URL:</td><td>{{ publication_form.url }}</td></tr>
+    <tr><td>Publisher:</td><td>{{ publication_form.publisher }}</td></tr>
+    <tr><td>Place:</td><td>{{ publication_form.place }}</td></tr>
+    <tr>
+      <td class="bottom"></td>
+      <td class="button bottom"><input type="submit" name="save" value="Save all changes" /></td>
+    </tr>
+  </table>
+
+</form>
+
+<a href="{% url 'home' %}">Back to all publications</a>
+
+{% endblock %}
