@@ -15,13 +15,13 @@ if __name__ == '__main__':
 
 
 import pandas as pd
-from publications.models import Outcome
+from publications.models import Population
 
 # Load a csv file with the list to be added to the database.
-csv = "publications/data/outcomes.csv"
+csv = "publications/data/populations.csv"
 df = pd.read_csv(csv, encoding="utf-8")
 
 for result in df.itertuples():
-    outcome = result.Outcome
-    record = Outcome(outcome=outcome)
+    population = result.Population
+    record = Population(population=population)
     record.save()

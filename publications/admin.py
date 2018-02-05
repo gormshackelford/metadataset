@@ -1,9 +1,10 @@
 from django.contrib import admin
-from .models import Publication, Intervention, Population, Design, Experiment, BroadCategory, Crop, Taxon, IUCNActionLevel1, IUCNActionLevel2, IUCNActionLevel3, IUCNHabitatLevel1, IUCNHabitatLevel2, IUCNThreatLevel1, IUCNThreatLevel2, ExperimentDesign, ExperimentBroadCategory, ExperimentCrop, ExperimentPopulation, ExperimentTaxon, ExperimentLatLong, ExperimentIUCNAction, ExperimentIUCNHabitat, ExperimentIUCNThreat, ExperimentPopulationOutcome
+from .models import Publication, Intervention, Population, Outcome, Design, Experiment, BroadCategory, Crop, Taxon, IUCNActionLevel1, IUCNActionLevel2, IUCNActionLevel3, IUCNHabitatLevel1, IUCNHabitatLevel2, IUCNThreatLevel1, IUCNThreatLevel2, ExperimentDesign, ExperimentBroadCategory, ExperimentCrop, ExperimentPopulation, ExperimentTaxon, ExperimentLatLong, ExperimentIUCNAction, ExperimentIUCNHabitat, ExperimentIUCNThreat, ExperimentPopulationOutcome
 
 admin.site.register(Publication)
 admin.site.register(Intervention)
 admin.site.register(Population)
+admin.site.register(Outcome)
 admin.site.register(Design)
 admin.site.register(Experiment)
 admin.site.register(BroadCategory)

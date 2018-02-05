@@ -2,8 +2,15 @@ from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.db import transaction
 from django.forms import modelformset_factory
 from django.shortcuts import render, redirect
-from .forms import PublicationForm, ExperimentForm, ExperimentCropForm, ExperimentDesignForm, ExperimentIUCNThreatForm, ExperimentLatLongForm, ExperimentPopulationForm, ExperimentPopulationOutcomeForm
+from .forms import PublicationForm, ExperimentForm, ExperimentCropForm, ExperimentDesignForm, ExperimentIUCNThreatForm, ExperimentLatLongForm, ExperimentPopulationForm, ExperimentPopulationOutcomeForm, EffectForm
 from .models import Publication, Experiment, Population, Crop, ExperimentCrop, ExperimentDesign, ExperimentIUCNThreat, ExperimentLatLong, ExperimentPopulation, ExperimentPopulationOutcome
+
+
+
+from .models import Outcome
+from mptt.forms import TreeNodeChoiceField
+
+
 
 
 def home(request):
@@ -86,11 +93,11 @@ def experiment(request, publication_pk, experiment_index):
     ExperimentLatLongFormSet = modelformset_factory(ExperimentLatLong, form=ExperimentLatLongForm, extra=2, can_delete=True)
     ExperimentPopulationFormSet = modelformset_factory(ExperimentPopulation, form=ExperimentPopulationForm, extra=2, can_delete=True)
     if request.method == 'POST':
+        experiment_population_formset = ExperimentPopulationFormSet(request.POST, prefix="experiment_population_formset")
         experiment_crop_formset = ExperimentCropFormSet(request.POST, prefix="experiment_crop_formset")
         experiment_design_formset = ExperimentDesignFormSet(request.POST, prefix="experiment_design_formset")
         experiment_IUCN_threat_formset = ExperimentIUCNThreatFormSet(request.POST, prefix="experiment_IUCN_threat_formset")
         experiment_lat_long_formset = ExperimentLatLongFormSet(request.POST, prefix="experiment_lat_long_formset")
-        experiment_population_formset = ExperimentPopulationFormSet(request.POST, prefix="experiment_population_formset")
         with transaction.atomic():
             #TODO: Do this in a loop:
             formset = experiment_population_formset
@@ -102,6 +109,11 @@ def experiment(request, publication_pk, experiment_index):
                 else:
                     for instance in instances:
                         instance.experiment = experiment
+                        if instance.old_population is not None:
+                        # If the user changes the population, then we need to delete the instances of ExperimentPopulationOutcome that depend on the old population.
+                            if (instance.old_population != instance.population):
+                                ExperimentPopulationOutcome.objects.filter(experiment_population=instance).delete()
+                        instance.old_population = instance.population
                         instance.save()
             formset = experiment_crop_formset
             if formset.is_valid():
@@ -190,11 +202,23 @@ def population(request, publication_pk, experiment_index, population_index):
     experiment = experiments[experiment_index]
     experiment_populations = ExperimentPopulation.objects.filter(experiment=experiment).order_by('pk')
     experiment_population = experiment_populations[population_index]
-    ExperimentPopulationOutcomeFormSet = modelformset_factory(ExperimentPopulationOutcome, form=ExperimentPopulationOutcomeForm, extra=1, can_delete=True)
+    ExperimentPopulationOutcomeFormSet = modelformset_factory(ExperimentPopulationOutcome, form=ExperimentPopulationOutcomeForm, extra=2, can_delete=True)
+    data = request.POST or None
+
+
+
+
+    #TODO: Simplify all formsets in views like this:
+
+
+
+
+    formset = ExperimentPopulationOutcomeFormSet(data=data, queryset=ExperimentPopulationOutcome.objects.filter(experiment_population=experiment_population), prefix="experiment_population_outcome_formset")
+    for form in formset:
+        form.fields['outcome'] = TreeNodeChoiceField(queryset=Outcome.objects.get(outcome=experiment_population.population).get_descendants(include_self=True), level_indicator = "->")
+
     if request.method == 'POST':
-        experiment_population_outcome_formset = ExperimentPopulationOutcomeFormSet(request.POST, prefix="experiment_population_outcome_formset")
         with transaction.atomic():
-            formset = experiment_population_outcome_formset
             if formset.is_valid():
                 instances = formset.save(commit=False)
                 if 'delete' in request.POST:
@@ -205,18 +229,56 @@ def population(request, publication_pk, experiment_index, population_index):
                         instance.experiment_population = experiment_population
                         instance.save()
             return redirect('population', publication_pk=publication_pk, experiment_index=experiment_index, population_index=population_index)
-    else:
-        if ExperimentPopulationOutcome.objects.filter(experiment_population=experiment_population).exists():
-            experiment_population_outcome_formset = ExperimentPopulationOutcomeFormSet(queryset=ExperimentPopulationOutcome.objects.filter(experiment_population=experiment_population), prefix="experiment_population_outcome_formset")
-        else:
-            experiment_population_outcome_formset = ExperimentPopulationOutcomeFormSet(queryset=ExperimentPopulationOutcome.objects.none(), prefix="experiment_population_outcome_formset")
 
     context = {
         'publication': publication,
         'experiment': experiment,
-        'experiment_index': experiment_index,
         'experiment_population': experiment_population,
-        'experiment_population_outcome_formset': experiment_population_outcome_formset
+        'experiment_index': experiment_index,
+        'population_index': population_index,
+        'experiment_population_outcome_formset': formset
     }
 
     return render(request, 'publications/population.html', context)
+
+
+def outcome(request, publication_pk, experiment_index, population_index, outcome_index):
+    publication = Publication.objects.get(pk=publication_pk)
+    experiments = Experiment.objects.filter(publication=publication).order_by('pk')
+    experiment = experiments[experiment_index]
+    experiment_populations = ExperimentPopulation.objects.filter(experiment=experiment).order_by('pk')
+    experiment_population = experiment_populations[population_index]
+    experiment_population_outcomes = ExperimentPopulationOutcome.objects.filter(experiment_population=experiment_population).order_by('pk')
+    experiment_population_outcome = experiment_population_outcomes[outcome_index]
+    EffectFormSet = modelformset_factory(ExperimentPopulationOutcome, form=EffectForm, extra=0, can_delete=True)
+    if request.method == 'POST':
+        formset = EffectFormSet(request.POST, prefix="effect_formset")
+        with transaction.atomic():
+            if formset.is_valid():
+                instances = formset.save(commit=False)
+                if 'delete' in request.POST:
+                    for obj in formset.deleted_objects:
+                        obj.delete()
+                else:
+                    for instance in instances:
+                        instance.experiment_population = experiment_population
+                        instance.save()
+            return redirect('outcome', publication_pk=publication_pk, experiment_index=experiment_index, population_index=population_index, outcome_index=outcome_index)
+    else:
+        if ExperimentPopulationOutcome.objects.filter(pk=experiment_population_outcome.pk).exists():
+            effect_formset = EffectFormSet(queryset=ExperimentPopulationOutcome.objects.filter(pk=experiment_population_outcome.pk), prefix="effect_formset")
+        else:
+            effect_formset = EffectFormSet(queryset=ExperimentPopulationOutcome.objects.none(), prefix="effect_formset")
+
+    context = {
+        'publication': publication,
+        'experiment': experiment,
+        'experiment_population': experiment_population,
+        'experiment_population_outcome': experiment_population_outcome,
+        'experiment_index': experiment_index,
+        'population_index': population_index,
+        'outcome_index': outcome_index,
+        'effect_formset': effect_formset
+    }
+
+    return render(request, 'publications/outcome.html', context)

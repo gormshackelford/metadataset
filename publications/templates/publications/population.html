@@ -10,48 +10,42 @@
 
 {% block content %}
 
-<h1>
-  {{ experiment.intervention }}: Effects on {{ experiment_population.population|lower }}
-</h1>
+<h1>Population: {{ experiment_population.population|capfirst }}</h1>
+
+<p><a href="{% url 'experiment' publication_pk=publication.pk experiment_index=experiment_index %}">Back to all populations</a></p>
 
 <form method="post" action="">{% csrf_token %}
   <table>
+    <tr><th colspan="3">Outcomes</th></tr>
+    <tr>
+      <td colspan="2"></td>
+      <td class="centered">Select</td>
+    </tr>
     {{ experiment_population_outcome_formset.management_form }}
     {% for form in experiment_population_outcome_formset %}
-      {{ form.non_field_errors }}
       <tr>
-        <th colspan="2">
-          {% if form.instance.outcome %}
-            {{ form.instance.outcome }}
-          {% else %}
-            Outcome {{ forloop.counter }}
-          {% endif %}
+        <td>
           {% for hidden_field in form.hidden_fields %}
             {{ hidden_field }}
           {% endfor %}
-        </th>
+          {% if forloop.first %}
+            {{ form.outcome.label }}:
+          {% endif %}
+        </td>
+        <td>{{ form.outcome }}
+          {% if form.instance.outcome %}
+            <a href="{% url 'outcome' publication_pk=publication.pk experiment_index=experiment_index population_index=population_index outcome_index=forloop.counter0 %}">Effect</a>
+          {% endif %}
+        </td>
+        <td class="centered">{{ form.DELETE }}</td>
       </tr>
-      {% for field in form.visible_fields %}
-        <tr>
-          <td>{{ field.label }}:</td>
-          <td>{{ field }} {{ field.help_text }} {{ field.errors }}</td>
-        </tr>
-      {% endfor %}
     {% endfor %}
-
-    <tr>
-      <th colspan="2"></th>
-    </tr>
-
     <tr>
       <td class="button bottom"><input type="submit" name="save" value="Save all changes" /></td>
-      <td></td>
+      <td class="bottom"></td>
       <td class="button bottom centered"><input type="submit" name="delete" value="Delete selected" /></td>
     </tr>
-
   </table>
 </form>
-
-<p><a href="{% url 'experiment' publication_pk=publication.pk experiment_index=experiment_index %}">Back to the intervention</a></p>
 
 {% endblock %}

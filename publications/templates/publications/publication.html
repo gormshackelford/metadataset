@@ -11,6 +11,7 @@
 {% block content %}
 
 <h1>{{ publication.title|default:'[title not available]' }}</h1>
+
 <p>Search for the full text: <a target="_blank"
   href="http://www.google.com/search?q={{ publication.google_string }}">Google</a>
   {% if publication.doi != '' %}
@@ -29,8 +30,8 @@
     </tr>
   </table>
 
-  <h1>Experiments</h1>
-  <p>We use the "PICO" terminology for describing experiments ("P" = "Population", "I" = "Intervention", "C" = "Comparison", and "O" = "Outcome"). Please select one or more interventions (the "I" in "PICO"). Then click "Save all changes". You will then see a link to the metadata for each intervention, which will allow you to select one or more populations, comparisons, and outcomes for each intervention.</p>
+  <h1>Interventions</h1>
+  <p>We use the "PICO" terminology for describing experiments ("P" = "Population", "I" = "Intervention", "C" = "Comparison", and "O" = "Outcome"). Please select one or more interventions (the "I" in "PICO"), and then click "Save all changes". You will then see a link to the metadata for each intervention, which will allow you to select one or more populations, outcomes, and comparisons for each intervention.</p>
   <table>
     <tr>
       <td class="top" colspan="2"></td>
@@ -49,7 +50,7 @@
       </td>
       <td>{{ form.intervention }}
         {% if form.instance.intervention %}
-          <a href="{% url 'experiment' publication_pk=publication.pk experiment_index=forloop.counter0 %}">Edit metadata</a>
+          <a href="{% url 'experiment' publication_pk=publication.pk experiment_index=forloop.counter0 %}">Populations</a>
         {% endif %}
       </td>
       <td class="centered">{{ form.DELETE }}</td>
@@ -83,7 +84,5 @@
   </table>
 
 </form>
-
-<a href="{% url 'home' %}">Back to all publications</a>
 
 {% endblock %}

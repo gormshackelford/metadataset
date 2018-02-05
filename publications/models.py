@@ -1,5 +1,6 @@
 from django.db import models
 from django.core.validators import MaxValueValidator, MinValueValidator
+from mptt.models import MPTTModel, TreeForeignKey
 from urllib.parse import quote_plus
 
 
@@ -52,11 +53,18 @@ class Comparison(models.Model):
 
 
 # "Outcome" is the "O" in "PICO".
-class Outcome(models.Model):
-    outcome = models.CharField(max_length=254, unique=True)
+class Outcome(MPTTModel):
+    outcome = models.CharField(max_length=254)
+    parent = TreeForeignKey('self', null=True, blank=True, related_name='children', db_index=True, on_delete=models.CASCADE)
 
     def __str__(self):
         return self.outcome
+
+    class MPTTMeta:
+        order_insertion_by = ['outcome']
+
+    class Meta:
+        unique_together = ('outcome', 'parent')
 
 
 # Experimental design (e.g., "replicated", "randomized", "controlled")
@@ -78,6 +86,9 @@ class Crop(models.Model):
 class BroadCategory(models.Model):
     category = models.CharField(max_length=126, unique=True)
 
+    class Meta:
+        verbose_name_plural = "Broad categories"
+
     def __str__(self):
         return self.category
 
@@ -87,6 +98,9 @@ class Taxon(models.Model):
     family = models.CharField(max_length=126)
     genus = models.CharField(max_length=126)
     species = models.CharField(max_length=126)
+
+    class Meta:
+        verbose_name_plural = "Taxa"
 
     def __str__(self):
         return self.genus
@@ -158,10 +172,11 @@ class Experiment(models.Model):
 
 class ExperimentPopulation(models.Model):
     experiment = models.ForeignKey(Experiment, on_delete=models.CASCADE)
-    population = models.ForeignKey(Population, on_delete=models.CASCADE)
+    population = models.ForeignKey(Population, on_delete=models.CASCADE, related_name="experiment_population")
+    old_population = models.ForeignKey(Population, on_delete=models.SET_NULL, blank=True, null=True)
 
     def __str__(self):
-        return self.experiment.publication.title
+        return "{intervention}: {population}".format(intervention=self.experiment.intervention, population=self.population)
 
 
 class ExperimentDesign(models.Model):
@@ -187,6 +202,9 @@ class ExperimentTaxon(models.Model):
     experiment = models.ForeignKey(Experiment, on_delete=models.CASCADE)
     taxon = models.ForeignKey(Taxon, on_delete=models.CASCADE)
 
+    class Meta:
+        verbose_name_plural = "Experiment taxa"
+
     def __str__(self):
         return self.experiment.publication.title
 
@@ -194,6 +212,9 @@ class ExperimentTaxon(models.Model):
 class ExperimentBroadCategory(models.Model):
     experiment = models.ForeignKey(Experiment, on_delete=models.CASCADE)
     broad_category = models.ForeignKey(BroadCategory, on_delete=models.CASCADE)
+
+    class Meta:
+        verbose_name_plural = "Experiment broad categories"
 
     def __str__(self):
         return self.experiment.publication.title
@@ -234,8 +255,8 @@ class ExperimentLatLong(models.Model):
 
 class ExperimentPopulationOutcome(models.Model):
     experiment_population = models.ForeignKey(ExperimentPopulation, on_delete=models.CASCADE)
-    outcome = models.ForeignKey(Outcome, on_delete=models.CASCADE)
-    note = models.TextField(blank=True, null=True)
+    outcome = TreeForeignKey(Outcome, on_delete=models.CASCADE)
+    comparison = models.TextField(blank=True, null=True)
     EFFECT_CHOICES = (
         (1, "+"),
         (0, "0"),
@@ -252,6 +273,7 @@ class ExperimentPopulationOutcome(models.Model):
         ("R", "R - Response ratio"),
         ("L", "L - Log response ratio"),
         ("Zr", "Zr - Fischer's Z-transformed r"),
+        ("Other", "Other")
     )
     effect_size_unit = models.CharField(
         max_length=30,
@@ -259,12 +281,13 @@ class ExperimentPopulationOutcome(models.Model):
         null=True,
         choices=EFFECT_SIZE_UNIT_CHOICES
     )
-    other_unit = models.CharField(max_length=62, blank=True, null=True)
-    sd = models.FloatField(blank=True, null=True)
-    se = models.FloatField(blank=True, null=True)
-    variance = models.FloatField(blank=True, null=True)
-    n = models.IntegerField(blank=True, null=True)
-    exact_p_value = models.FloatField(blank=True, null=True, validators=[MinValueValidator(0), MaxValueValidator(1)])
+    other_effect_size_unit = models.CharField(max_length=62, blank=True, null=True)
+    lower_limit = models.FloatField(blank=True, null=True, help_text="Lower limit of the confidence interval for the effect size")
+    upper_limit = models.FloatField(blank=True, null=True, help_text="Upper limit of the confidence interval for the effect size")
+    confidence = models.FloatField(blank=True, null=True,  validators=[MinValueValidator(0), MaxValueValidator(100)], help_text="Confidence of the confidence interval (percent)")
+    se = models.FloatField(blank=True, null=True, help_text="Standard error of the effect size")
+    variance = models.FloatField(blank=True, null=True, help_text="Variance of the effect size")
+    n = models.IntegerField(blank=True, null=True, help_text="Number of replicates")
     APPROXIMATE_P_VALUE_CHOICES = (
         ("< 0.0001", "< 0.0001"),
         ("< 0.001", "< 0.001"),
@@ -280,8 +303,8 @@ class ExperimentPopulationOutcome(models.Model):
         null=True,
         choices=APPROXIMATE_P_VALUE_CHOICES
     )
+    exact_p_value = models.FloatField(blank=True, null=True, validators=[MinValueValidator(0), MaxValueValidator(1)], help_text="Please enter a value from 0 to 1.")
     z_value = models.FloatField(blank=True, null=True)
-    significant = models.NullBooleanField(blank=True)
     treatment_mean = models.IntegerField(blank=True, null=True)
     control_mean = models.IntegerField(blank=True, null=True)
     unit = models.CharField(max_length=62, blank=True, null=True)
@@ -291,7 +314,9 @@ class ExperimentPopulationOutcome(models.Model):
     sd_control = models.FloatField(blank=True, null=True)
     se_treatment = models.FloatField(blank=True, null=True)
     se_control = models.FloatField(blank=True, null=True)
-    sed = models.FloatField(blank=True, null=True)
+    sed = models.FloatField(blank=True, null=True, help_text="Standard error of the difference between the means")
+    lsd = models.FloatField(blank=True, null=True, help_text="Least significant difference between the means")
+    note = models.TextField(blank=True, null=True)
 
     def __str__(self):
         return self.experiment_population.experiment.publication.title

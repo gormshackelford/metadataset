@@ -51,12 +51,18 @@ class ExperimentPopulationForm(forms.ModelForm):
 
     class Meta:
         model = ExperimentPopulation
-        exclude = ['experiment']
+        exclude = ['experiment', 'old_population']
 
 
 class ExperimentPopulationOutcomeForm(forms.ModelForm):
-    exact_p_value = forms.FloatField(min_value=0, max_value=1, help_text="Please enter a value from 0 to 1.", required=False)
 
     class Meta:
         model = ExperimentPopulationOutcome
-        exclude = ['experiment_population']
+        fields = ['outcome']
+
+
+class EffectForm(forms.ModelForm):
+
+    class Meta:
+        model = ExperimentPopulationOutcome
+        exclude = ['experiment_population', 'outcome']

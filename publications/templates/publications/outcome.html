@@ -1,0 +1,142 @@
+{% extends 'publications/base.html' %}
+
+{% block title %}
+  Outcome | MetaDataSet.com
+{% endblock %}
+
+{% block css %}
+  {% load staticfiles %}
+{% endblock %}
+
+{% block content %}
+
+<h1>Outcome: {{ experiment_population_outcome.outcome|capfirst }}</h1>
+
+<p><a href="{% url 'population' publication_pk=publication.pk experiment_index=experiment_index population_index=population_index %}">Back to all outcomes</a></p>
+
+<form method="post" action="">{% csrf_token %}
+  <table>
+    
+    <tr>
+      <td>{{ form }}</td>
+    </tr>
+
+    {{ effect_formset.management_form }}
+    {% for form in effect_formset %}
+      <tr>
+        <td>
+          {% for hidden_field in form.hidden_fields %}
+            {{ hidden_field }}
+          {% endfor %}
+          {{ form.comparison.label }}:
+        </td>
+        <td>{{ form.comparison }}</td>
+      </tr>
+      <tr>
+        <td>{{ form.effect.label }}:</td>
+        <td>{{ form.effect }}</td>
+      </tr>
+      <tr>
+        <td>{{ form.effect_size.label }}:</td>
+        <td>{{ form.effect_size }}</td>
+      </tr>
+      <tr>
+        <td>{{ form.effect_size_unit.label }}:</td>
+        <td>{{ form.effect_size_unit }}</td>
+      </tr>
+      <tr>
+        <td>Effect size unit (other):</td>
+        <td>{{ form.other_effect_size_unit }}</td>
+      </tr>
+      <tr>
+        <td>CI lower limit:</td>
+        <td>{{ form.lower_limit }} {{ form.lower_limit.help_text }}</td>
+      </tr>
+      <tr>
+        <td>CI upper limit:</td>
+        <td>{{ form.upper_limit }} {{ form.upper_limit.help_text }}</td>
+      </tr>
+      <tr>
+        <td>{{ form.confidence.label }}:</td>
+        <td>{{ form.confidence }} {{ form.confidence.help_text }}</td>
+      </tr>
+      <tr>
+      <tr>
+        <td>SE:</td>
+        <td>{{ form.se }} {{ form.se.help_text }}</td>
+      </tr>
+      <tr>
+        <td>{{ form.variance.label }}:</td>
+        <td>{{ form.variance }} {{ form.variance.help_text }}</td>
+      </tr>
+      <tr>
+        <td>{{ form.n.label }}:</td>
+        <td>{{ form.n }} {{ form.n.help_text }}</td>
+      </tr>
+        <td>Approximate P-value:</td>
+        <td>{{ form.approximate_p_value }}</td>
+      </tr>
+      <tr>
+        <td>Exact P-value:</td>
+        <td>{{ form.exact_p_value }} {{ form.exact_p_value.help_text }}</td>
+      </tr>
+      <tr>
+        <td>Z-value:</td>
+        <td>{{ form.z_value }}</td>
+      </tr>
+      <tr>
+        <td>{{ form.treatment_mean.label }}:</td>
+        <td>{{ form.treatment_mean }}</td>
+      </tr>
+      <tr>
+        <td>{{ form.control_mean.label }}:</td>
+        <td>{{ form.control_mean }}</td>
+      </tr>
+      <tr>
+        <td>{{ form.unit.label }}:</td>
+        <td>{{ form.unit }}</td>
+      </tr>
+      <tr>
+        <td>{{ form.n_treatment.label }}:</td>
+        <td>{{ form.n_treatment }}</td>
+      </tr>
+      <tr>
+        <td>{{ form.n_control.label }}:</td>
+        <td>{{ form.n_control }}</td>
+      </tr>
+      <tr>
+        <td>SD treatment:</td>
+        <td>{{ form.sd_treatment }}</td>
+      </tr>
+      <tr>
+        <td>SD control:</td>
+        <td>{{ form.sd_control }}</td>
+      </tr>
+      <tr>
+        <td>SE treatment:</td>
+        <td>{{ form.se_treatment }}</td>
+      </tr>
+      <tr>
+        <td>SE control:</td>
+        <td>{{ form.se_control }}</td>
+      </tr>
+      <tr>
+        <td>SED:</td>
+        <td>{{ form.sed }} {{ form.sed.help_text }}</td>
+      </tr>
+      <tr>
+        <td>LSD:</td>
+        <td>{{ form.lsd }} {{ form.lsd.help_text }}</td>
+      </tr>
+      <tr>
+        <td>{{ form.note.label }}:</td>
+        <td>{{ form.note }}</td>
+      </tr>
+      <tr>
+        <td class="button bottom"><input type="submit" name="save" value="Save all changes" /></td>
+      </tr>
+    {% endfor %}
+  </table>
+</form>
+
+{% endblock %}

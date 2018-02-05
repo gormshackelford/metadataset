@@ -21,6 +21,10 @@ class NewVisitorTest(unittest.TestCase):
 
     # She uploads a bibliography as an ris file.
 
+    # She tags each publication as relevant or not relevant to her systematic review (if she creates new systematic reviews, these are added to the dropdown list, any of her publications can be tagged as relevant to any of her reviews).
+
+    # She downloads the bibliographic metadata for the relevant publications as a CSV file.
+
     # She user creates a list of populations (the "P" in a "PICO" experiment).
 
     # She creates a list of interventions (the "I" in a "PICO" experiment).
@@ -29,13 +33,19 @@ class NewVisitorTest(unittest.TestCase):
 
     # She creates a list of comparisons (the "C" in a "PICO" experiment).
 
-    # She tags each publication as relevant or not relevant to her systematic review (if she creates new systematic reviews, these are added to the dropdown list, any of her publications can be tagged as relevant to any of her reviews).
+    #[Wish list: When creating these lists of PICO items, she select the items from hierarchical classification trees that exist for all users. She names the "leaves" that she selects from these classification "trees". Thus, she personalizes them, but they can be related to those of other users through the classification tree.]
 
     # She enters the PICO metadata and statitical data for each publication.
 
+    # She creates a meta-analysis for one intervention, using all publications from her systematic review that have relevant PICO data for this intervention, or by selecting a subset of these publications.
+
+    # She sees a forest plot for this meta-analysis.
+
+    # She downloads the data and metadata from the meta-analysis as a CSV file.
+
     # Other users can see her work, but cannot edit it unless she gives them permission.
 
-    # Other users can aggregate data from multiple reviews, based on their metadata.
+    # Other users can aggregate data from multiple reviews, based on their metadata, using the hierarchical classification trees.
 
 
     def test_can_enter_data_for_a_publication(self):
