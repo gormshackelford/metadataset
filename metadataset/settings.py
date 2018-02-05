@@ -19,15 +19,9 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 
 # Load the configuration file
-try:
-    #config_file = "config.json"
-    config_file = os.path.join(BASE_DIR, "config.json")
-    with open(config_file, 'r') as f:
-        config = json.load(f)
-except:
-    config_file = "/tmp/config.json"
-    with open(config_file, 'r') as f:
-        config = json.load(f)
+config_file = os.path.join(BASE_DIR, "config.json")
+with open(config_file, 'r') as f:
+    config = json.load(f)
 
 
 # Quick-start development settings - unsuitable for production
