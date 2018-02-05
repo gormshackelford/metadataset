@@ -80,7 +80,7 @@ WSGI_APPLICATION = 'metadataset.wsgi.application'
 DEBUG = bool(config['DEBUG'])
 
 if DEBUG:
-   INTERNAL_IPS = ('127.0.0.1', 'localhost',)
+   INTERNAL_IPS = ('127.0.0.1', 'localhost', 'www.metadataset.com')
    MIDDLEWARE += (
        'debug_toolbar.middleware.DebugToolbarMiddleware',
    )
