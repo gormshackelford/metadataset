@@ -1,12 +1,21 @@
-Outcome
-Microbial biomass carbon
-Potassium content
-Phosphorus content
-Nitrogen content
-Water content
-Organic matter content
-Erosion
-Aggregation
-pH
-Organic carbon content
-Mycorrhizae
+Outcome,Parent
+Biodiversity,
+Cost,
+Crops,
+Energy,
+"Pathogens, Pests, and Weeds",
+Soil,
+Water,
+Abundance,Biodiversity
+Diversity,Biodiversity
+Microbial biomass carbon,Soil
+Potassium content,Soil
+Phosphorus content,Soil
+Nitrogen content,Soil
+Water content,Soil
+Organic matter content,Soil
+Erosion,Soil
+Aggregation,Soil
+pH,Soil
+Organic carbon content,Soil
+Mycorrhizae,Soil

@@ -23,5 +23,10 @@ df = pd.read_csv(csv, encoding="utf-8")
 
 for result in df.itertuples():
     outcome = result.Outcome
+    parent = result.Parent
     record = Outcome(outcome=outcome)
     record.save()
+    if Outcome.objects.filter(outcome=parent).exists():
+        parent = Outcome.objects.get(outcome=parent)
+        record.parent = parent
+        record.save()

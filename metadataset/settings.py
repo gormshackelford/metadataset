@@ -80,7 +80,7 @@ WSGI_APPLICATION = 'metadataset.wsgi.application'
 DEBUG = bool(config['DEBUG'])
 
 if DEBUG:
-   INTERNAL_IPS = ('127.0.0.1', 'localhost', 'www.metadataset.com')
+   INTERNAL_IPS = ('127.0.0.1', 'localhost')
    MIDDLEWARE += (
        'debug_toolbar.middleware.DebugToolbarMiddleware',
    )
@@ -123,6 +123,12 @@ DATABASES = {
         }
     }
 }
+
+
+# Abstract User model with email address as username
+# https://docs.djangoproject.com/en/1.11/topics/auth/customizing/#auth-custom-user
+AUTH_USER_MODEL = 'publications.User'
+
 
 # Password validation
 # https://docs.djangoproject.com/en/2.0/ref/settings/#auth-password-validators
