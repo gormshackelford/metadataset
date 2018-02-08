@@ -1,0 +1,30 @@
+{% extends 'publications/base.html' %}
+
+{% block content %}
+
+    <form method="post" action="{% url 'login' %}">
+
+    {% csrf_token %}
+
+        <table>
+          <tr>
+            <td>{{ form.username.label_tag }}</td>
+            <td>{{ form.username }}</td>
+          </tr>
+          <tr>
+            <td>{{ form.password.label_tag }}</td>
+            <td>{{ form.password }}</td>
+          </tr>
+        </table>
+
+        <p><input type="submit" value="Log in" /></p>
+
+    </form>
+
+    <p><a href="{% url 'password_reset' %}">Reset your password</a></p>
+
+    {% if form.errors %}
+      <p><span class="warning">Your username and/or password did not match our records, or you do not have permission to log in.</span></p>
+    {% endif %}
+
+{% endblock %}

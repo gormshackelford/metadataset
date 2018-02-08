@@ -1,12 +1,17 @@
-Intervention
-Add compost to the soil
-Add manure to the soil
-Grow cover crops
-Plant cassava stakes at different densities
-Plant cassava stakes at different depths
-Plant cassava stakes in different soil preparations
-Plant cassava stakes vertically vs horizontally or diagonally
-Soak cassava stakes in water before planting
-Treat cassava stakes with chemicals before planting
-Use mulch
-Use no tillage
+Level1,Level2,Level3,Level4,Level5,Level6,Level7
+Economic interventions,Agriculture and aquaculture,,,,,
+Environmental interventions,Agriculture and aquaculture,Crops,Crop rotations,Crop rotations (cash crops),,
+Environmental interventions,Agriculture and aquaculture,Crops,Crop rotations,"Crop rotations (cover crops, catch crops, and green manures)",,
+Environmental interventions,Agriculture and aquaculture,Crops,Cultivar selection,,,
+Environmental interventions,Agriculture and aquaculture,Crops,Planting methods,Planting season,Planting earlier or later,
+Environmental interventions,Agriculture and aquaculture,Crops,Planting methods,Planting depth and spacing,Planting cuttings vertically vs horizontally or diagonally,
+Environmental interventions,Agriculture and aquaculture,Crops,Planting methods,Planting depth and spacing,Planting deeper or shallower,
+Environmental interventions,Agriculture and aquaculture,Crops,Planting methods,Planting depth and spacing,Planting at higher or lower densities,
+Environmental interventions,Agriculture and aquaculture,Crops,Planting methods,Seed and cutting treatments,Soaking in water before planting,
+Environmental interventions,Agriculture and aquaculture,Crops,Planting methods,Seed and cutting treatments,Treating with chemicals before planting,
+Environmental interventions,Agriculture and aquaculture,Soil,Fertilizer and other soil amendments,Compost,,
+Environmental interventions,Agriculture and aquaculture,Soil,Fertilizer and other soil amendments,Manure,,
+Environmental interventions,Agriculture and aquaculture,Soil,Fertilizer and other soil amendments,Mulch,,
+Environmental interventions,Agriculture and aquaculture,Soil,Tillage,Less tillage,No tillage,
+Environmental interventions,Agriculture and aquaculture,Water,Irrigation,Less irrigation,,
+Social interventions,Agriculture and aquaculture,,,,,

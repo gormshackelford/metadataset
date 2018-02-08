@@ -1,8 +1,7 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as DjangoUserAdmin
 from django.utils.translation import ugettext_lazy as _
-from .models import User  # AbstractUser with email address as username
-
+from .models import Profile, User  # AbstractUser with email address as username
 from .models import Publication, Intervention, Population, Outcome, Design, Experiment, BroadCategory, Crop, Taxon, IUCNActionLevel1, IUCNActionLevel2, IUCNActionLevel3, IUCNHabitatLevel1, IUCNHabitatLevel2, IUCNThreatLevel1, IUCNThreatLevel2, ExperimentDesign, ExperimentBroadCategory, ExperimentCrop, ExperimentPopulation, ExperimentTaxon, ExperimentLatLong, ExperimentIUCNAction, ExperimentIUCNHabitat, ExperimentIUCNThreat, ExperimentPopulationOutcome
 
 
@@ -27,6 +26,8 @@ class UserAdmin(DjangoUserAdmin):
     search_fields = ('email', 'first_name', 'last_name')
     ordering = ('email',)
 
+
+admin.site.register(Profile)
 
 admin.site.register(Publication)
 admin.site.register(Intervention)

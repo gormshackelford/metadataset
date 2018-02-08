@@ -10,6 +10,39 @@
   <body>
     <div id="page">
       <div id="header">
+
+        <a id="logo" href="{% url 'home' %}"><img id="logo" src="{% static 'logo.jpeg' %}" alt="logo" /></a>
+
+        &nbsp;&nbsp;|&nbsp;&nbsp;
+        <a class="navigation_text" href="{% url 'home' %}">About</a>
+
+        &nbsp;&nbsp;|&nbsp;&nbsp;
+        <a class="navigation_text" href="{% url 'home' %}">Methods</a>
+
+        &nbsp;&nbsp;|&nbsp;&nbsp;
+        <a class="navigation_text" id="navigation_text" href="{% url 'home' %}">Contact Us</a>
+
+        &nbsp;&nbsp;|&nbsp;&nbsp;
+
+        {% if user.is_authenticated %}
+
+          <a class="navigation_button" href="{% url 'home' %}">Your Assessments</a>
+
+          &nbsp;&nbsp;|&nbsp;&nbsp;
+          <a class="navigation_text" href="{% url 'home' %}">Your Profile</a>
+
+          &nbsp;&nbsp;|&nbsp;&nbsp;
+          <a class="navigation_text" href="{% url 'logout' %}">Log Out</a>
+
+        {% else %}
+
+          <a class="navigation_text" href="{% url 'signup' %}">Sign Up</a>
+
+          &nbsp;&nbsp;|&nbsp;&nbsp;
+          <a class="navigation_text" href="{% url 'login' %}?next={{ request.path }}">Log In</a>
+
+        {% endif %}
+
       </div>
 
       <div id="content">

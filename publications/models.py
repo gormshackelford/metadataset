@@ -1,7 +1,9 @@
-from django.contrib.auth.models import AbstractUser, BaseUserManager  # TODO
+from django.contrib.auth.models import AbstractUser, BaseUserManager
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
-from django.utils.translation import ugettext_lazy as _  # TODO
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+from django.utils.translation import ugettext_lazy as _
 from mptt.models import MPTTModel, TreeForeignKey
 from urllib.parse import quote_plus
 
@@ -45,11 +47,32 @@ class User(AbstractUser):
 
     username = None
     email = models.EmailField(_('email address'), unique=True)
+    first_name = models.CharField(max_length=30)
+    last_name = models.CharField(max_length=30)
 
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = []
 
     objects = UserManager()
+
+    def __str__(self):
+        return '{email}'.format(email=self.email)
+
+
+class Profile(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    email_is_confirmed = models.BooleanField(default=False)
+    institution = models.CharField(max_length=254, blank=True)
+
+    def __str__(self):
+        return 'Profile for {email}'.format(email=self.user.email)
+
+
+@receiver(post_save, sender=User)
+def update_user_profile(sender, instance, created, **kwargs):
+    if created:
+        Profile.objects.create(user=instance)
+    instance.profile.save()
 
 
 class Publication(models.Model):
@@ -85,11 +108,18 @@ class Population(models.Model):
 
 
 # "Intervention" is the "I" in "PICO".
-class Intervention(models.Model):
-    intervention = models.CharField(max_length=254, unique=True)
+class Intervention(MPTTModel):
+    intervention = models.CharField(max_length=254)
+    parent = TreeForeignKey('self', null=True, blank=True, related_name='children', db_index=True, on_delete=models.CASCADE)
 
     def __str__(self):
         return self.intervention
+
+    class MPTTMeta:
+        order_insertion_by = ['intervention']
+
+    class Meta:
+        unique_together = ('intervention', 'parent')
 
 
 # "Comparison" is the "C" in "PICO".

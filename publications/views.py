@@ -1,9 +1,16 @@
+from django.contrib.auth import login, authenticate
+from django.contrib.sites.shortcuts import get_current_site
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.db import transaction
 from django.forms import modelformset_factory
 from django.shortcuts import render, redirect
-from .forms import PublicationForm, ExperimentForm, ExperimentCropForm, ExperimentDesignForm, ExperimentIUCNThreatForm, ExperimentLatLongForm, ExperimentPopulationForm, ExperimentPopulationOutcomeForm, EffectForm
-from .models import Publication, Experiment, Population, Crop, ExperimentCrop, ExperimentDesign, ExperimentIUCNThreat, ExperimentLatLong, ExperimentPopulation, ExperimentPopulationOutcome
+from django.template import loader
+from django.template.loader import render_to_string
+from django.utils.encoding import force_bytes, force_text
+from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
+from .tokens import account_activation_token
+from .forms import PublicationForm, ExperimentForm, ExperimentCropForm, ExperimentDesignForm, ExperimentIUCNThreatForm, ExperimentLatLongForm, ExperimentPopulationForm, ExperimentPopulationOutcomeForm, EffectForm, SignUpForm
+from .models import Publication, Experiment, Population, Crop, ExperimentCrop, ExperimentDesign, ExperimentIUCNThreat, ExperimentLatLong, ExperimentPopulation, ExperimentPopulationOutcome, Intervention, User
 
 
 
@@ -29,6 +36,78 @@ def home(request):
     return render(request, 'publications/home.html', context)
 
 
+def signup(request):
+    if request.method == 'POST':
+        form = SignUpForm(request.POST)
+        if form.is_valid():
+
+            """
+            ''' Begin reCAPTCHA validation '''
+
+            recaptcha_response = request.POST.get('g-recaptcha-response')
+            url = 'https://www.google.com/recaptcha/api/siteverify'
+            values = {
+                'secret': config.GOOGLE_RECAPTCHA_SECRET_KEY,
+                'response': recaptcha_response
+            }
+            data = urllib.parse.urlencode(values).encode()
+            req =  urllib.request.Request(url, data=data)
+            response = urllib.request.urlopen(req)
+            result = json.loads(response.read().decode())
+
+            ''' End reCAPTCHA validation '''
+            """
+
+#            if result['success']:
+            user = form.save()
+            user.refresh_from_db()  # Load the profile instance created by the signal.
+            user.profile.institution = form.cleaned_data.get('institution')
+            user.is_active = False
+            user.save()
+            current_site = get_current_site(request)
+            subject = 'MetaDataSet'
+            message = render_to_string('publications/confirm_email.html', {
+                'user': user,
+                'domain': current_site.domain,
+                'uid': urlsafe_base64_encode(force_bytes(user.pk)).decode(),
+                'token': account_activation_token.make_token(user),
+            })
+            user.email_user(subject, message)
+            return redirect('email_sent')
+    else:
+        form = SignUpForm()
+    return render(request, 'publications/signup.html', {'form': form})
+
+
+def email_sent(request):
+    return render(request, 'publications/email_sent.html')
+
+
+def email_confirmed(request):
+    return render(request, 'publications/email_confirmed.html')
+
+
+def email_not_confirmed(request):
+    return render(request, 'publications/email_not_confirmed.html')
+
+
+def confirm_email(request, uidb64, token):
+    try:
+        uid = urlsafe_base64_decode(uidb64).decode()
+        user = User.objects.get(pk=uid)
+    except (TypeError, ValueError, OverflowError, User.DoesNotExist):
+        user = None
+
+    if user is not None and account_activation_token.check_token(user, token):
+        user.is_active = True
+        user.profile.email_is_confirmed = True
+        user.save()
+        login(request, user)
+        return render(request, 'publications/email_confirmed.html')
+    else:
+        return render(request, 'publications/email_not_confirmed.html', {'uid': uid})
+
+
 def add_publication(request):
     if request.method == 'POST':
         publication_form = PublicationForm(request.POST, prefix="publication_form")
@@ -47,13 +126,18 @@ def add_publication(request):
 def publication(request, publication_pk):
     publication = Publication.objects.get(pk=publication_pk)
     ExperimentFormSet = modelformset_factory(Experiment, form=ExperimentForm, extra=2, can_delete=True)
+    data = request.POST or None
+    publication_form = PublicationForm(data=data, instance=publication, prefix="publication_form")
+    formset = ExperimentFormSet(data=data, prefix="experiment_formset")
+    level1 = "Environmental interventions"
+    level1 = Intervention.objects.get(intervention=level1)
+    level2 = "Agriculture and aquaculture"
+    for form in formset:
+        form.fields['intervention'] = TreeNodeChoiceField(queryset=Intervention.objects.filter(intervention=level2, parent=level1).get_descendants(include_self=False), level_indicator = "---")
     if request.method == 'POST':
-        publication_form = PublicationForm(request.POST, instance=publication, prefix="publication_form")
-        experiment_formset = ExperimentFormSet(request.POST, prefix="experiment_formset")
         with transaction.atomic():
             if publication_form.is_valid():
                 publication = publication_form.save()
-            formset = experiment_formset
             if formset.is_valid():
                 instances = formset.save(commit=False)
                 if 'delete' in request.POST:
@@ -64,20 +148,11 @@ def publication(request, publication_pk):
                         instance.publication = publication
                         instance.save()
             return redirect('publication', publication_pk=publication_pk)
-    else:
-        publication_form = PublicationForm(instance=publication, prefix="publication_form")
-        if Experiment.objects.filter(publication=publication).exists():
-            experiments = Experiment.objects.filter(publication=publication).order_by('pk')
-            experiment_formset = ExperimentFormSet(queryset=experiments, prefix="experiment_formset")
-        else:
-            experiment_formset = ExperimentFormSet(queryset=Experiment.objects.none(), prefix="experiment_formset")
-            experiments = []
 
     context = {
         'publication': publication,
-        'experiments': experiments,
         'publication_form': publication_form,
-        'experiment_formset': experiment_formset
+        'experiment_formset': formset
     }
 
     return render(request, 'publications/publication.html', context)
@@ -203,20 +278,19 @@ def population(request, publication_pk, experiment_index, population_index):
     experiment_populations = ExperimentPopulation.objects.filter(experiment=experiment).order_by('pk')
     experiment_population = experiment_populations[population_index]
     ExperimentPopulationOutcomeFormSet = modelformset_factory(ExperimentPopulationOutcome, form=ExperimentPopulationOutcomeForm, extra=2, can_delete=True)
+
+
+
+
+    #TODO: Simplify formsets in experiment view like this:
+
+
     data = request.POST or None
-
-
-
-
-    #TODO: Simplify all formsets in views like this:
-
-
 
 
     formset = ExperimentPopulationOutcomeFormSet(data=data, queryset=ExperimentPopulationOutcome.objects.filter(experiment_population=experiment_population), prefix="experiment_population_outcome_formset")
     for form in formset:
         form.fields['outcome'] = TreeNodeChoiceField(queryset=Outcome.objects.get(outcome=experiment_population.population).get_descendants(include_self=True), level_indicator = "---")
-
     if request.method == 'POST':
         with transaction.atomic():
             if formset.is_valid():
@@ -251,8 +325,9 @@ def outcome(request, publication_pk, experiment_index, population_index, outcome
     experiment_population_outcomes = ExperimentPopulationOutcome.objects.filter(experiment_population=experiment_population).order_by('pk')
     experiment_population_outcome = experiment_population_outcomes[outcome_index]
     EffectFormSet = modelformset_factory(ExperimentPopulationOutcome, form=EffectForm, extra=0, can_delete=True)
+    data = request.POST or None
+    formset = EffectFormSet(data=data, queryset=ExperimentPopulationOutcome.objects.filter(pk=experiment_population_outcome.pk), prefix="effect_formset")
     if request.method == 'POST':
-        formset = EffectFormSet(request.POST, prefix="effect_formset")
         with transaction.atomic():
             if formset.is_valid():
                 instances = formset.save(commit=False)
@@ -264,11 +339,6 @@ def outcome(request, publication_pk, experiment_index, population_index, outcome
                         instance.experiment_population = experiment_population
                         instance.save()
             return redirect('outcome', publication_pk=publication_pk, experiment_index=experiment_index, population_index=population_index, outcome_index=outcome_index)
-    else:
-        if ExperimentPopulationOutcome.objects.filter(pk=experiment_population_outcome.pk).exists():
-            effect_formset = EffectFormSet(queryset=ExperimentPopulationOutcome.objects.filter(pk=experiment_population_outcome.pk), prefix="effect_formset")
-        else:
-            effect_formset = EffectFormSet(queryset=ExperimentPopulationOutcome.objects.none(), prefix="effect_formset")
 
     context = {
         'publication': publication,
@@ -278,7 +348,7 @@ def outcome(request, publication_pk, experiment_index, population_index, outcome
         'experiment_index': experiment_index,
         'population_index': population_index,
         'outcome_index': outcome_index,
-        'effect_formset': effect_formset
+        'effect_formset': formset
     }
 
     return render(request, 'publications/outcome.html', context)

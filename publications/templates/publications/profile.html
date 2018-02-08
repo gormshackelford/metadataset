@@ -1,0 +1,37 @@
+{% extends 'publications/base.html' %}
+
+{% block title %}
+    Your Profile | MetaDataSet | www.metadataset.com
+{% endblock %}
+
+{% block css %}{% load staticfiles %}
+{% endblock %}
+
+
+{% block content %}
+
+    <h1>Your Profile</h1>
+    <p>Please click "Save" after making changes. To change your email address, please <a href="{% url 'contact' %}">contact us</a>.
+    <form method="POST">
+      {% csrf_token %}
+      <table>
+        {% for field in user_form %}
+          <tr>
+            <td>{{ field.label_tag }}</td>
+            <td>{{ field }}</td>
+          </tr>
+        {% endfor %}
+        {% for field in profile_form %}
+          <tr>
+            <td>{{ field.label_tag }}</td>
+            <td>{{ field }}</td>
+          </tr>
+        {% endfor %}
+      </table>
+      <p><input type="submit" name="save" value="Save" /></p>
+    </form>
+
+{% endblock %}
+
+{% block sidebar %}
+{% endblock %}

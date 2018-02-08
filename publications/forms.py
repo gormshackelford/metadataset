@@ -1,6 +1,38 @@
 from django import forms
 from django.db import models
-from .models import Publication, Experiment, ExperimentCrop, ExperimentDesign, ExperimentIUCNThreat, ExperimentLatLong, ExperimentPopulation, ExperimentPopulationOutcome
+from django.contrib.auth.forms import UserCreationForm
+from .models import Publication, Experiment, ExperimentCrop, ExperimentDesign, ExperimentIUCNThreat, ExperimentLatLong, ExperimentPopulation, ExperimentPopulationOutcome, Profile, User
+
+
+class SignUpForm(UserCreationForm):
+    institution = forms.CharField(max_length=254)
+
+    class Meta:
+        model = User
+        fields = ('email', 'first_name', 'last_name', 'password1', 'password2')
+
+    def clean_email(self):
+        email = self.cleaned_data.get('email')
+        if User.objects.filter(email=email).exists():
+            raise forms.ValidationError('This email address has already been registered.')
+        return email
+
+
+class UserForm(forms.ModelForm):
+    first_name = forms.CharField(max_length=30)
+    last_name = forms.CharField(max_length=30)
+
+    class Meta:
+        model = User
+        exclude = []
+
+
+class ProfileForm(forms.ModelForm):
+    institution = forms.CharField(max_length=254)
+
+    class Meta:
+        model = Profile
+        exclude = []
 
 
 class PublicationForm(forms.ModelForm):

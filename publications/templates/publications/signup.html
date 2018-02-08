@@ -1,0 +1,51 @@
+{% extends 'publications/base.html' %}
+
+{% block title %}
+  Sign Up | MetaDataSet | www.metadataset.com
+{% endblock %}
+
+{% block css %}{% load staticfiles %}
+{% endblock %}
+
+
+{% block content %}
+
+  <h1>Join the Network</h1>
+  <p>If you are based at an academic institution, please use your institutional email address.</p>
+
+  <form method="post">
+
+    {% csrf_token %}
+
+    <table>
+      {% for field in form %}
+        <tr>
+          <td>{{ field.label_tag }}</td>
+          <td>{{ field }}</td>
+        </tr>
+      {% endfor %}
+    </table>
+
+    <!--
+    <script src='https://www.google.com/recaptcha/api.js'></script>
+    <p class="g-recaptcha" data-sitekey="6Ld2TzEUAAAAABRadV5nPd01sWLyBgAI_CeLilSt"></p>
+    -->
+
+    <p><input type="submit" value="Sign up" /></p>
+
+  </form>
+
+  {% for field in form %}
+    {% if field.errors %}
+      <ul>
+        {% for error in field.errors %}
+          <li><span class="warning">{{ error }}</span></li>
+        {% endfor %}
+      </ul>
+    {% endif %}
+  {% endfor %}
+
+{% endblock %}
+
+{% block sidebar %}
+{% endblock %}
