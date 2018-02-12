@@ -36,6 +36,13 @@ def home(request):
     return render(request, 'publications/home.html', context)
 
 
+def about(request):
+    context = {
+        'nodes': Intervention.objects.all()
+    }
+    return render(request, 'publications/about.html', context)
+
+
 def signup(request):
     if request.method == 'POST':
         form = SignUpForm(request.POST)
@@ -129,11 +136,8 @@ def publication(request, publication_pk):
     data = request.POST or None
     publication_form = PublicationForm(data=data, instance=publication, prefix="publication_form")
     formset = ExperimentFormSet(data=data, prefix="experiment_formset")
-    level1 = "Environmental interventions"
-    level1 = Intervention.objects.get(intervention=level1)
-    level2 = "Agriculture and aquaculture"
     for form in formset:
-        form.fields['intervention'] = TreeNodeChoiceField(queryset=Intervention.objects.filter(intervention=level2, parent=level1).get_descendants(include_self=False), level_indicator = "---")
+        form.fields['intervention'] = TreeNodeChoiceField(queryset=Intervention.objects.all().get_descendants(include_self=True), level_indicator = "---")
     if request.method == 'POST':
         with transaction.atomic():
             if publication_form.is_valid():

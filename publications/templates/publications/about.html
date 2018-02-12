@@ -1,0 +1,27 @@
+{% extends 'publications/base.html' %}
+
+{% block title %}
+  About | MetaDataSet | www.metadataset.com
+{% endblock %}
+
+{% block css %}
+  {% load staticfiles %}
+{% endblock %}
+
+{% block content %}
+
+{% load mptt_tags %}
+{% recursetree nodes %}
+  {% if node.is_root_node %}
+    <h1>{{ node.intervention }}</h1>
+  {% else %}
+    <li>{{ node.intervention }}</li>
+  {% endif %}
+  {% if not node.is_leaf_node %}
+    <ul class="children">
+      {{ children }}
+    </ul>
+  {% endif %}
+{% endrecursetree %}
+
+{% endblock %}
