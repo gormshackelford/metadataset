@@ -54,7 +54,7 @@ a.button:hover {
 }
 
 a.navigation_button, a.navigation_button:visited {
-    font-family: "Noto Serif", "Times New Roman", serif;
+    font-family: "Noto Sans", "Times New Roman", serif;
     color: #ff6666;
     text-decoration: none;
 }
@@ -64,7 +64,7 @@ a.navigation_button:hover {
 }
 
 h1, h2, h3 {
-    font-family: "Noto Serif", "Times New Roman", serif;
+    font-family: "Noto Sans", "Times New Roman", serif;
     font-style: normal;
     font-weight: normal;
 }
@@ -93,6 +93,10 @@ input[type=text], input[type=email], input[type=password] {
 li {
     margin-top: 0.75em;
     line-height: 1.5em;
+}
+
+li.root_node {
+    font-size: 2em;
 }
 
 p {
@@ -130,7 +134,7 @@ span.active {
 }
 
 span.heading {
-    font-family: "Noto Serif", "Times New Roman", serif;
+    font-family: "Noto Sans", "Times New Roman", serif;
     font-weight: bold;
 }
 
@@ -187,7 +191,12 @@ td.scoreboard {
 
 ul {
     margin-top: 1em;
-    padding-left: 1.25em;
+    padding-left: 2em;
+}
+
+ul.tree {
+    list-style: none;
+    padding-left: 2em;
 }
 
 #page {
@@ -199,14 +208,14 @@ ul {
 
 #header {
     font-size: 1em;
-    min-height: 2em;
+    min-height: 4em;
     padding-bottom: 1em;
     border-bottom: solid 1px black;
 }
 
 #logo {
     float: left;
-    height: 2em;
+    height: 6em;
 }
 
 #content {
@@ -219,8 +228,8 @@ ul {
 }
 
 .navigation_text, .navigation_text:visited {
-    font-family: "Noto Serif", "Times New Roman", serif;
-    line-height: 2em;
+    font-family: "Noto Sans", "Times New Roman", serif;
+    line-height: 6em;
 }
 
 .button {

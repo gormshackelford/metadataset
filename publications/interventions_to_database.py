@@ -18,7 +18,7 @@ import pandas as pd
 from publications.models import Intervention
 
 # Load a csv file with the list to be added to the database.
-csv = "publications/data/interventions.csv"
+csv = "publications/data/interventions 2.0.csv"
 df = pd.read_csv(csv, encoding="utf-8")
 
 for row in df.itertuples():
@@ -42,4 +42,3 @@ for row in df.itertuples():
     level7 = row.Level7
     if not pd.isnull(level7):
         level7, created = Intervention.objects.get_or_create(intervention=level7, parent=level6)
-    

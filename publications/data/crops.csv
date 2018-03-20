@@ -1,180 +1,1 @@
-Crop
-Agave
-Alfalfa
-Almonds
-"Animals, live, other"
-"Aniseed/anise, badian, fennel, coriander, cumin, caraway"
-Apples
-Apricots
-Arecanuts/betel nut
-Artichokes
-Asparagus
-Asses/donkeys
-Aubergines/eggplants
-Avocados
-Bambara beans/Bambara groundnut/earth pea
-Bananas
-Barley
-"Bastfibres, other"
-"Beans: kidney, butter bean, scarlet runner bean and others"
-Bees (hives)
-"Berries: blackberry, loganberry, mulberry, myrtle berry, huckleberry, dangleberry"
-"Blueberries: European, American, bilberry, whortleberry"
-Brazil nuts
-"Broad beans, horse beans, field beans"
-Buckwheat
-Buffaloes
-"Cabbages, kale, Brussel sprouts and other brassicas"
-Camels and other camelids
-Canary seed
-Carobs
-Carrots
-"Cashew nuts, cashewapple"
-Cassava
-Castor oil seed
-Cattle
-Cauliflowers and broccoli
-"Cereals, other"
-Cherries
-Chestnuts
-Chick peas
-Chickens
-Chicory
-Chillies and peppers
-Cicer milkvetch
-Cinnamon (canella)
-"Citrus fruit, other"
-"Clovers: crimson, red, white, alsike, sweetclover"
-Cloves
-Cocoa beans
-Coconuts
-Coffee
-Cotton
-"Cow peas, blackeye pea/bean, southern pea"
-"Cranberries: American, European"
-Cucumbers and gherkins
-"Currants: black, red and white"
-Dates
-Ducks
-"Fescues: meadow, tall"
-"Fibre crops, other"
-Figs
-Fonio
-"Fruit, fresh, other"
-"Fruit, tropical fresh, other"
-Garlic
-Geese and guinea fowls
-Ginger
-Goats
-Gooseberries
-"Grapefruit, pomelos"
-Grapes
-"Grasses, other"
-Groundnuts/peanuts
-"Gums, natural"
-Hazelnuts
-Hemp
-Hops
-Horses
-Jojoba
-Juniper berries
-Jute
-Kapok
-Karite nuts/Sheanuts
-Kiwi fruit
-"Kolanuts, kola, cola, Sudan cola nut"
-"Leeks, chives, other alliaceous veg"
-"Leguminous crops, other: lespedezas, guar, flat pea, mucuna"
-Lemons and limes
-Lentils
-Lettuces
-Linseed/flax
-Lupins
-Maize
-"Mangoes, mangosteens, guavas"
-Manila fibre (Abaca)
-Mat_
-"Melons, cantaloupes"
-Millet
-Miscanthus/Elephantgrass
-Mules
-Mushrooms and truffles
-Mustard
-"Nutmeg, mace and cardamoms"
-"Nuts, other"
-Oats
-Oil palm
-"Oilseeds, other"
-Okra
-Olives
-"Onions, shallots"
-Oranges
-Palm kernels
-Papayas
-Peaches and nectarines
-Pears
-"Peas: garden pea, field pea "
-Pepper (Piper spp.)
-Peppermint
-Persimmons
-Pigeon peas/cajan
-Pigeons and other birds
-Pigs
-Pineapples
-Pistachios
-Plantains
-Plums and sloes
-"Pome fruit, other"
-Poppy seed
-Potatoes
-"Pulses, other"
-"Pumpkins, marrows, courgette, squash and gourds"
-Pyrethrum
-Quinces
-Quinoa
-Rabbits and hares
-Ramie
-Rapeseed
-Raspberries
-"Rice, paddy"
-"Rodents, other"
-"Roots and tubers, other"
-"Rubber, natural"
-Rye
-"Ryegrass, perennial"
-Safflower seed
-Sesame seed
-Sheep
-"Short rotation coppice: willow, poplar"
-Sisal
-Sorghum
-Sour cherries
-Soybeans
-"Spices, other"
-Spinach
-"Stone fruit, other"
-Strawberries
-"Sugar beet, beetroot/table beet/garden beet, Swiss chard"
-Sugar cane
-"Sugar crops, other"
-Sunflowers
-Sweet potatoes
-Tallowtree seeds
-"Tangerines, mandarins, clementine"
-Taro/old cocoyam
-Tea
-Tobacco
-Tomatoes
-"Trefoil, Bird's-foot"
-Triticale
-Tung Nuts
-Turkeys
-Turnips
-Vanilla
-"Vegetables, other"
-"Vetches: spring/common, hairy"
-Walnuts
-Watermelons
-Wheat
-Yams
-Yautia/new cocoyam
+Level1,Level2,Level3,Level41 Cereals,1.01 Wheat,,1 Cereals,1.02 Maize,,1 Cereals,1.03 Rice,,1 Cereals,1.04 Sorghum (not incl. 8.03 Sweet sorghum),,1 Cereals,1.05 Barley,,1 Cereals,1.06 Rye,,1 Cereals,1.07 Oats,,1 Cereals,1.08 Millet,,1 Cereals,1.09 Triticale,,1 Cereals,1.10 Buckwheat,,1 Cereals,1.11 Fonio,,1 Cereals,1.12 Quinoa,,1 Cereals,1.13 Canary seed,,1 Cereals,1.14 Mixed cereals,,1 Cereals,"1.90 Other cereals, n.e.c.",,2 Vegetables and melons,2.01 Leafy or stem vegetables,2.01.01 Artichokes,2 Vegetables and melons,2.01 Leafy or stem vegetables,2.01.02 Asparagus,2 Vegetables and melons,2.01 Leafy or stem vegetables,2.01.03 Cabbages,2 Vegetables and melons,2.01 Leafy or stem vegetables,2.01.04 Cauliflower and broccoli,2 Vegetables and melons,2.01 Leafy or stem vegetables,2.01.05 Lettuce,2 Vegetables and melons,2.01 Leafy or stem vegetables,2.01.06 Spinach,2 Vegetables and melons,2.01 Leafy or stem vegetables,2.01.07 Chicory,2 Vegetables and melons,2.01 Leafy or stem vegetables,"2.01.90 Other leafy or stem vegetables, n.e.c.",2 Vegetables and melons,2.02 Fruit-bearing vegetables,2.02.01 Cucumbers,2 Vegetables and melons,2.02 Fruit-bearing vegetables,2.02.02 Eggplants (aubergines),2 Vegetables and melons,2.02 Fruit-bearing vegetables,2.02.03 Tomatoes,2 Vegetables and melons,2.02 Fruit-bearing vegetables,"2.02.04 Pumpkin, squash and gourds",2 Vegetables and melons,2.02 Fruit-bearing vegetables,2.02.05 Okra,2 Vegetables and melons,2.02 Fruit-bearing vegetables,"2.02.90 Other fruit-bearing vegetables, n.e.c.",2 Vegetables and melons,"2.03 Root, bulb or tuberous vegetables",2.03.01 Carrots,2 Vegetables and melons,"2.03 Root, bulb or tuberous vegetables",2.03.02 Turnips,2 Vegetables and melons,"2.03 Root, bulb or tuberous vegetables",2.03.03 Garlic,2 Vegetables and melons,"2.03 Root, bulb or tuberous vegetables",2.03.04 Onions (incl. shallots),2 Vegetables and melons,"2.03 Root, bulb or tuberous vegetables",2.03.05 Leeks and other alliaceous vegetables,2 Vegetables and melons,"2.03 Root, bulb or tuberous vegetables","2.03.90 Other root, bulb, or tuberous vegetables, n.e.c.",2 Vegetables and melons,2.04 Mushrooms and truffles,,2 Vegetables and melons,2.05 Melons,2.05.01 Watermelons,2 Vegetables and melons,2.05 Melons,2.05.02 Cantaloupes and other melons,2 Vegetables and melons,"2.90 Other vegetables, n.e.c.",,3 Fruits and nuts,3.01 Tropical and subtropical fruits,3.01.01 Avocados,3 Fruits and nuts,3.01 Tropical and subtropical fruits,3.01.02 Bananas,3 Fruits and nuts,3.01 Tropical and subtropical fruits,3.01.03 Plantains,3 Fruits and nuts,3.01 Tropical and subtropical fruits,3.01.04 Dates,3 Fruits and nuts,3.01 Tropical and subtropical fruits,3.01.05 Figs,3 Fruits and nuts,3.01 Tropical and subtropical fruits,"3.01.06 Mangoes, guavas and mangosteens",3 Fruits and nuts,3.01 Tropical and subtropical fruits,3.01.07 Papayas,3 Fruits and nuts,3.01 Tropical and subtropical fruits,3.01.08 Pineapples,3 Fruits and nuts,3.01 Tropical and subtropical fruits,"3.01.90 Other tropical and subtropical fruits, n.e.c.",3 Fruits and nuts,3.02 Citrus fruits,3.02.01 Grapefruit and pomelo,3 Fruits and nuts,3.02 Citrus fruits,3.02.02 Lemons and limes,3 Fruits and nuts,3.02 Citrus fruits,3.02.03 Oranges,3 Fruits and nuts,3.02 Citrus fruits,"3.02.04 Tangerines mandarins, clementines",3 Fruits and nuts,3.02 Citrus fruits,"3.02.90 Other citrus fruits, n.e.c.",3 Fruits and nuts,3.03 Grapes,,3 Fruits and nuts,3.04 Berries,3.04.01 Currants,3 Fruits and nuts,3.04 Berries,3.04.02 Gooseberries,3 Fruits and nuts,3.04 Berries,3.04.03 Kiwi fruit,3 Fruits and nuts,3.04 Berries,3.04.04 Raspberries,3 Fruits and nuts,3.04 Berries,3.04.05 Strawberries,3 Fruits and nuts,3.04 Berries,3.04.06 Blueberries,3 Fruits and nuts,3.04 Berries,3.04.07 Cranberries,3 Fruits and nuts,3.04 Berries,"3.04.90 Other berries, n.e.c",3 Fruits and nuts,3.05 Pome fruits and stone fruits,3.05.01 Apples,3 Fruits and nuts,3.05 Pome fruits and stone fruits,3.05.02 Apricots,3 Fruits and nuts,3.05 Pome fruits and stone fruits,3.05.03 Cherries and sour cherries,3 Fruits and nuts,3.05 Pome fruits and stone fruits,3.05.04 Peaches and nectarines,3 Fruits and nuts,3.05 Pome fruits and stone fruits,3.05.05 Pears and quinces,3 Fruits and nuts,3.05 Pome fruits and stone fruits,3.05.06 Plums and sloes,3 Fruits and nuts,3.05 Pome fruits and stone fruits,"3.05.90 Other pome fruits and stone fruits, n.e.c.",3 Fruits and nuts,3.06 Nuts,3.06.01 Almonds,3 Fruits and nuts,3.06 Nuts,3.06.02 Cashew nuts,3 Fruits and nuts,3.06 Nuts,3.06.03 Chestnuts,3 Fruits and nuts,3.06 Nuts,3.06.04 Hazelnuts,3 Fruits and nuts,3.06 Nuts,3.06.05 Pistachios,3 Fruits and nuts,3.06 Nuts,3.06.06 Walnuts,3 Fruits and nuts,3.06 Nuts,3.06.07 Brazil nuts,3 Fruits and nuts,3.06 Nuts,3.06.08 Areca nuts,3 Fruits and nuts,3.06 Nuts,3.06.09 Cola nuts,3 Fruits and nuts,3.06 Nuts,"3.06.90 Other nuts, n.e.c. (not incl. 4.02 Groundnuts)",3 Fruits and nuts,"3.90 Other fruits, n.e.c.",,4 Oilseed crops and oleaginous fruits,4.01 Soya beans,,4 Oilseed crops and oleaginous fruits,4.02 Groundnuts,,4 Oilseed crops and oleaginous fruits,4.03 Other temporary oilseed crops,4.03.01 Castor bean,4 Oilseed crops and oleaginous fruits,4.03 Other temporary oilseed crops,4.03.02 Linseed,4 Oilseed crops and oleaginous fruits,4.03 Other temporary oilseed crops,4.03.03 Mustard,4 Oilseed crops and oleaginous fruits,4.03 Other temporary oilseed crops,4.03.04 Niger seed,4 Oilseed crops and oleaginous fruits,4.03 Other temporary oilseed crops,4.03.05 Rapeseed,4 Oilseed crops and oleaginous fruits,4.03 Other temporary oilseed crops,4.03.06 Safflower,4 Oilseed crops and oleaginous fruits,4.03 Other temporary oilseed crops,4.03.07 Sesame,4 Oilseed crops and oleaginous fruits,4.03 Other temporary oilseed crops,4.03.08 Sunflower,4 Oilseed crops and oleaginous fruits,4.03 Other temporary oilseed crops,4.03.09 Shea tree (shea butter or karite nuts),4 Oilseed crops and oleaginous fruits,4.03 Other temporary oilseed crops,4.03.10 Tung tree,4 Oilseed crops and oleaginous fruits,4.03 Other temporary oilseed crops,4.03.11 Jojoba,4 Oilseed crops and oleaginous fruits,4.03 Other temporary oilseed crops,4.03.12 Poppy,4 Oilseed crops and oleaginous fruits,4.03 Other temporary oilseed crops,4.03.13 Tallow tree,4 Oilseed crops and oleaginous fruits,4.03 Other temporary oilseed crops,"4.03.90 Other temporary oilseed crops, n.e.c.",4 Oilseed crops and oleaginous fruits,4.04 Permanent oilseed crops,4.04.01 Coconuts,4 Oilseed crops and oleaginous fruits,4.04 Permanent oilseed crops,4.04.02 Olives,4 Oilseed crops and oleaginous fruits,4.04 Permanent oilseed crops,4.04.03 Oil palms,4 Oilseed crops and oleaginous fruits,4.04 Permanent oilseed crops,"4.04.90 Other oleaginous fruits, n.e.c.",5 Root/tuber crops with high starch or inulin content,5.01 Potatoes,,5 Root/tuber crops with high starch or inulin content,5.02 Sweet potatoes,,5 Root/tuber crops with high starch or inulin content,5.03 Cassava,,5 Root/tuber crops with high starch or inulin content,5.04 Yams,,5 Root/tuber crops with high starch or inulin content,5.05 Taro,,5 Root/tuber crops with high starch or inulin content,5.06 Yautia,,5 Root/tuber crops with high starch or inulin content,"5.90 Other roots and tubers, n.e.c.",,"6 Stimulant, spice and aromatic crops",6.01 Stimulant crops,6.01.01 Coffee,"6 Stimulant, spice and aromatic crops",6.01 Stimulant crops,6.01.02 Tea,"6 Stimulant, spice and aromatic crops",6.01 Stimulant crops,6.01.03 Maté,"6 Stimulant, spice and aromatic crops",6.01 Stimulant crops,6.01.04 Cocoa,"6 Stimulant, spice and aromatic crops",6.01 Stimulant crops,6.01.05 Chicory roots,"6 Stimulant, spice and aromatic crops",6.01 Stimulant crops,"6.01.90 Other stimulant crops, n.e.c. (not incl. 9.03.02.02 Coca or 9.06 Tobacco)","6 Stimulant, spice and aromatic crops",6.02 Spice and aromatic crops,6.02.01 Temporary spice and aromatic crops,6.02.01.01 Chillies and peppers (Capsicum spp.)"6 Stimulant, spice and aromatic crops",6.02 Spice and aromatic crops,6.02.01 Temporary spice and aromatic crops,"6.02.01.02 Anise, badian, and fennel""6 Stimulant, spice and aromatic crops",6.02 Spice and aromatic crops,6.02.01 Temporary spice and aromatic crops,"6.02.01.90 Other temporary spice crops, n.e.c.""6 Stimulant, spice and aromatic crops",6.02 Spice and aromatic crops,6.02.02 Permanent spice and aromatic crops,6.02.02.01 Pepper (Piper spp.)"6 Stimulant, spice and aromatic crops",6.02 Spice and aromatic crops,6.02.02 Permanent spice and aromatic crops,"6.02.02.02 Nutmeg, mace, cardamoms""6 Stimulant, spice and aromatic crops",6.02 Spice and aromatic crops,6.02.02 Permanent spice and aromatic crops,6.02.02.03 Cinnamon (canella)"6 Stimulant, spice and aromatic crops",6.02 Spice and aromatic crops,6.02.02 Permanent spice and aromatic crops,6.02.02.04 Cloves"6 Stimulant, spice and aromatic crops",6.02 Spice and aromatic crops,6.02.02 Permanent spice and aromatic crops,6.02.02.05 Ginger"6 Stimulant, spice and aromatic crops",6.02 Spice and aromatic crops,6.02.02 Permanent spice and aromatic crops,6.02.02.06 Vanilla"6 Stimulant, spice and aromatic crops",6.02 Spice and aromatic crops,6.02.02 Permanent spice and aromatic crops,6.02.02.07 Hops"6 Stimulant, spice and aromatic crops",6.02 Spice and aromatic crops,6.02.02 Permanent spice and aromatic crops,"6.02.02.90 Other permanent spice and aromatic crops, n.e.c."7 Leguminous crops,7.01 Beans (not incl. 4.01 Soya beans),,7 Leguminous crops,7.02 Broad beans,,7 Leguminous crops,7.03 Chickpeas,,7 Leguminous crops,7.04 Cowpeas,,7 Leguminous crops,7.05 Lentils,,7 Leguminous crops,7.06 Lupins,,7 Leguminous crops,7.07 Peas,,7 Leguminous crops,7.08 Pigeon peas,,7 Leguminous crops,7.09 Bambara beans,,7 Leguminous crops,7.10 Vetches,,7 Leguminous crops,"7.90 Leguminous crops, n.e.c.",,8 Sugar crops,8.01 Sugar beet,,8 Sugar crops,8.02 Sugar cane,,8 Sugar crops,8.03 Sweet sorghum,,8 Sugar crops,"8.90 Other sugar crops, n.e.c.",,9 Other crops,9.01 Grasses and other fodder crops,9.01.01 Temporary grass and fodder crops,9 Other crops,9.01 Grasses and other fodder crops,9.01.02 Permanent grass and fodder crops,9 Other crops,9.02 Fibre crops,9.02.01 Temporary fibre crops,9.02.01.01 Cotton9 Other crops,9.02 Fibre crops,9.02.01 Temporary fibre crops,"9.02.01.02 Jute, kenaf, and other similar crops"9 Other crops,9.02 Fibre crops,9.02.01 Temporary fibre crops,9.02.01.03 Flax9 Other crops,9.02 Fibre crops,9.02.01 Temporary fibre crops,9.02.01.04 Hemp9 Other crops,9.02 Fibre crops,9.02.01 Temporary fibre crops,"9.02.01.90 Other temporary fibre crops, n.e.c."9 Other crops,9.02 Fibre crops,9.02.02 Permanent fibre crops,9.02.02.01 Ramie9 Other crops,9.02 Fibre crops,9.02.02 Permanent fibre crops,9.02.02.02 Sisal9 Other crops,9.02 Fibre crops,9.02.02 Permanent fibre crops,"9.02.02.90 Other permanent fibre crops, n.e.c."9 Other crops,"9.03 Medicinal, pesticidal or similar crops","9.03.01 Temporary medicinal, pesticidal or similar crops",9.03.01.01 Mint9 Other crops,"9.03 Medicinal, pesticidal or similar crops","9.03.01 Temporary medicinal, pesticidal or similar crops",9.03.01.02 Basil9 Other crops,"9.03 Medicinal, pesticidal or similar crops","9.03.01 Temporary medicinal, pesticidal or similar crops","9.03.01.90 Other temporary medicinal, pesticidal or similar crops"9 Other crops,"9.03 Medicinal, pesticidal or similar crops","9.03.02 Permanent medicinal, pesticidal or similar crops",9.03.02.01 Ginseng9 Other crops,"9.03 Medicinal, pesticidal or similar crops","9.03.02 Permanent medicinal, pesticidal or similar crops",9.03.02.02 Coca9 Other crops,"9.03 Medicinal, pesticidal or similar crops","9.03.02 Permanent medicinal, pesticidal or similar crops",9.03.02.03 Kava9 Other crops,"9.03 Medicinal, pesticidal or similar crops","9.03.02 Permanent medicinal, pesticidal or similar crops",9.03.02.04 Guarana9 Other crops,"9.03 Medicinal, pesticidal or similar crops","9.03.02 Permanent medicinal, pesticidal or similar crops","9.03.02.90 Other permanent medicinal, pesticidal or similar crops"9 Other crops,9.04 Rubber,,9 Other crops,9.05 Flower crops,9.05.01 Temporary flower crops,9 Other crops,9.05 Flower crops,9.05.02 Permanent flower crops,9 Other crops,9.06 Tobacco,,9 Other crops,"9.90 Other crops, n.e.c.","9.90.01 Other crops, n.e.c., temporary",9 Other crops,"9.90 Other crops, n.e.c.","9.90.02 Other crops, n.e.c., permanent",

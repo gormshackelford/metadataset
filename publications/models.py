@@ -3,7 +3,9 @@ from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.db.models.signals import post_save
 from django.dispatch import receiver
+from django.urls import reverse
 from django.utils.translation import ugettext_lazy as _
+from django.utils.text import slugify
 from mptt.models import MPTTModel, TreeForeignKey
 from urllib.parse import quote_plus
 
@@ -111,130 +113,78 @@ class Population(models.Model):
 class Intervention(MPTTModel):
     intervention = models.CharField(max_length=254)
     parent = TreeForeignKey('self', null=True, blank=True, related_name='children', db_index=True, on_delete=models.CASCADE)
+    slug = models.SlugField(max_length=510)
+
+    def save(self, *args, **kwargs):
+        self.slug = slugify(self.intervention)
+        super(Intervention, self).save(*args, **kwargs)
 
     def __str__(self):
         return self.intervention
+
+    def get_absolute_url(self):
+        return reverse('filter_by_intervention', kwargs={'path': self.get_path()})
 
     class MPTTMeta:
         order_insertion_by = ['intervention']
 
     class Meta:
-        unique_together = ('intervention', 'parent')
+        unique_together = ('slug', 'parent')
 
 
-# "Comparison" is the "C" in "PICO".
-class Comparison(models.Model):
-    comparison = models.CharField(max_length=254, unique=True)
-
-    def __str__(self):
-        return self.outcome
-
+# "Comparison" is the "C" in "PICO". It is a field in the model for effect sizes ("ExperimentPopulationOutcome").
 
 # "Outcome" is the "O" in "PICO".
 class Outcome(MPTTModel):
     outcome = models.CharField(max_length=254)
     parent = TreeForeignKey('self', null=True, blank=True, related_name='children', db_index=True, on_delete=models.CASCADE)
+    slug = models.SlugField(max_length=510)
+
+    def save(self, *args, **kwargs):
+        self.slug = slugify(self.outcome)
+        super(Outcome, self).save(*args, **kwargs)
 
     def __str__(self):
         return self.outcome
+
+    def get_absolute_url(self):
+        return reverse('filter_by_outcome', kwargs={'path': self.get_path()})
 
     class MPTTMeta:
         order_insertion_by = ['outcome']
 
     class Meta:
-        unique_together = ('outcome', 'parent')
+        unique_together = ('slug', 'parent')
 
 
-# Experimental design (e.g., "replicated", "randomized", "controlled")
-class Design(models.Model):
-    design = models.CharField(max_length=30, unique=True)
+class Crop(MPTTModel):
+    crop = models.CharField(max_length=126)
+    parent = TreeForeignKey('self', null=True, blank=True, related_name='children', db_index=True, on_delete=models.CASCADE)
+    slug = models.SlugField(max_length=254)
 
-    def __str__(self):
-        return self.design
-
-
-class Crop(models.Model):
-    crop = models.CharField(max_length=126, unique=True)
+    def save(self, *args, **kwargs):
+        self.slug = slugify(self.crop)
+        super(Crop, self).save(*args, **kwargs)
 
     def __str__(self):
         return self.crop
 
+    def get_absolute_url(self):
+        return reverse('filter_by_crop', kwargs={'path': self.get_path()})
 
-# "Broad categories" from www.conservationevidence.com
-class BroadCategory(models.Model):
-    category = models.CharField(max_length=126, unique=True)
-
-    class Meta:
-        verbose_name_plural = "Broad categories"
-
-    def __str__(self):
-        return self.category
-
-
-class Taxon(models.Model):
-    order = models.CharField(max_length=126)
-    family = models.CharField(max_length=126)
-    genus = models.CharField(max_length=126)
-    species = models.CharField(max_length=126)
+    class MPTTMeta:
+        order_insertion_by = ['crop']
 
     class Meta:
-        verbose_name_plural = "Taxa"
+        unique_together = ('slug', 'parent')
+
+
+# Experimental design (e.g., "replicated", "randomized", "controlled")
+class Design(models.Model):
+    design = models.CharField(max_length=62, unique=True)
 
     def __str__(self):
-        return self.genus
-
-
-class IUCNActionLevel1(models.Model):
-    action = models.CharField(max_length=254, unique=True)
-
-    def __str__(self):
-        return self.action
-
-
-class IUCNActionLevel2(models.Model):
-    action = models.CharField(max_length=254)
-    parent = models.ForeignKey(IUCNActionLevel1, on_delete=models.CASCADE)
-
-    def __str__(self):
-        return self.action
-
-
-class IUCNActionLevel3(models.Model):
-    action = models.CharField(max_length=254)
-    parent = models.ForeignKey(IUCNActionLevel2, on_delete=models.CASCADE)
-
-    def __str__(self):
-        return self.action
-
-
-class IUCNHabitatLevel1(models.Model):
-    habitat = models.CharField(max_length=254, unique=True)
-
-    def __str__(self):
-        return self.habitat
-
-
-class IUCNHabitatLevel2(models.Model):
-    habitat = models.CharField(max_length=254)
-    parent = models.ForeignKey(IUCNHabitatLevel1, on_delete=models.CASCADE)
-
-    def __str__(self):
-        return self.habitat
-
-
-class IUCNThreatLevel1(models.Model):
-    threat = models.CharField(max_length=254, unique=True)
-
-    def __str__(self):
-        return self.threat
-
-
-class IUCNThreatLevel2(models.Model):
-    threat = models.CharField(max_length=254)
-    parent = models.ForeignKey(IUCNThreatLevel1, on_delete=models.CASCADE)
-
-    def __str__(self):
-        return self.threat
+        return self.design
 
 
 # Intersection tables
@@ -243,26 +193,11 @@ class IUCNThreatLevel2(models.Model):
 class Experiment(models.Model):
     publication = models.ForeignKey(Publication, on_delete=models.CASCADE)
     intervention = models.ForeignKey(Intervention, on_delete=models.CASCADE)
+    created = models.DateTimeField(auto_now_add=True)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
 
     def __str__(self):
         return self.publication.title
-
-
-class ExperimentPopulation(models.Model):
-    experiment = models.ForeignKey(Experiment, on_delete=models.CASCADE)
-    population = models.ForeignKey(Population, on_delete=models.CASCADE, related_name="experiment_population")
-    old_population = models.ForeignKey(Population, on_delete=models.SET_NULL, blank=True, null=True)
-
-    def __str__(self):
-        return "{intervention}: {population}".format(intervention=self.experiment.intervention, population=self.population)
-
-
-class ExperimentDesign(models.Model):
-    experiment = models.ForeignKey(Experiment, on_delete=models.CASCADE)
-    design = models.ForeignKey(Design, on_delete=models.CASCADE)
-
-    def __str__(self):
-        return self.experiment.publication.title
 
 
 class ExperimentCrop(models.Model):
@@ -276,47 +211,9 @@ class ExperimentCrop(models.Model):
         return self.experiment.publication.title
 
 
-class ExperimentTaxon(models.Model):
+class ExperimentDesign(models.Model):
     experiment = models.ForeignKey(Experiment, on_delete=models.CASCADE)
-    taxon = models.ForeignKey(Taxon, on_delete=models.CASCADE)
-
-    class Meta:
-        verbose_name_plural = "Experiment taxa"
-
-    def __str__(self):
-        return self.experiment.publication.title
-
-
-class ExperimentBroadCategory(models.Model):
-    experiment = models.ForeignKey(Experiment, on_delete=models.CASCADE)
-    broad_category = models.ForeignKey(BroadCategory, on_delete=models.CASCADE)
-
-    class Meta:
-        verbose_name_plural = "Experiment broad categories"
-
-    def __str__(self):
-        return self.experiment.publication.title
-
-
-class ExperimentIUCNAction(models.Model):
-    experiment = models.ForeignKey(Experiment, on_delete=models.CASCADE)
-    action = models.ForeignKey(IUCNActionLevel3, on_delete=models.CASCADE)
-
-    def __str__(self):
-        return self.experiment.publication.title
-
-
-class ExperimentIUCNHabitat(models.Model):
-    experiment = models.ForeignKey(Experiment, on_delete=models.CASCADE)
-    habitat = models.ForeignKey(IUCNHabitatLevel2, on_delete=models.CASCADE)
-
-    def __str__(self):
-        return self.experiment.publication.title
-
-
-class ExperimentIUCNThreat(models.Model):
-    experiment = models.ForeignKey(Experiment, on_delete=models.CASCADE)
-    threat = models.ForeignKey(IUCNThreatLevel2, on_delete=models.CASCADE)
+    design = models.ForeignKey(Design, on_delete=models.CASCADE)
 
     def __str__(self):
         return self.experiment.publication.title
@@ -331,10 +228,19 @@ class ExperimentLatLong(models.Model):
         return self.experiment.publication.title
 
 
+class ExperimentPopulation(models.Model):
+    experiment = models.ForeignKey(Experiment, on_delete=models.CASCADE)
+    population = models.ForeignKey(Population, on_delete=models.CASCADE, related_name="experiment_population")
+    old_population = models.ForeignKey(Population, on_delete=models.SET_NULL, blank=True, null=True)
+
+    def __str__(self):
+        return "{intervention}: {population}".format(intervention=self.experiment.intervention, population=self.population)
+
+
 class ExperimentPopulationOutcome(models.Model):
     experiment_population = models.ForeignKey(ExperimentPopulation, on_delete=models.CASCADE)
     outcome = TreeForeignKey(Outcome, on_delete=models.CASCADE)
-    comparison = models.TextField(blank=True, null=True)
+    comparison = models.TextField(blank=True, null=True)  # "Comparison" is the "C" in "PICO".
     EFFECT_CHOICES = (
         (1, "+"),
         (0, "0"),

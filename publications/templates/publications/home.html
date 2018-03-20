@@ -1,51 +1,24 @@
 {% extends 'publications/base.html' %}
 
 {% block title %}
-  Publication | MetaDataSet | www.metadataset.com
+  Data for Meta-Analysis | Metadataset | www.metadataset.com
 {% endblock %}
 
 {% block css %}
   {% load staticfiles %}
+  <link href="{% static 'css/sidebar.css' %}" rel="stylesheet">
 {% endblock %}
 
 {% block content %}
 
-<p><a href="{% url 'add_publication' %}">Add a publication</a></p>
+<h1>Meta-analysis of open data</h1>
+<p>Metadataset is a collection of open data that are used for meta-analysis. The data are extracted from scientific publications, transformed into standardized effect sizes, and tagged with standardized metadata. Subsets of the data are aggregated into open-source meta-analyses that are moderated by our community of Data Wranglers.</p>
 
-{% for publication in publications %}
-  <h1>{{ publication.title|default:'[title not available]' }}</h1>
-  <p>{{ publication.authors|default:'[authors not available]' }} ({{ publication.year|default:'[year not available]' }}) <span class="italic">{{ publication.journal|default:'[journal not available]' }}</span> {{ publication.volume|default:'[volume not available]'}}, {{ publication.pages|default:'[pages not available]' }}.</p>
-  <p><a href="{% url 'publication' publication_pk=publication.pk %}">Edit metadata</a></p>
-  <p class="hr"></p>
-{% empty %}
-  <h1>No publications</h1>
-{% endfor %}
+<h1>Systematic reviews of agricultural practices</h1>
+<p>Our mission is to create a comprehensive collection of standardized data about sustainable agricultural practices. Thanks to funding from the <a href="http://www.leventisfoundation.org">Leventis Foundation</a>, we are starting this mission by systematically reviewing scientific publications about <a href="#">cassava</a>.</p>
 
-{% if publications.has_other_pages %}
-  <p>
-    {% if publications.has_previous %}
-      <a class="button" href="?page={{ publications.previous_page_number }}">Previous page</a>
-    {% else %}
-      <a class="button" href="?page={{ publications.paginator.num_pages }}">Previous page</a>
-    {% endif %}
-    {% if publications.has_next %}
-      <a class="button" href="?page={{ publications.next_page_number }}">Next page</a>
-    {% else %}
-      <a class="button" href="?page=1">Next page</a>
-    {% endif %}
-  </p>
-  <p>
-    Page number:
-    {% for i in publications.paginator.page_range %}
-      {% if i == publications.number %}
-        <span class="warning">{{ i }}</span>,
-      {% elif i == publications.paginator.num_pages %}
-        <a href="?page={{ i }}">{{ i }}</a>
-      {% else %}
-        <a href="?page={{ i }}">{{ i }}</a>,
-      {% endif %}
-    {% endfor %}
-  </p>
-{% endif %}
+{% endblock %}
 
+{% block sidebar %}
+  {% include 'publications/sidebar.html' %}
 {% endblock %}

@@ -1,0 +1,43 @@
+{% extends 'publications/base.html' %}
+
+{% block title %}
+  Browse Datasets | Metadataset | www.metadataset.com
+{% endblock %}
+
+{% block css %}
+  {% load staticfiles %}
+{% endblock %}
+
+{% block content %}
+
+{% load mptt_tags %}
+
+<h1>Interventions</h1>
+{% recursetree interventions %}
+  <ul class="tree">
+  {% if node.is_root_node %}
+    <li class="root_node"><a href="http://{{ domain }}{{ node.get_absolute_url }}">{{ node.intervention }}</a></li>
+  {% else %}
+    <li><a href="http://{{ domain }}{{ node.get_absolute_url }}">{{ node.intervention }}</a></li>
+  {% endif %}
+  {% if not node.is_leaf_node %}
+    {{ children }}
+  {% endif %}
+  </ul>
+{% endrecursetree %}
+
+<h1>Outcomes</h1>
+{% recursetree outcomes %}
+  <ul class="tree">
+  {% if node.is_root_node %}
+    <li class="root_node"><a href="http://{{ domain }}{{ node.get_absolute_url }}">{{ node.outcome }}</a></li>
+  {% else %}
+    <li><a href="http://{{ domain }}{{ node.get_absolute_url }}">{{ node.outcome }}</a></li>
+  {% endif %}
+  {% if not node.is_leaf_node %}
+    {{ children }}
+  {% endif %}
+  </ul>
+{% endrecursetree %}
+
+{% endblock %}

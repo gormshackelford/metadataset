@@ -1,7 +1,7 @@
 from django import forms
 from django.db import models
 from django.contrib.auth.forms import UserCreationForm
-from .models import Publication, Experiment, ExperimentCrop, ExperimentDesign, ExperimentIUCNThreat, ExperimentLatLong, ExperimentPopulation, ExperimentPopulationOutcome, Profile, User
+from .models import Publication, Experiment, ExperimentCrop, ExperimentDesign, ExperimentLatLong, ExperimentPopulation, ExperimentPopulationOutcome, Profile, User
 
 
 class SignUpForm(UserCreationForm):
@@ -46,7 +46,7 @@ class ExperimentForm(forms.ModelForm):
 
     class Meta:
         model = Experiment
-        exclude = ['publication']
+        exclude = ['publication', 'user']
 
 
 class ExperimentCropForm(forms.ModelForm):
@@ -60,13 +60,6 @@ class ExperimentDesignForm(forms.ModelForm):
 
     class Meta:
         model = ExperimentDesign
-        exclude = ['experiment']
-
-
-class ExperimentIUCNThreatForm(forms.ModelForm):
-
-    class Meta:
-        model = ExperimentIUCNThreat
         exclude = ['experiment']
 
 

@@ -1,0 +1,10 @@
+<h1>Data portal</h1>
+<p><a href="{% url 'browse' %}">Browse data by intervention</a></p>
+<p><a href="#">Browse data by outcome</a></p>
+
+<h1>Your Data</h1>
+{% if user.is_authenticated %}
+  <p>Your systematic reviews</p>
+  <p><a href="{% url 'publications' %}">Your publications</a></p>
+{% else %}
+{% endif %}
