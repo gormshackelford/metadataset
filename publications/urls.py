@@ -8,7 +8,12 @@ import mptt_urls
 
 urlpatterns = [
     path('', views.home, name='home'),
-    path('browse', views.browse, name='browse'),
+    path('search', include('haystack.urls')),
+    path('systematic-review/<slug>/', views.subject, name='subject'),
+    path('systematic-review/<subject>/publications-by-intervention', views.browse_publications_by_intervention, name='browse_publications_by_intervention'),
+    re_path('systematic-review/(?P<subject>[a-zA-Z-]+)/publications-by-intervention/(?P<path>.*)', mptt_urls.view(model=Intervention, view=views.publications_by_intervention, slug_field='slug'), name='publications_by_intervention'),
+    path('systematic-review/<subject>/publications-by-outcome', views.browse_publications_by_outcome, name='browse_publications_by_outcome'),
+    re_path('systematic-review/(?P<subject>[a-zA-Z-]+)/publications-by-outcome/(?P<path>.*)', mptt_urls.view(model=Outcome, view=views.publications_by_outcome, slug_field='slug'), name='publications_by_outcome'),
     path('about', views.about, name='about'),
     path('methods', views.methods, name='methods'),
     path('signup/', views.signup, name='signup'),
@@ -22,8 +27,6 @@ urlpatterns = [
     path('publication/<int:publication_pk>/intervention/<int:experiment_index>/', views.experiment, name='experiment'),
     path('publication/<int:publication_pk>/intervention/<int:experiment_index>/population/<int:population_index>/', views.population, name='population'),
     path('publication/<int:publication_pk>/intervention/<int:experiment_index>/population/<int:population_index>/outcome/<int:outcome_index>/', views.outcome, name='outcome'),
-    re_path('filter/intervention/(?P<path>.*)', mptt_urls.view(model=Intervention, view=views.filter_by_intervention, slug_field='slug'), name='filter_by_intervention'),
-    re_path('filter/outcome/(?P<path>.*)', mptt_urls.view(model=Outcome, view=views.filter_by_outcome, slug_field='slug'), name='filter_by_outcome')
 ]
 
 if settings.DEBUG:

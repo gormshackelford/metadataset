@@ -1,7 +1,7 @@
 {% extends 'publications/base.html' %}
 
 {% block title %}
-  About | Metadataset | www.metadataset.com
+  {{ subject|title }} - systematic review of agricultural practices | Metadataset | www.metadataset.com
 {% endblock %}
 
 {% block css %}
@@ -11,11 +11,12 @@
 
 {% block content %}
 
-<h1>About</h1>
-<p></p>
+<h1>{{ subject|title }}: systematic review of agricultural practices</h1>
+
+{{ subject.text|safe }}
 
 {% endblock %}
 
 {% block sidebar %}
-  {% include 'publications/sidebar.html' %}
+  {% include 'publications/subject_sidebar.html' %}
 {% endblock %}

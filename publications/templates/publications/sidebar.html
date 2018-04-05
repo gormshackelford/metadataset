@@ -1,10 +1,18 @@
-<h1>Data portal</h1>
-<p><a href="{% url 'browse' %}">Browse data by intervention</a></p>
-<p><a href="#">Browse data by outcome</a></p>
+{% load metadataset_tags %}
 
-<h1>Your Data</h1>
-{% if user.is_authenticated %}
-  <p>Your systematic reviews</p>
-  <p><a href="{% url 'publications' %}">Your publications</a></p>
-{% else %}
-{% endif %}
+<h1>Meta-analyses</h1>
+<p>
+  <a href="#">Meta-analyses by crop</a> (cassava only)
+  <br />
+  <a href="#">Meta-analyses by intervention</a>
+  <br />
+  <a href="#">Meta-analyses by outcome</a>
+</p>
+
+<h1>Systematic reviews</h1>
+<p>
+  {% get_subjects as subjects %}
+  {% for subject in subjects %}
+    <a href="{% url 'subject' slug=subject.slug %}">{{ subject|title }}</a><br />
+  {% endfor %}
+</p>

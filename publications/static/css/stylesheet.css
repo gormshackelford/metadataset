@@ -1,10 +1,10 @@
 body {
     color: black;
-    font-family: "Noto Serif", "Times New Roman", serif;
+    font-family: "Noto Serif", serif;
     font-size: 1em;
     line-height: 1.5em;
     background: #E0E0E0;
-    width: 95%;
+    width: 97%;
     margin: 0 auto;
 }
 
@@ -54,7 +54,7 @@ a.button:hover {
 }
 
 a.navigation_button, a.navigation_button:visited {
-    font-family: "Noto Sans", "Times New Roman", serif;
+    font-family: "Noto Serif", serif;
     color: #ff6666;
     text-decoration: none;
 }
@@ -64,7 +64,7 @@ a.navigation_button:hover {
 }
 
 h1, h2, h3 {
-    font-family: "Noto Sans", "Times New Roman", serif;
+    font-family: "Noto Serif", serif;
     font-style: normal;
     font-weight: normal;
 }
@@ -134,7 +134,7 @@ span.active {
 }
 
 span.heading {
-    font-family: "Noto Sans", "Times New Roman", serif;
+    font-family: "Noto Serif", serif;
     font-weight: bold;
 }
 
@@ -228,7 +228,7 @@ ul.tree {
 }
 
 .navigation_text, .navigation_text:visited {
-    font-family: "Noto Sans", "Times New Roman", serif;
+    font-family: "Noto Serif", serif;
     line-height: 6em;
 }
 
@@ -302,6 +302,10 @@ td.bottom {
     border-bottom: none;
 }
 
+td.search {
+    border: none;
+}
+
 input[type="number"] {
     font-size: 1em;
     padding: 0.25em;
@@ -332,6 +336,10 @@ table {
     margin-bottom: 1em;
     border-spacing: 0;
     border-collapse: collapse;
+}
+
+table.search {
+    width: 100%;
 }
 
 textarea {

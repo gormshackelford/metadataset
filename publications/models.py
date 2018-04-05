@@ -8,6 +8,7 @@ from django.utils.translation import ugettext_lazy as _
 from django.utils.text import slugify
 from mptt.models import MPTTModel, TreeForeignKey
 from urllib.parse import quote_plus
+from ast import literal_eval
 
 
 class UserManager(BaseUserManager):
@@ -100,6 +101,16 @@ class Publication(models.Model):
         string = quote_plus(self.title)
         return string
 
+    @property
+    def author_list(self):
+        try:
+            list = literal_eval(self.authors)
+            return list
+        # If the author field is not a Python list (e.g., ['Surname, A.B.', 'Surname, C.D.']) or cannot be displayed as a string, return None.
+        except:
+            list = None
+            return list
+
 
 # "Population" is the "P" in "PICO" (also referred to as "Patient" or "Problem"). The purpose of this database is to record the effect of an Intervention ("I") on a Population ("P"), measured in terms of an Outcome ("O"), with respect to a Control ("C").
 class Population(models.Model):
@@ -122,9 +133,6 @@ class Intervention(MPTTModel):
     def __str__(self):
         return self.intervention
 
-    def get_absolute_url(self):
-        return reverse('filter_by_intervention', kwargs={'path': self.get_path()})
-
     class MPTTMeta:
         order_insertion_by = ['intervention']
 
@@ -133,6 +141,7 @@ class Intervention(MPTTModel):
 
 
 # "Comparison" is the "C" in "PICO". It is a field in the model for effect sizes ("ExperimentPopulationOutcome").
+
 
 # "Outcome" is the "O" in "PICO".
 class Outcome(MPTTModel):
@@ -147,14 +156,26 @@ class Outcome(MPTTModel):
     def __str__(self):
         return self.outcome
 
-    def get_absolute_url(self):
-        return reverse('filter_by_outcome', kwargs={'path': self.get_path()})
-
     class MPTTMeta:
         order_insertion_by = ['outcome']
 
     class Meta:
         unique_together = ('slug', 'parent')
+
+
+# Subjects for systematic reviews (as "subject-wide evidence syntheses")
+class Subject(models.Model):
+    subject = models.CharField(max_length=126, unique=True)
+    slug = models.SlugField(max_length=254, blank=True)
+    text = models.TextField(blank=True)
+
+    def save(self, *args, **kwargs):
+        self.subject = self.subject.lower()
+        self.slug = slugify(self.subject)
+        super(Subject, self).save(*args, **kwargs)
+
+    def __str__(self):
+        return self.subject
 
 
 class Crop(MPTTModel):

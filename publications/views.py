@@ -10,7 +10,7 @@ from django.utils.encoding import force_bytes, force_text
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from .tokens import account_activation_token
 from .forms import PublicationForm, ExperimentForm, ExperimentCropForm, ExperimentDesignForm, ExperimentLatLongForm, ExperimentPopulationForm, ExperimentPopulationOutcomeForm, EffectForm, SignUpForm
-from .models import Crop, Experiment, Intervention, Outcome, Population, ExperimentCrop, ExperimentDesign, ExperimentLatLong, ExperimentPopulation, ExperimentPopulationOutcome, Publication, User
+from .models import Crop, Experiment, Intervention, Outcome, Population, ExperimentCrop, ExperimentDesign, ExperimentLatLong, ExperimentPopulation, ExperimentPopulationOutcome, Publication, Subject, User
 from mptt.forms import TreeNodeChoiceField
 
 
@@ -30,18 +30,14 @@ def publications(request):
     return render(request, 'publications/publications.html', context)
 
 
+def subject(request, slug):
+    subject = Subject.objects.get(slug=slug)
+    context = {'subject': subject}
+    return render(request, 'publications/subject.html', context)
+
+
 def home(request):
     return render(request, 'publications/home.html')
-
-
-def browse(request):
-    current_site = get_current_site(request)
-    context = {
-        'domain': current_site.domain,
-        'interventions': Intervention.objects.all(),
-        'outcomes': Outcome.objects.all()
-    }
-    return render(request, 'publications/browse.html', context)
 
 
 def about(request):
@@ -334,17 +330,35 @@ def outcome(request, publication_pk, experiment_index, population_index, outcome
     return render(request, 'publications/outcome.html', context)
 
 
-def filter_by_intervention(request, path, instance):
+def browse_publications_by_intervention(request, subject):
+    subject = Subject.objects.get(slug=subject)
+    context = {
+        'subject': subject,  # Browse within this subject
+        'interventions': Intervention.objects.all(),
+    }
+    return render(request, 'publications/browse_publications_by_intervention.html', context)
+
+
+def browse_publications_by_outcome(request, subject):
+    subject = Subject.objects.get(slug=subject)
+    context = {
+        'subject': subject,  # Browse within this subject
+        'outcomes': Outcome.objects.all(),
+    }
+    return render(request, 'publications/browse_publications_by_outcome.html', context)
+
+
+def publications_by_intervention(request, subject, path, instance):
     interventions = instance.get_descendants(include_self=True)
     experiments = Experiment.objects.filter(intervention__in=interventions)
     publications = Publication.objects.filter(experiment__in=experiments).order_by('title')
     context = {
         'publications': publications
     }
-    return render(request, 'publications/filter_by_intervention.html', context)
+    return render(request, 'publications/publications_by_intervention.html', context)
 
 
-def filter_by_outcome(request, path, instance):
+def publications_by_outcome(request, subject, path, instance):
     outcomes = instance.get_descendants(include_self=True)
     experiment_population_outcomes = ExperimentPopulationOutcome.objects.filter(outcome__in=outcomes)
     experiment_populations = ExperimentPopulation.objects.filter(experimentpopulationoutcome__in=experiment_population_outcomes)
@@ -353,4 +367,4 @@ def filter_by_outcome(request, path, instance):
     context = {
         'publications': publications
     }
-    return render(request, 'publications/filter_by_outcome.html', context)
+    return render(request, 'publications/publications_by_outcome.html', context)

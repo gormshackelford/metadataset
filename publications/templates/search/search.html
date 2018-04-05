@@ -1,0 +1,36 @@
+{% extends 'publications/base.html' %}
+
+{% block title %}
+  Search for Publications | Metadataset | www.metadataset.com
+{% endblock %}
+
+{% block css %}
+  {% load staticfiles %}
+  <link href="{% static 'css/sidebar.css' %}" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+
+  <h1>Search results</h1>
+
+  {% for result in page.object_list %}
+    <p>
+      <a href="{% url 'publication' publication_pk=result.object.pk %}">{{ result.object.title }}</a>
+    </p>
+  {% empty %}
+    <p>No results found.</p>
+  {% endfor %}
+
+  {% if page.has_previous or page.has_next %}
+    <div>
+      {% if page.has_previous %}<a href="?q={{ query }}&amp;page={{ page.previous_page_number }}">{% endif %}&laquo; Previous{% if page.has_previous %}</a>{% endif %}
+      |
+      {% if page.has_next %}<a href="?q={{ query }}&amp;page={{ page.next_page_number }}">{% endif %}Next &raquo;{% if page.has_next %}</a>{% endif %}
+    </div>
+  {% endif %}
+
+{% endblock %}
+
+{% block sidebar %}
+  {% include 'publications/sidebar.html' %}
+{% endblock %}

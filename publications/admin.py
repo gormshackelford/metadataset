@@ -3,7 +3,7 @@ from django.contrib.auth.admin import UserAdmin as DjangoUserAdmin
 from django.utils.translation import ugettext_lazy as _
 from mptt.admin import DraggableMPTTAdmin
 from .models import Profile, User  # AbstractUser with email address as username
-from .models import Publication, Intervention, Population, Outcome, Design, Experiment, Crop, ExperimentDesign, ExperimentCrop, ExperimentPopulation, ExperimentLatLong, ExperimentPopulationOutcome
+from .models import Subject, Publication, Intervention, Population, Outcome, Design, Experiment, Crop, ExperimentDesign, ExperimentCrop, ExperimentPopulation, ExperimentLatLong, ExperimentPopulationOutcome
 
 
 @admin.register(User)
@@ -29,6 +29,8 @@ class UserAdmin(DjangoUserAdmin):
 
 
 admin.site.register(Profile)
+
+admin.site.register(Subject)
 
 admin.site.register(Publication)
 admin.site.register(Population)

@@ -13,7 +13,14 @@
 
 {% for publication in publications %}
   <h1>{{ publication.title|default:'[title not available]' }}</h1>
-  <p>{{ publication.authors|default:'[authors not available]' }} ({{ publication.year|default:'[year not available]' }}) <span class="italic">{{ publication.journal|default:'[journal not available]' }}</span> {{ publication.volume|default:'[volume not available]'}}, {{ publication.pages|default:'[pages not available]' }}.</p>
+  <p>
+    {% if publication.author_list %}
+      {{ publication.author_list|join:", "|default:'[authors not available]' }}
+    {% else %}
+      {{ publication.authors }}
+    {% endif %}
+     ({{ publication.year|default:'[year not available]' }}) <span class="italic">{{ publication.journal|default:'[journal not available]' }}</span> {{ publication.volume|default:'[volume not available]'}}, {{ publication.pages|default:'[pages not available]' }}.
+  </p>
   <p><a href="{% url 'publication' publication_pk=publication.pk %}">Edit metadata</a></p>
   <p class="hr"></p>
 {% empty %}
