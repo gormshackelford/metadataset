@@ -12,7 +12,7 @@
 
 <h1>Population: {{ experiment_population.population|capfirst }}</h1>
 
-<p><a href="{% url 'experiment' publication_pk=publication.pk experiment_index=experiment_index %}">Back to all populations</a></p>
+<p><a href="{% url 'experiment' subject=subject.slug publication_pk=publication.pk experiment_index=experiment_index %}">Back to all populations</a></p>
 
 <form method="post" action="">{% csrf_token %}
   <table>
@@ -34,7 +34,7 @@
         </td>
         <td>{{ form.outcome }}
           {% if form.instance.outcome %}
-            <a href="{% url 'outcome' publication_pk=publication.pk experiment_index=experiment_index population_index=population_index outcome_index=forloop.counter0 %}">Effect</a>
+            <a href="{% url 'outcome' subject=subject.slug publication_pk=publication.pk experiment_index=experiment_index population_index=population_index outcome_index=forloop.counter0 %}">Effect</a>
           {% endif %}
         </td>
         <td class="centered">{{ form.DELETE }}</td>

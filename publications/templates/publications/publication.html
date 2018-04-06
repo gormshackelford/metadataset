@@ -23,12 +23,10 @@
 
 <form method="post" action="">{% csrf_token %}
 
-  <h1>Relevance</h1>
-  <p>Based on its title and abstract, is this publication relevant to any of your systematic reviews?</p>
-  <table>
-    <tr>
-    </tr>
-  </table>
+  <h1>Relevant to {{ subject }}?</h1>
+  <p>Based on its title and abstract, is this publication relevant to this systematic review? If not, then please click "Save all changes" without ticking this box.</p>
+  <p>Relevant to {{ subject }}? &nbsp;{{ assessment_form.is_relevant }}</p>
+  <p><input type="submit" name="save" value="Save all changes" /></p>
 
   <h1>Interventions</h1>
   <p>We use the "PICO" terminology for describing experiments ("P" = "Population", "I" = "Intervention", "C" = "Comparison", and "O" = "Outcome"). Please select one or more interventions (the "I" in "PICO"), and then click "Save all changes". You will then see a link to the metadata for each intervention, which will allow you to select one or more populations, outcomes, and comparisons for each intervention.</p>
@@ -50,7 +48,7 @@
       </td>
       <td>{{ form.intervention }}
         {% if form.instance.intervention %}
-          <a href="{% url 'experiment' publication_pk=publication.pk experiment_index=forloop.counter0 %}">Populations</a>
+          <a href="{% url 'experiment' subject=subject publication_pk=publication.pk experiment_index=forloop.counter0 %}">Populations</a>
         {% endif %}
       </td>
       <td class="centered">{{ form.DELETE }}</td>

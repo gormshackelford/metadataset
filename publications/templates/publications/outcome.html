@@ -12,7 +12,7 @@
 
 <h1>Outcome: {{ experiment_population_outcome.outcome|capfirst }}</h1>
 
-<p><a href="{% url 'population' publication_pk=publication.pk experiment_index=experiment_index population_index=population_index %}">Back to all outcomes</a></p>
+<p><a href="{% url 'population' subject=subject publication_pk=publication.pk experiment_index=experiment_index population_index=population_index %}">Back to all outcomes</a></p>
 
 <form method="post" action="">{% csrf_token %}
   <table>

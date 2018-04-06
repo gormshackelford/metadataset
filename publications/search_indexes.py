@@ -3,6 +3,7 @@ from .models import Publication
 
 class PublicationIndex(indexes.SearchIndex, indexes.Indexable):
     text = indexes.EdgeNgramField(document=True, use_template=True)
+    subject = indexes.CharField(model_attr='subject', null=True)
 
     def get_model(self):
         return Publication

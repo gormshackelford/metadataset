@@ -13,9 +13,9 @@
 
   <h1>Search results</h1>
 
-  {% for result in page.object_list %}
+  {% for result in page_obj.object_list %}
     <p>
-      <a href="{% url 'publication' publication_pk=result.object.pk %}">{{ result.object.title }}</a>
+      <a href="{% url 'publication' subject='cassava' publication_pk=result.object.pk %}">{{ result.object.title }}</a>
     </p>
   {% empty %}
     <p>No results found.</p>

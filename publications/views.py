@@ -1,4 +1,5 @@
 from django.contrib.auth import login, authenticate
+from django.contrib.auth.decorators import login_required
 from django.contrib.sites.shortcuts import get_current_site
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.db import transaction
@@ -9,13 +10,58 @@ from django.template.loader import render_to_string
 from django.utils.encoding import force_bytes, force_text
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from .tokens import account_activation_token
-from .forms import PublicationForm, ExperimentForm, ExperimentCropForm, ExperimentDesignForm, ExperimentLatLongForm, ExperimentPopulationForm, ExperimentPopulationOutcomeForm, EffectForm, SignUpForm
-from .models import Crop, Experiment, Intervention, Outcome, Population, ExperimentCrop, ExperimentDesign, ExperimentLatLong, ExperimentPopulation, ExperimentPopulationOutcome, Publication, Subject, User
+from .forms import PublicationForm, AssessmentForm, ExperimentForm, ExperimentCropForm, ExperimentDesignForm, ExperimentLatLongForm, ExperimentPopulationForm, ExperimentPopulationOutcomeForm, EffectForm, SignUpForm
+from .models import Assessment, Crop, Experiment, Intervention, Outcome, Population, ExperimentCrop, ExperimentDesign, ExperimentLatLong, ExperimentPopulation, ExperimentPopulationOutcome, Publication, Subject, User
 from mptt.forms import TreeNodeChoiceField
 
 
-def publications(request):
-    publications = Publication.objects.all().order_by('title')
+
+
+
+
+
+
+
+
+
+
+from haystack.generic_views import SearchView
+from haystack.forms import SearchForm
+from haystack.query import SearchQuerySet
+
+class MySearchView(SearchView):
+    template_name = 'search/search.html'
+
+    def get_queryset(self, *args, **kwargs):
+        subject = self.kwargs['subject']
+        subject = Subject.objects.get(slug=subject)
+        queryset = super(MySearchView, self).get_queryset()
+        return queryset.filter(subject=subject)
+
+    def get_context_data(self, *args, **kwargs):
+        context = super(MySearchView, self).get_context_data(*args, **kwargs)
+        # do something
+        return context
+
+
+
+
+
+
+
+
+
+
+
+def subject(request, subject):
+    subject = Subject.objects.get(slug=subject)
+    context = {'subject': subject}
+    return render(request, 'publications/subject.html', context)
+
+
+def publications(request, subject):
+    subject = Subject.objects.get(slug=subject)
+    publications = Publication.objects.filter(subject=subject).order_by('title')
     page = request.GET.get('page', 1)
     paginator = Paginator(publications, 10)
     try:
@@ -25,15 +71,10 @@ def publications(request):
     except EmptyPage:
         publications = paginator.page(paginator.num_pages)
     context = {
+        'subject': subject,
         'publications': publications
     }
     return render(request, 'publications/publications.html', context)
-
-
-def subject(request, slug):
-    subject = Subject.objects.get(slug=slug)
-    context = {'subject': subject}
-    return render(request, 'publications/subject.html', context)
 
 
 def home(request):
@@ -122,18 +163,25 @@ def confirm_email(request, uidb64, token):
     else:
         return render(request, 'publications/email_not_confirmed.html', {'uid': uid})
 
-
-def publication(request, publication_pk):
+@login_required
+def publication(request, subject, publication_pk):
     """
     On this page, the user chooses interventions for this publication.
     """
     user = request.user
     data = request.POST or None
+    subject = Subject.objects.get(slug=subject)
     ExperimentFormSet = modelformset_factory(Experiment, form=ExperimentForm, extra=2, can_delete=True)
     # This publication
     publication = Publication.objects.get(pk=publication_pk)
     # Form for this publication
     publication_form = PublicationForm(data=data, instance=publication, prefix="publication_form")
+    # Form for this assessment
+    if Assessment.objects.filter(publication=publication, user=user, subject=subject).exists():
+        assessment = Assessment.objects.get(publication=publication, user=user, subject=subject)
+        assessment_form = AssessmentForm(data=data, instance=assessment, prefix="assessment_form")
+    else:
+        assessment_form = AssessmentForm(data=data, prefix="assessment_form")
     # Formset for this publication
     formset = ExperimentFormSet(data=data, queryset=Experiment.objects.filter(publication=publication), prefix="experiment_formset")
     # Intervention choices for the formset
@@ -143,6 +191,12 @@ def publication(request, publication_pk):
         with transaction.atomic():
             if publication_form.is_valid():
                 publication = publication_form.save()
+            if assessment_form.is_valid():
+                assessment = assessment_form.save(commit=False)
+                assessment.user = user
+                assessment.publication = publication
+                assessment.subject = subject
+                assessment.save()
             if formset.is_valid():
                 instances = formset.save(commit=False)
                 if 'delete' in request.POST:
@@ -153,20 +207,24 @@ def publication(request, publication_pk):
                         instance.publication = publication
                         instance.user = user
                         instance.save()
-            return redirect('publication', publication_pk=publication_pk)
+            return redirect('publication', subject=subject, publication_pk=publication_pk)
     context = {
+        'subject': subject,
         'publication': publication,
         'publication_form': publication_form,
+        'assessment_form': assessment_form,
         'experiment_formset': formset
     }
     return render(request, 'publications/publication.html', context)
 
 
-def experiment(request, publication_pk, experiment_index):
+@login_required
+def experiment(request, subject, publication_pk, experiment_index):
     """
     On this page, the user chooses populations, experimental designs, crops, IUCN actions, IUCN threats, and coordinates for this intervention (AKA "experiment").
     """
     data = request.POST or None
+    subject = Subject.objects.get(slug=subject)
     ExperimentCropFormSet = modelformset_factory(ExperimentCrop, form=ExperimentCropForm, extra=2, can_delete=True)
     ExperimentDesignFormSet = modelformset_factory(ExperimentDesign, form=ExperimentDesignForm, extra=3, can_delete=True)
     ExperimentLatLongFormSet = modelformset_factory(ExperimentLatLong, form=ExperimentLatLongForm, extra=2, can_delete=True)
@@ -231,8 +289,9 @@ def experiment(request, publication_pk, experiment_index):
                     for instance in instances:
                         instance.experiment = experiment
                         instance.save()
-            return redirect('experiment', publication_pk=publication_pk, experiment_index=experiment_index)
+            return redirect('experiment', subject=subject, publication_pk=publication_pk, experiment_index=experiment_index)
     context = {
+        'subject': subject,
         'publication': publication,
         'experiment': experiment,
         'experiment_index': experiment_index,
@@ -244,11 +303,13 @@ def experiment(request, publication_pk, experiment_index):
     return render(request, 'publications/experiment.html', context)
 
 
-def population(request, publication_pk, experiment_index, population_index):
+@login_required
+def population(request, subject, publication_pk, experiment_index, population_index):
     """
     On this page, the user chooses populations for this intervention (AKA "experiment").
     """
     data = request.POST or None
+    subject = Subject.objects.get(slug=subject)
     ExperimentPopulationOutcomeFormSet = modelformset_factory(ExperimentPopulationOutcome, form=ExperimentPopulationOutcomeForm, extra=2, can_delete=True)
     # This publication
     publication = Publication.objects.get(pk=publication_pk)
@@ -274,8 +335,9 @@ def population(request, publication_pk, experiment_index, population_index):
                     for instance in instances:
                         instance.experiment_population = experiment_population
                         instance.save()
-            return redirect('population', publication_pk=publication_pk, experiment_index=experiment_index, population_index=population_index)
+            return redirect('population', subject=subject, publication_pk=publication_pk, experiment_index=experiment_index, population_index=population_index)
     context = {
+        'subject': subject,
         'publication': publication,
         'experiment': experiment,
         'experiment_population': experiment_population,
@@ -286,11 +348,13 @@ def population(request, publication_pk, experiment_index, population_index):
     return render(request, 'publications/population.html', context)
 
 
-def outcome(request, publication_pk, experiment_index, population_index, outcome_index):
+@login_required
+def outcome(request, subject, publication_pk, experiment_index, population_index, outcome_index):
     """
     On this page, the user chooses outcomes for this population.
     """
     data = request.POST or None
+    subject = Subject.objects.get(slug=subject)
     EffectFormSet = modelformset_factory(ExperimentPopulationOutcome, form=EffectForm, extra=0, can_delete=True)
     # This publication
     publication = Publication.objects.get(pk=publication_pk)
@@ -316,8 +380,9 @@ def outcome(request, publication_pk, experiment_index, population_index, outcome
                     for instance in instances:
                         instance.experiment_population = experiment_population
                         instance.save()
-            return redirect('outcome', publication_pk=publication_pk, experiment_index=experiment_index, population_index=population_index, outcome_index=outcome_index)
+            return redirect('outcome', subject=subject, publication_pk=publication_pk, experiment_index=experiment_index, population_index=population_index, outcome_index=outcome_index)
     context = {
+        'subject': subject,
         'publication': publication,
         'experiment': experiment,
         'experiment_population': experiment_population,
@@ -349,22 +414,26 @@ def browse_publications_by_outcome(request, subject):
 
 
 def publications_by_intervention(request, subject, path, instance):
+    subject = Subject.objects.get(slug=subject)
     interventions = instance.get_descendants(include_self=True)
     experiments = Experiment.objects.filter(intervention__in=interventions)
-    publications = Publication.objects.filter(experiment__in=experiments).order_by('title')
+    publications = Publication.objects.filter(subject=subject, experiment__in=experiments).order_by('title')
     context = {
+        'subject': subject,
         'publications': publications
     }
-    return render(request, 'publications/publications_by_intervention.html', context)
+    return render(request, 'publications/publications.html', context)
 
 
 def publications_by_outcome(request, subject, path, instance):
+    subject = Subject.objects.get(slug=subject)
     outcomes = instance.get_descendants(include_self=True)
     experiment_population_outcomes = ExperimentPopulationOutcome.objects.filter(outcome__in=outcomes)
     experiment_populations = ExperimentPopulation.objects.filter(experimentpopulationoutcome__in=experiment_population_outcomes)
     experiments = Experiment.objects.filter(experimentpopulation__in=experiment_populations)
-    publications = Publication.objects.filter(experiment__in=experiments).order_by('title')
+    publications = Publication.objects.filter(subject=subject, experiment__in=experiments).order_by('title')
     context = {
+        'subject': subject,
         'publications': publications
     }
-    return render(request, 'publications/publications_by_outcome.html', context)
+    return render(request, 'publications/publications.html', context)

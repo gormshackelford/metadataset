@@ -78,6 +78,21 @@ def update_user_profile(sender, instance, created, **kwargs):
     instance.profile.save()
 
 
+# Subjects for systematic reviews (as "subject-wide evidence syntheses")
+class Subject(models.Model):
+    subject = models.CharField(max_length=126, unique=True)
+    slug = models.SlugField(max_length=254, blank=True)
+    text = models.TextField(blank=True)
+
+    def save(self, *args, **kwargs):
+        self.subject = self.subject.lower()
+        self.slug = slugify(self.subject)
+        super(Subject, self).save(*args, **kwargs)
+
+    def __str__(self):
+        return self.subject
+
+
 class Publication(models.Model):
     title = models.CharField(max_length=510)
     abstract = models.TextField(blank=True)
@@ -92,6 +107,7 @@ class Publication(models.Model):
     publisher = models.CharField(max_length=510, blank=True)
     place = models.CharField(max_length=510, blank=True)
     created = models.DateTimeField(auto_now_add=True)
+    subject = models.ForeignKey(Subject, on_delete=models.CASCADE, null=True)
 
     def __str__(self):
         return self.title
@@ -161,21 +177,6 @@ class Outcome(MPTTModel):
 
     class Meta:
         unique_together = ('slug', 'parent')
-
-
-# Subjects for systematic reviews (as "subject-wide evidence syntheses")
-class Subject(models.Model):
-    subject = models.CharField(max_length=126, unique=True)
-    slug = models.SlugField(max_length=254, blank=True)
-    text = models.TextField(blank=True)
-
-    def save(self, *args, **kwargs):
-        self.subject = self.subject.lower()
-        self.slug = slugify(self.subject)
-        super(Subject, self).save(*args, **kwargs)
-
-    def __str__(self):
-        return self.subject
 
 
 class Crop(MPTTModel):
@@ -325,3 +326,16 @@ class ExperimentPopulationOutcome(models.Model):
 
     def __str__(self):
         return self.experiment_population.experiment.publication.title
+
+
+class Assessment(models.Model):
+    publication = models.ForeignKey(Publication, on_delete=models.CASCADE)
+    is_relevant = models.BooleanField()
+    subject = models.ForeignKey(Subject, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return '{boolean}: "{publication}" is relevant to "{subject}"'.format(
+            boolean=self.is_relevant, publication=self.publication,
+            subject=self.subject
+        )

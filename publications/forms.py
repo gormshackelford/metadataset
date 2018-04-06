@@ -1,7 +1,7 @@
 from django import forms
 from django.db import models
 from django.contrib.auth.forms import UserCreationForm
-from .models import Publication, Experiment, ExperimentCrop, ExperimentDesign, ExperimentLatLong, ExperimentPopulation, ExperimentPopulationOutcome, Profile, User
+from .models import Assessment, Publication, Experiment, ExperimentCrop, ExperimentDesign, ExperimentLatLong, ExperimentPopulation, ExperimentPopulationOutcome, Profile, User
 
 
 class SignUpForm(UserCreationForm):
@@ -35,11 +35,18 @@ class ProfileForm(forms.ModelForm):
         exclude = []
 
 
+class AssessmentForm(forms.ModelForm):
+
+    class Meta:
+        model = Assessment
+        fields = ['is_relevant']
+
+
 class PublicationForm(forms.ModelForm):
 
     class Meta:
         model = Publication
-        exclude = []
+        exclude = ['subject']
 
 
 class ExperimentForm(forms.ModelForm):
