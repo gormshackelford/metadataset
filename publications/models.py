@@ -339,3 +339,17 @@ class Assessment(models.Model):
             boolean=self.is_relevant, publication=self.publication,
             subject=self.subject
         )
+
+
+class AssessmentStatus(models.Model):
+    subject = models.ForeignKey(Subject, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    assessment_order = models.TextField()
+    next_assessment = models.IntegerField(blank=True, null=True)
+    completed_assessments = models.TextField(blank=True)
+
+    def __str__(self):
+        return 'Progress report for "{user}" and subject "{subject}"'.format(user=self.user.email, subject=self.subject)
+
+    class Meta:
+        verbose_name_plural = "assessment statuses"

@@ -9,9 +9,11 @@ from django.template import loader
 from django.template.loader import render_to_string
 from django.utils.encoding import force_bytes, force_text
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
+from ast import literal_eval
+from random import shuffle
 from .tokens import account_activation_token
 from .forms import PublicationForm, AssessmentForm, ExperimentForm, ExperimentCropForm, ExperimentDesignForm, ExperimentLatLongForm, ExperimentPopulationForm, ExperimentPopulationOutcomeForm, EffectForm, SignUpForm
-from .models import Assessment, Crop, Experiment, Intervention, Outcome, Population, ExperimentCrop, ExperimentDesign, ExperimentLatLong, ExperimentPopulation, ExperimentPopulationOutcome, Publication, Subject, User
+from .models import Assessment, AssessmentStatus, Crop, Experiment, Intervention, Outcome, Population, ExperimentCrop, ExperimentDesign, ExperimentLatLong, ExperimentPopulation, ExperimentPopulationOutcome, Publication, Subject, User
 from mptt.forms import TreeNodeChoiceField
 
 
@@ -54,12 +56,32 @@ class MySearchView(SearchView):
 
 
 def subject(request, subject):
+    user = request.user
     subject = Subject.objects.get(slug=subject)
-    context = {'subject': subject}
+    # Get data for the sidebar.
+    if user.is_authenticated:
+        status = get_status(user, subject)
+        item = status.get('item')
+        next_assessment = item.next_assessment
+        publications_count = status.get('publications_count')
+        publications_assessed_count = status.get('publications_assessed_count')
+        publications_assessed_percent = status.get('publications_assessed_percent')
+        context = {
+            'subject': subject,
+            'publications_count': publications_count,
+            'publications_assessed_count': publications_assessed_count,
+            'publications_assessed_percent': publications_assessed_percent,
+            'next_assessment': next_assessment
+        }
+    else:
+        context = {
+            'subject': subject
+        }
     return render(request, 'publications/subject.html', context)
 
 
 def publications(request, subject):
+    user = request.user
     subject = Subject.objects.get(slug=subject)
     publications = Publication.objects.filter(subject=subject).order_by('title')
     page = request.GET.get('page', 1)
@@ -74,6 +96,9 @@ def publications(request, subject):
         'subject': subject,
         'publications': publications
     }
+    if user.is_authenticated:
+        user_context = get_user_context(user, subject)
+        context.update(user_context)
     return render(request, 'publications/publications.html', context)
 
 
@@ -163,6 +188,7 @@ def confirm_email(request, uidb64, token):
     else:
         return render(request, 'publications/email_not_confirmed.html', {'uid': uid})
 
+
 @login_required
 def publication(request, subject, publication_pk):
     """
@@ -171,49 +197,141 @@ def publication(request, subject, publication_pk):
     user = request.user
     data = request.POST or None
     subject = Subject.objects.get(slug=subject)
+    publication_pk = int(publication_pk)
+
+    # Get data for the sidebar.
+    status = get_status(user, subject)
+
+    item = status.get('item')
+    assessment_order = item.assessment_order
+    assessment_order = literal_eval(item.assessment_order)
+    completed_assessments = item.completed_assessments
+    completed_assessments = literal_eval(item.completed_assessments)
+    next_assessment = item.next_assessment
+
+    publications_count = status.get('publications_count')
+    publications_assessed_count = status.get('publications_assessed_count')
+    publications_assessed_percent = status.get('publications_assessed_percent')
+
+    # The next pk and previous pk in assessment_order, to be used for navigation
+    previous_pk = assessment_order[assessment_order.index(publication_pk) - 1]
+    try:
+        next_pk = assessment_order[assessment_order.index(publication_pk) + 1]
+    except:
+        next_pk = assessment_order[0]
+
     ExperimentFormSet = modelformset_factory(Experiment, form=ExperimentForm, extra=2, can_delete=True)
     # This publication
     publication = Publication.objects.get(pk=publication_pk)
-    # Form for this publication
-    publication_form = PublicationForm(data=data, instance=publication, prefix="publication_form")
     # Form for this assessment
     if Assessment.objects.filter(publication=publication, user=user, subject=subject).exists():
         assessment = Assessment.objects.get(publication=publication, user=user, subject=subject)
         assessment_form = AssessmentForm(data=data, instance=assessment, prefix="assessment_form")
     else:
         assessment_form = AssessmentForm(data=data, prefix="assessment_form")
+        relevance = ""
     # Formset for this publication
     formset = ExperimentFormSet(data=data, queryset=Experiment.objects.filter(publication=publication), prefix="experiment_formset")
     # Intervention choices for the formset
     for form in formset:
         form.fields['intervention'] = TreeNodeChoiceField(queryset=Intervention.objects.all().get_descendants(include_self=True), level_indicator = "---")
     if request.method == 'POST':
-        with transaction.atomic():
-            if publication_form.is_valid():
-                publication = publication_form.save()
-            if assessment_form.is_valid():
-                assessment = assessment_form.save(commit=False)
-                assessment.user = user
-                assessment.publication = publication
-                assessment.subject = subject
-                assessment.save()
-            if formset.is_valid():
-                instances = formset.save(commit=False)
-                if 'delete' in request.POST:
-                    for obj in formset.deleted_objects:
-                        obj.delete()
-                else:
-                    for instance in instances:
-                        instance.publication = publication
-                        instance.user = user
-                        instance.save()
-            return redirect('publication', subject=subject, publication_pk=publication_pk)
+        if 'is_relevant' in request.POST:
+            with transaction.atomic():
+                # Update assessment
+                if assessment_form.is_valid():
+                    assessment = assessment_form.save(commit=False)
+                    assessment.user = user
+                    assessment.publication = publication
+                    assessment.subject = subject
+                    assessment.is_relevant = True
+                    assessment.save()
+                    # Update status and get next assessment
+                    if publication_pk not in completed_assessments:
+                        completed_assessments.append(publication_pk)
+                        item.completed_assessments = completed_assessments
+                    next_assessment = get_next_assessment(publication_pk, next_pk, assessment_order, completed_assessments)
+                    item.next_assessment = next_assessment
+                    item.save()
+                    return redirect('publication', subject=subject, publication_pk=publication_pk)
+        if 'is_not_relevant' in request.POST:
+            with transaction.atomic():
+                if assessment_form.is_valid():
+                    # Update assessment
+                    assessment = assessment_form.save(commit=False)
+                    assessment.user = user
+                    assessment.publication = publication
+                    assessment.subject = subject
+                    assessment.is_relevant = False
+                    assessment.save()
+                    # Update status and get next assessment
+                    if publication_pk not in completed_assessments:
+                        completed_assessments.append(publication_pk)
+                        item.completed_assessments = completed_assessments
+                    next_assessment = get_next_assessment(publication_pk, next_pk, assessment_order, completed_assessments)
+                    item.next_assessment = next_assessment
+                    item.save()
+                    return redirect('publication', subject=subject, publication_pk=next_assessment)
+        if 'save' in request.POST or 'delete' in request.POST:
+            with transaction.atomic():
+                if formset.is_valid():
+                    instances = formset.save(commit=False)
+                    if 'delete' in request.POST:
+                        for obj in formset.deleted_objects:
+                            obj.delete()
+                    else:
+                        for instance in instances:
+                            instance.publication = publication
+                            instance.user = user
+                            instance.save()
+                    if assessment_form.is_valid():
+                        # If interventions have been selected, mark this publication as "relevant" to this systematic review.
+                        if Experiment.objects.filter(publication=publication, user=user).exists():
+                            # Update assessment
+                            assessment = assessment_form.save(commit=False)
+                            assessment.user = user
+                            assessment.publication = publication
+                            assessment.subject = subject
+                            assessment.is_relevant = True
+                            assessment.save()
+                            # Update status and get next assessment
+                            if publication_pk not in completed_assessments:
+                                completed_assessments.append(publication_pk)
+                                item.completed_assessments = completed_assessments
+                                next_assessment = get_next_assessment(publication_pk, next_pk, assessment_order, completed_assessments)
+                                item.next_assessment = next_assessment
+                                item.save()
+                        # If all interventions have been deleted, remove this publication from the completed assessments.
+                        elif 'delete' in request.POST:
+                            if publication_pk in completed_assessments:
+                                completed_assessments.remove(publication_pk)
+                                item.completed_assessments = completed_assessments
+                                next_assessment = publication_pk
+                                item.next_assessment = next_assessment
+                                item.save()
+                            if Assessment.objects.filter(publication=publication, user=user).exists():
+                                Assessment.objects.filter(publication=publication, user=user).delete()
+                return redirect('publication', subject=subject, publication_pk=publication_pk)
+    if Assessment.objects.filter(publication=publication, user=user).exists():
+        assessment = Assessment.objects.get(publication=publication, user=user)
+        if assessment.is_relevant == False:
+            relevance = "(marked as not relevant)"
+        else:
+            relevance = ""
+    else:
+        relevance = ""
     context = {
         'subject': subject,
         'publication': publication,
-        'publication_form': publication_form,
         'assessment_form': assessment_form,
-        'experiment_formset': formset
+        'experiment_formset': formset,
+        'relevance': relevance,
+        'next_pk': next_pk,
+        'previous_pk': previous_pk,
+        'publications_count': publications_count,
+        'publications_assessed_count': publications_assessed_count,
+        'publications_assessed_percent': publications_assessed_percent,
+        'next_assessment': next_assessment
     }
     return render(request, 'publications/publication.html', context)
 
@@ -396,20 +514,28 @@ def outcome(request, subject, publication_pk, experiment_index, population_index
 
 
 def browse_publications_by_intervention(request, subject):
+    user = request.user
     subject = Subject.objects.get(slug=subject)
     context = {
         'subject': subject,  # Browse within this subject
         'interventions': Intervention.objects.all(),
     }
+    if user.is_authenticated:
+        user_context = get_user_context(user, subject)
+        context.update(user_context)
     return render(request, 'publications/browse_publications_by_intervention.html', context)
 
 
 def browse_publications_by_outcome(request, subject):
+    user = request.user
     subject = Subject.objects.get(slug=subject)
     context = {
         'subject': subject,  # Browse within this subject
         'outcomes': Outcome.objects.all(),
     }
+    if user.is_authenticated:
+        user_context = get_user_context(user, subject)
+        context.update(user_context)
     return render(request, 'publications/browse_publications_by_outcome.html', context)
 
 
@@ -437,3 +563,106 @@ def publications_by_outcome(request, subject, path, instance):
         'publications': publications
     }
     return render(request, 'publications/publications.html', context)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+def get_status(user, subject):
+    # Publications should be assessed in a random order, but each user should see the same order from session to session. Therefore, a random assessment_order is created for each user (for each subject), and it is saved in the database.
+
+    # If an assessment_order has been created for this user and subject, get it from the database.
+    if AssessmentStatus.objects.filter(user=user, subject=subject).exists():
+        item = AssessmentStatus.objects.get(user=user, subject=subject)
+        assessment_order = literal_eval(item.assessment_order)
+        next_assessment = item.next_assessment
+        completed_assessments = literal_eval(item.completed_assessments)
+
+        # If new publications have been added to the database, then randomly append their pks to the end of assessment_order.
+        max_assessment_pks = max(assessment_order)
+        pks = Publication.objects.filter(subject=subject).values_list('pk', flat=True)
+        max_pks = max(pks)
+
+        if max_assessment_pks < max_pks:
+            new_publications = list(pks)
+            new_publications = list(set(new_publications) - set(assessment_order))
+            shuffle(new_publications)
+            assessment_order = assessment_order + new_publications
+            item.assessment_order = assessment_order
+            item.save()
+
+        # If old publications have been deleted from the database (this should not happen in production), then delete their pks from assessment_order.
+
+    # If an assessment_order has not been created for this user and subject, create it and save it in the database.
+    else:
+        pks = Publication.objects.filter(subject=subject).values_list('pk', flat=True)
+        assessment_order = list(pks)
+        shuffle(assessment_order)
+        next_assessment = assessment_order[0]
+        completed_assessments = []
+        item = AssessmentStatus(
+            subject=subject,
+            user=user,
+            assessment_order=assessment_order,
+            next_assessment=next_assessment,
+            completed_assessments=completed_assessments
+        )
+        item.save()
+    item = AssessmentStatus.objects.get(user=user, subject=subject)
+
+    publications_count = len(assessment_order)
+    publications_assessed_count = len(completed_assessments)
+
+    if publications_count != 0:
+        publications_assessed_percent = int(publications_assessed_count / publications_count * 100)
+    else:
+        publications_assessed_percent = 100
+
+    status = {
+        'item': item,
+        'publications_count': publications_count,
+        'publications_assessed_count': publications_assessed_count,
+        'publications_assessed_percent': publications_assessed_percent
+    }
+
+    return(status)
+
+
+def get_next_assessment(publication_pk, next_pk, assessment_order, completed_assessments):
+    next_assessment = next_pk
+    for i in assessment_order:
+        if next_assessment not in completed_assessments:
+            if next_assessment != publication_pk:
+                break
+        else:
+            try:
+                next_assessment = assessment_order[assessment_order.index(next_assessment) + 1]
+            except:
+                next_assessment = assessment_order[0]
+    return(next_assessment)
+
+
+def get_user_context(user, subject):
+    status = get_status(user, subject)
+    item = status.get('item')
+    next_assessment = item.next_assessment
+    publications_count = status.get('publications_count')
+    publications_assessed_count = status.get('publications_assessed_count')
+    publications_assessed_percent = status.get('publications_assessed_percent')
+    user_context = {
+        'publications_count': publications_count,
+        'publications_assessed_count': publications_assessed_count,
+        'publications_assessed_percent': publications_assessed_percent,
+        'next_assessment': next_assessment
+    }
+    return(user_context)

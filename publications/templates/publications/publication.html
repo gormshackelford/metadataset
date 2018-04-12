@@ -6,34 +6,49 @@
 
 {% block css %}
   {% load staticfiles %}
+  <link href="{% static 'css/sidebar.css' %}" rel="stylesheet">
 {% endblock %}
 
 {% block content %}
 
-<h1>{{ publication.title|default:'[title not available]' }}</h1>
-
-<p>Search for the full text: <a target="_blank"
-  href="http://www.google.com/search?q={{ publication.google_string }}">Google</a>
-  {% if publication.doi != '' %}
-     | <a target="_blank" href="http://dx.doi.org/{{ publication.doi }}">DOI</a>
-  {% endif %}</p>
-
-<h1>Abstract</h1>
-<p>{{ publication.abstract|default:'[abstract not available]' }}</p>
-
 <form method="post" action="">{% csrf_token %}
 
-  <h1>Relevant to {{ subject }}?</h1>
-  <p>Based on its title and abstract, is this publication relevant to this systematic review? If not, then please click "Save all changes" without ticking this box.</p>
-  <p>Relevant to {{ subject }}? &nbsp;{{ assessment_form.is_relevant }}</p>
-  <p><input type="submit" name="save" value="Save all changes" /></p>
+  <h1>
+    Relevance to {{ subject }} <span class="red">{{ relevance }}</span>
+  </h1>
+  <p>
+    If this publication is not relevant to this systematic review ({{ subject }}), click "not relevant" (you will automatically be redirected to the next publication). If it is relevant, click "relevant" or select an intervention from the drop-down menus below the abstract (the publication will automatically be marked as "relevant").
 
-  <h1>Interventions</h1>
-  <p>We use the "PICO" terminology for describing experiments ("P" = "Population", "I" = "Intervention", "C" = "Comparison", and "O" = "Outcome"). Please select one or more interventions (the "I" in "PICO"), and then click "Save all changes". You will then see a link to the metadata for each intervention, which will allow you to select one or more populations, outcomes, and comparisons for each intervention.</p>
+    <!-- A hidden input so that pressing enter saves the form instead of marking the publication as not relevant -->
+    <input type="submit" name="save" style="visibility: hidden;" value="Save all changes" />
+  </p>
+  <p>
+    <input type="submit" name="is_not_relevant" value="Not relevant" />
+    <input type="submit" name="is_relevant" value="Relevant" />
+    <a class="button" href="{% url 'publication' subject=subject.slug publication_pk=previous_pk %}">Back</a>
+    <a class="button" href="{% url 'publication' subject=subject.slug publication_pk=next_pk %}">Forward</a>
+  </p>
+  <p>Click "Back" and "Forward" only to revisit your previous assessments (to check or change them), but not to look for your next assessment. That way, your assessments will be made in a random order, which is best practice.
+  </p>
+
+  <h1>{{ publication.title|default:'[title not available]' }}</h1>
+
+  <p>
+    Search for the full text: <a target="_blank"
+    href="http://www.google.com/search?q={{ publication.google_string }}">Google</a>
+    {% if publication.doi != '' %}
+       | <a target="_blank" href="http://dx.doi.org/{{ publication.doi }}">DOI</a>
+    {% endif %}
+  </p>
+
+  <h1>Abstract</h1>
+  <p>{{ publication.abstract|default:'[abstract not available]' }}</p>
+
   <table>
+    <tr><th colspan="4">Interventions</th></tr>
     <tr>
-      <td class="top" colspan="2"></td>
-      <td class="centered top">Select</td>
+      <td colspan="3"></td>
+      <td class="centered">Select</td>
     </tr>
     {{ experiment_formset.management_form }}
     {% for form in experiment_formset %}
@@ -46,10 +61,11 @@
           {{ form.intervention.label }}:
         {% endif %}
       </td>
-      <td>{{ form.intervention }}
-        {% if form.instance.intervention %}
-          <a href="{% url 'experiment' subject=subject publication_pk=publication.pk experiment_index=forloop.counter0 %}">Populations</a>
-        {% endif %}
+      <td>{{ form.intervention }}</td>
+      <td>
+      {% if form.instance.intervention %}
+        <a href="{% url 'experiment' subject=subject publication_pk=publication.pk experiment_index=forloop.counter0 %}">Populations</a>
+      {% endif %}
       </td>
       <td class="centered">{{ form.DELETE }}</td>
     </tr>
@@ -57,30 +73,15 @@
     <tr>
       <td class="bottom"></td>
       <td class="button bottom"><input type="submit" name="save" value="Save all changes" /></td>
-      <td class="bottom button"><input type="submit" name="delete" value="Delete selected" /></td>
-    </tr>
-  </table>
-
-  <h1>Publication Metadata</h1>
-  <table>
-    <tr><td>Title:</td><td>{{ publication_form.title }}</td></tr>
-    <tr><td>Abstract:</td><td>{{ publication_form.abstract }}</td></tr>
-    <tr><td>Authors:</td><td>{{ publication_form.authors }}</td></tr>
-    <tr><td>Year:</td><td>{{ publication_form.year }}</td></tr>
-    <tr><td>Journal:</td><td>{{ publication_form.journal }}</td></tr>
-    <tr><td>Volume:</td><td>{{ publication_form.volume }}</td></tr>
-    <tr><td>Issue:</td><td>{{ publication_form.issue }}</td></tr>
-    <tr><td>Pages:</td><td>{{ publication_form.pages }}</td></tr>
-    <tr><td>DOI:</td><td>{{ publication_form.doi }}</td></tr>
-    <tr><td>URL:</td><td>{{ publication_form.url }}</td></tr>
-    <tr><td>Publisher:</td><td>{{ publication_form.publisher }}</td></tr>
-    <tr><td>Place:</td><td>{{ publication_form.place }}</td></tr>
-    <tr>
       <td class="bottom"></td>
-      <td class="button bottom"><input type="submit" name="save" value="Save all changes" /></td>
+      <td class="bottom button"><input type="submit" name="delete" value="Delete selected" /></td>
     </tr>
   </table>
 
 </form>
 
+{% endblock %}
+
+{% block sidebar %}
+  {% include 'publications/subject_sidebar.html' %}
 {% endblock %}

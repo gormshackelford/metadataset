@@ -39,14 +39,14 @@ class AssessmentForm(forms.ModelForm):
 
     class Meta:
         model = Assessment
-        fields = ['is_relevant']
+        fields = []
 
 
 class PublicationForm(forms.ModelForm):
 
     class Meta:
         model = Publication
-        exclude = ['subject']
+        exclude = ['abstract', 'subject']
 
 
 class ExperimentForm(forms.ModelForm):

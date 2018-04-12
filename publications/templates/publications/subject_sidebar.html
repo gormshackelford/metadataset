@@ -1,18 +1,20 @@
-<h1>{{ subject|capfirst }}: meta-analyses</h1>
-<p>
-  <a href="#">Meta-analyses by intervention</a>
-  <br />
-  <a href="#">Meta-analyses by outcome</a>
-</p>
-
 <h1>{{ subject|capfirst }}: publications</h1>
 <p>
-  {% if user.is_authenticated %}
-    <a href="{% url 'publications' subject=subject.slug %}">Publications to be assessed</a> <span class="red">(start or restart here)</span><br />
-  {% endif %}
+  <a href="{% url 'publications' subject=subject.slug %}">Publications</a> ({{ publications_count }})
+  <br />
   <a href="{% url 'browse_publications_by_intervention' subject=subject.slug %}">Publications by intervention</a>
   <br />
   <a href="{% url 'browse_publications_by_outcome' subject=subject.slug %}">Publications by outcome</a>
+  {% if user.is_authenticated %}
+    <br />
+    <br />
+    Publications: {{ publications_count }}
+    <br />
+    Assessments: {{ publications_assessed_count }} ({{ publications_assessed_percent }}% complete)
+    <br />
+    <br />
+    <a href="{% url 'publication' subject=subject.slug publication_pk=next_assessment %}">Your next assessment</a> <span class="red">(start or restart here)</span>
+  {% endif %}
 </p>
 
 <form action="/search/{{ subject.slug }}/" method="get">

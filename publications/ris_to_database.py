@@ -14,8 +14,12 @@ if __name__ == '__main__':
     django.setup()
 
 from RISparser import readris, TAG_KEY_MAPPING
-from publications.models import Publication
+from publications.models import Publication, Subject
 
+
+# Set the systematic review
+subject = 'cassava'
+subject = Subject.objects.get(subject=subject)
 
 # Load a csv file with the bibliography (exported from Zotero).
 with open('publications/data/test.txt', 'r') as f:
@@ -67,6 +71,7 @@ for result in results:
         issue=issue,
         pages=pages,
         doi=doi,
-        url=url
+        url=url,
+        subject=subject
     )
     record.save()
