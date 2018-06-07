@@ -12,7 +12,7 @@ from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from ast import literal_eval
 from random import shuffle
 from .tokens import account_activation_token
-from .forms import PublicationForm, AssessmentForm, ExperimentForm, ExperimentCropForm, ExperimentDesignForm, ExperimentLatLongForm, ExperimentPopulationForm, ExperimentPopulationOutcomeForm, EffectForm, SignUpForm
+from .forms import PublicationForm, AssessmentForm, FullTextAssessmentForm, ExperimentForm, ExperimentCropForm, ExperimentDesignForm, ExperimentLatLongForm, ExperimentPopulationForm, ExperimentPopulationOutcomeForm, EffectForm, SignUpForm
 from .models import Assessment, AssessmentStatus, Crop, Experiment, Intervention, Outcome, Population, ExperimentCrop, ExperimentDesign, ExperimentLatLong, ExperimentPopulation, ExperimentPopulationOutcome, Publication, Subject, User
 from mptt.forms import TreeNodeChoiceField
 
@@ -58,25 +58,13 @@ class MySearchView(SearchView):
 def subject(request, subject):
     user = request.user
     subject = Subject.objects.get(slug=subject)
+    context = {
+        'subject': subject
+    }
     # Get data for the sidebar.
     if user.is_authenticated:
         status = get_status(user, subject)
-        item = status.get('item')
-        next_assessment = item.next_assessment
-        publications_count = status.get('publications_count')
-        publications_assessed_count = status.get('publications_assessed_count')
-        publications_assessed_percent = status.get('publications_assessed_percent')
-        context = {
-            'subject': subject,
-            'publications_count': publications_count,
-            'publications_assessed_count': publications_assessed_count,
-            'publications_assessed_percent': publications_assessed_percent,
-            'next_assessment': next_assessment
-        }
-    else:
-        context = {
-            'subject': subject
-        }
+        context.update(status)
     return render(request, 'publications/subject.html', context)
 
 
@@ -97,8 +85,8 @@ def publications(request, subject):
         'publications': publications
     }
     if user.is_authenticated:
-        user_context = get_user_context(user, subject)
-        context.update(user_context)
+        status = get_status(user, subject)
+        context.update(status)
     return render(request, 'publications/publications.html', context)
 
 
@@ -201,17 +189,11 @@ def publication(request, subject, publication_pk):
 
     # Get data for the sidebar.
     status = get_status(user, subject)
-
-    item = status.get('item')
-    assessment_order = item.assessment_order
+    item = status.get('item')  # item = AssessmentStatus instance for this user and subject
     assessment_order = literal_eval(item.assessment_order)
-    completed_assessments = item.completed_assessments
     completed_assessments = literal_eval(item.completed_assessments)
-    next_assessment = item.next_assessment
-
-    publications_count = status.get('publications_count')
-    publications_assessed_count = status.get('publications_assessed_count')
-    publications_assessed_percent = status.get('publications_assessed_percent')
+    completed_full_text_assessments = literal_eval(item.completed_full_text_assessments)
+    relevant_publications = literal_eval(item.relevant_publications)
 
     # The next pk and previous pk in assessment_order, to be used for navigation
     previous_pk = assessment_order[assessment_order.index(publication_pk) - 1]
@@ -227,14 +209,13 @@ def publication(request, subject, publication_pk):
     if Assessment.objects.filter(publication=publication, user=user, subject=subject).exists():
         assessment = Assessment.objects.get(publication=publication, user=user, subject=subject)
         assessment_form = AssessmentForm(data=data, instance=assessment, prefix="assessment_form")
+        full_text_assessment_form = FullTextAssessmentForm(data=data, instance=assessment, prefix="full_text_assessment_form")
     else:
         assessment_form = AssessmentForm(data=data, prefix="assessment_form")
+        full_text_assessment_form = FullTextAssessmentForm(data=data, prefix="full_text_assessment_form")
         relevance = ""
     # Formset for this publication
     formset = ExperimentFormSet(data=data, queryset=Experiment.objects.filter(publication=publication), prefix="experiment_formset")
-    # Intervention choices for the formset
-    for form in formset:
-        form.fields['intervention'] = TreeNodeChoiceField(queryset=Intervention.objects.all().get_descendants(include_self=True), level_indicator = "---")
     if request.method == 'POST':
         if 'is_relevant' in request.POST:
             with transaction.atomic():
@@ -245,13 +226,21 @@ def publication(request, subject, publication_pk):
                     assessment.publication = publication
                     assessment.subject = subject
                     assessment.is_relevant = True
+                    assessment.full_text_is_relevant = None
+                    assessment.note = ''
                     assessment.save()
                     # Update status and get next assessment
                     if publication_pk not in completed_assessments:
                         completed_assessments.append(publication_pk)
                         item.completed_assessments = completed_assessments
+                    if publication_pk not in relevant_publications:
+                        relevant_publications.append(publication_pk)
+                        item.relevant_publications = relevant_publications
                     next_assessment = get_next_assessment(publication_pk, next_pk, assessment_order, completed_assessments)
                     item.next_assessment = next_assessment
+                    if publication_pk in completed_full_text_assessments:
+                        completed_full_text_assessments.remove(publication_pk)
+                        item.completed_full_text_assessments = completed_full_text_assessments
                     item.save()
                     return redirect('publication', subject=subject, publication_pk=publication_pk)
         if 'is_not_relevant' in request.POST:
@@ -263,6 +252,8 @@ def publication(request, subject, publication_pk):
                     assessment.publication = publication
                     assessment.subject = subject
                     assessment.is_relevant = False
+                    assessment.full_text_is_relevant = None
+                    assessment.note = ''
                     assessment.save()
                     # Update status and get next assessment
                     if publication_pk not in completed_assessments:
@@ -270,10 +261,45 @@ def publication(request, subject, publication_pk):
                         item.completed_assessments = completed_assessments
                     next_assessment = get_next_assessment(publication_pk, next_pk, assessment_order, completed_assessments)
                     item.next_assessment = next_assessment
+                    if publication_pk in relevant_publications:
+                        relevant_publications.remove(publication_pk)
+                        item.relevant_publications = relevant_publications
+                    if publication_pk in completed_full_text_assessments:
+                        completed_full_text_assessments.remove(publication_pk)
+                        item.completed_full_text_assessments = completed_full_text_assessments
                     item.save()
                     return redirect('publication', subject=subject, publication_pk=next_assessment)
+        if 'full_text_is_not_relevant' in request.POST:
+            with transaction.atomic():
+                if full_text_assessment_form.is_valid():
+                    # Update assessments (add the reason for rejection)
+                    assessment = assessment_form.save(commit=False)
+                    if assessment.note != '':
+                        assessment.user = user
+                        assessment.publication = publication
+                        assessment.subject = subject
+                        assessment.is_relevant = True  # It must be relevant based on the title and abstract if it is to be rejected based on the full text.
+                        assessment.full_text_is_relevant = False
+                        assessment.save()
+                        # Update status and get next assessment
+                        if publication_pk not in completed_assessments:
+                            completed_assessments.append(publication_pk)
+                            item.completed_assessments = completed_assessments
+                        if publication_pk not in relevant_publications:
+                            relevant_publications.append(publication_pk)
+                            item.relevant_publications = relevant_publications
+                        next_assessment = get_next_assessment(publication_pk, next_pk, assessment_order, completed_assessments)
+                        item.next_assessment = next_assessment
+                        if publication_pk not in completed_full_text_assessments:
+                            completed_full_text_assessments.append(publication_pk)
+                            item.completed_full_text_assessments = completed_full_text_assessments
+                        item.save()
+                return redirect('publication', subject=subject, publication_pk=publication_pk)
         if 'save' in request.POST or 'delete' in request.POST:
             with transaction.atomic():
+                # Before the formset is validated, the choices for the intervention field need to be redefined, or the validation will fail. This is because only a subset of all choices (high level choices in the MPTT tree) were initially shown in the dropdown (for better UI).
+                for form in formset:
+                    form.fields['intervention'] = TreeNodeChoiceField(queryset=Intervention.objects.all().get_descendants(include_self=True), level_indicator = "---")
                 if formset.is_valid():
                     instances = formset.save(commit=False)
                     if 'delete' in request.POST:
@@ -293,6 +319,8 @@ def publication(request, subject, publication_pk):
                             assessment.publication = publication
                             assessment.subject = subject
                             assessment.is_relevant = True
+                            assessment.full_text_is_relevant = True
+                            assessment.note = ''
                             assessment.save()
                             # Update status and get next assessment
                             if publication_pk not in completed_assessments:
@@ -301,21 +329,39 @@ def publication(request, subject, publication_pk):
                                 next_assessment = get_next_assessment(publication_pk, next_pk, assessment_order, completed_assessments)
                                 item.next_assessment = next_assessment
                                 item.save()
+                            if publication_pk not in relevant_publications:
+                                relevant_publications.append(publication_pk)
+                                item.relevant_publications = relevant_publications
+                                item.save()
+                            if publication_pk not in completed_full_text_assessments:
+                                completed_full_text_assessments.append(publication_pk)
+                                item.completed_full_text_assessments = completed_full_text_assessments
+                                item.save()
                         # If all interventions have been deleted, remove this publication from the completed assessments.
                         elif 'delete' in request.POST:
                             if publication_pk in completed_assessments:
                                 completed_assessments.remove(publication_pk)
                                 item.completed_assessments = completed_assessments
+                                relevant_publications.remove(publication_pk)
+                                item.relevant_publications = relevant_publications
                                 next_assessment = publication_pk
                                 item.next_assessment = next_assessment
+                                item.save()
+                            if publication_pk in completed_full_text_assessments:
+                                completed_full_text_assessments.remove(publication_pk)
+                                item.completed_full_text_assessments = completed_full_text_assessments
                                 item.save()
                             if Assessment.objects.filter(publication=publication, user=user).exists():
                                 Assessment.objects.filter(publication=publication, user=user).delete()
                 return redirect('publication', subject=subject, publication_pk=publication_pk)
+    else:
+        # Intervention choices for the formset (high-level choices only)
+        for form in formset:
+            form.fields['intervention'] = TreeNodeChoiceField(required=False, queryset=Intervention.objects.all().get_descendants(include_self=True).filter(level__lte=1), level_indicator = "---")
     if Assessment.objects.filter(publication=publication, user=user).exists():
         assessment = Assessment.objects.get(publication=publication, user=user)
         if assessment.is_relevant == False:
-            relevance = "(marked as not relevant)"
+            relevance = "(not relevant)"
         else:
             relevance = ""
     else:
@@ -324,15 +370,14 @@ def publication(request, subject, publication_pk):
         'subject': subject,
         'publication': publication,
         'assessment_form': assessment_form,
+        'full_text_assessment_form': full_text_assessment_form,
         'experiment_formset': formset,
         'relevance': relevance,
         'next_pk': next_pk,
-        'previous_pk': previous_pk,
-        'publications_count': publications_count,
-        'publications_assessed_count': publications_assessed_count,
-        'publications_assessed_percent': publications_assessed_percent,
-        'next_assessment': next_assessment
+        'previous_pk': previous_pk
     }
+    status = get_status(user, subject)
+    context.update(status)
     return render(request, 'publications/publication.html', context)
 
 
@@ -341,8 +386,10 @@ def experiment(request, subject, publication_pk, experiment_index):
     """
     On this page, the user chooses populations, experimental designs, crops, IUCN actions, IUCN threats, and coordinates for this intervention (AKA "experiment").
     """
+    user = request.user
     data = request.POST or None
     subject = Subject.objects.get(slug=subject)
+    ExperimentFormSet = modelformset_factory(Experiment, form=ExperimentForm, extra=0, can_delete=False)
     ExperimentCropFormSet = modelformset_factory(ExperimentCrop, form=ExperimentCropForm, extra=2, can_delete=True)
     ExperimentDesignFormSet = modelformset_factory(ExperimentDesign, form=ExperimentDesignForm, extra=3, can_delete=True)
     ExperimentLatLongFormSet = modelformset_factory(ExperimentLatLong, form=ExperimentLatLongForm, extra=2, can_delete=True)
@@ -352,6 +399,9 @@ def experiment(request, subject, publication_pk, experiment_index):
     # This experiment
     experiments = Experiment.objects.filter(publication=publication).order_by('pk')
     experiment = experiments[experiment_index]
+    # Form for this experiment
+    experiment_form = ExperimentForm(data=data, instance=experiment, prefix="experiment_form")
+    experiment_form.fields['intervention'] = TreeNodeChoiceField(queryset=Intervention.objects.all().get_descendants(include_self=True), level_indicator = "---")
     # Formsets for this experiment
     experiment_population_formset = ExperimentPopulationFormSet(data=data, queryset=ExperimentPopulation.objects.filter(experiment=experiment), prefix="experiment_population_formset")
     experiment_crop_formset = ExperimentCropFormSet(data=data, queryset=ExperimentCrop.objects.filter(experiment=experiment), prefix="experiment_crop_formset")
@@ -362,6 +412,9 @@ def experiment(request, subject, publication_pk, experiment_index):
     experiment_lat_long_formset = ExperimentLatLongFormSet(data=data, queryset=ExperimentLatLong.objects.filter(experiment=experiment), prefix="experiment_lat_long_formset")
     if request.method == 'POST':
         with transaction.atomic():
+            form = experiment_form
+            if form.is_valid():
+                form.save()
             formset = experiment_population_formset
             if formset.is_valid():
                 instances = formset.save(commit=False)
@@ -413,6 +466,7 @@ def experiment(request, subject, publication_pk, experiment_index):
         'publication': publication,
         'experiment': experiment,
         'experiment_index': experiment_index,
+        'experiment_form': experiment_form,
         'experiment_crop_formset': experiment_crop_formset,
         'experiment_design_formset': experiment_design_formset,
         'experiment_lat_long_formset': experiment_lat_long_formset,
@@ -521,8 +575,8 @@ def browse_publications_by_intervention(request, subject):
         'interventions': Intervention.objects.all(),
     }
     if user.is_authenticated:
-        user_context = get_user_context(user, subject)
-        context.update(user_context)
+        status = get_status(user, subject)
+        context.update(status)
     return render(request, 'publications/browse_publications_by_intervention.html', context)
 
 
@@ -534,12 +588,13 @@ def browse_publications_by_outcome(request, subject):
         'outcomes': Outcome.objects.all(),
     }
     if user.is_authenticated:
-        user_context = get_user_context(user, subject)
-        context.update(user_context)
+        status = get_status(user, subject)
+        context.update(status)
     return render(request, 'publications/browse_publications_by_outcome.html', context)
 
 
 def publications_by_intervention(request, subject, path, instance):
+    user = request.user
     subject = Subject.objects.get(slug=subject)
     interventions = instance.get_descendants(include_self=True)
     experiments = Experiment.objects.filter(intervention__in=interventions)
@@ -548,10 +603,14 @@ def publications_by_intervention(request, subject, path, instance):
         'subject': subject,
         'publications': publications
     }
+    if user.is_authenticated:
+        status = get_status(user, subject)
+        context.update(status)
     return render(request, 'publications/publications.html', context)
 
 
 def publications_by_outcome(request, subject, path, instance):
+    user = request.user
     subject = Subject.objects.get(slug=subject)
     outcomes = instance.get_descendants(include_self=True)
     experiment_population_outcomes = ExperimentPopulationOutcome.objects.filter(outcome__in=outcomes)
@@ -562,6 +621,9 @@ def publications_by_outcome(request, subject, path, instance):
         'subject': subject,
         'publications': publications
     }
+    if user.is_authenticated:
+        status = get_status(user, subject)
+        context.update(status)
     return render(request, 'publications/publications.html', context)
 
 
@@ -587,6 +649,8 @@ def get_status(user, subject):
         assessment_order = literal_eval(item.assessment_order)
         next_assessment = item.next_assessment
         completed_assessments = literal_eval(item.completed_assessments)
+        completed_full_text_assessments = literal_eval(item.completed_full_text_assessments)
+        relevant_publications = literal_eval(item.relevant_publications)
 
         # If new publications have been added to the database, then randomly append their pks to the end of assessment_order.
         max_assessment_pks = max(assessment_order)
@@ -603,6 +667,7 @@ def get_status(user, subject):
 
         # If old publications have been deleted from the database (this should not happen in production), then delete their pks from assessment_order.
 
+    #TODO: This crashes if there is a subject for which no publications have yet been added to the database.
     # If an assessment_order has not been created for this user and subject, create it and save it in the database.
     else:
         pks = Publication.objects.filter(subject=subject).values_list('pk', flat=True)
@@ -610,18 +675,24 @@ def get_status(user, subject):
         shuffle(assessment_order)
         next_assessment = assessment_order[0]
         completed_assessments = []
+        completed_full_text_assessments = []
+        relevant_publications = []
         item = AssessmentStatus(
             subject=subject,
             user=user,
             assessment_order=assessment_order,
             next_assessment=next_assessment,
-            completed_assessments=completed_assessments
+            completed_assessments=completed_assessments,
+            completed_full_text_assessments=completed_full_text_assessments,
+            relevant_publications=relevant_publications
         )
         item.save()
     item = AssessmentStatus.objects.get(user=user, subject=subject)
 
     publications_count = len(assessment_order)
     publications_assessed_count = len(completed_assessments)
+    full_texts_assessed_count = len(completed_full_text_assessments)
+    relevant_publications_count = len(relevant_publications)
 
     if publications_count != 0:
         publications_assessed_percent = int(publications_assessed_count / publications_count * 100)
@@ -632,7 +703,10 @@ def get_status(user, subject):
         'item': item,
         'publications_count': publications_count,
         'publications_assessed_count': publications_assessed_count,
-        'publications_assessed_percent': publications_assessed_percent
+        'publications_assessed_percent': publications_assessed_percent,
+        'full_texts_assessed_count': full_texts_assessed_count,
+        'relevant_publications_count': relevant_publications_count,
+        'next_assessment': next_assessment
     }
 
     return(status)
@@ -650,19 +724,3 @@ def get_next_assessment(publication_pk, next_pk, assessment_order, completed_ass
             except:
                 next_assessment = assessment_order[0]
     return(next_assessment)
-
-
-def get_user_context(user, subject):
-    status = get_status(user, subject)
-    item = status.get('item')
-    next_assessment = item.next_assessment
-    publications_count = status.get('publications_count')
-    publications_assessed_count = status.get('publications_assessed_count')
-    publications_assessed_percent = status.get('publications_assessed_percent')
-    user_context = {
-        'publications_count': publications_count,
-        'publications_assessed_count': publications_assessed_count,
-        'publications_assessed_percent': publications_assessed_percent,
-        'next_assessment': next_assessment
-    }
-    return(user_context)

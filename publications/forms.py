@@ -1,7 +1,8 @@
 from django import forms
 from django.db import models
 from django.contrib.auth.forms import UserCreationForm
-from .models import Assessment, Publication, Experiment, ExperimentCrop, ExperimentDesign, ExperimentLatLong, ExperimentPopulation, ExperimentPopulationOutcome, Profile, User
+from mptt.forms import TreeNodeChoiceField
+from .models import Assessment, Publication, Intervention, Experiment, ExperimentCrop, ExperimentDesign, ExperimentLatLong, ExperimentPopulation, ExperimentPopulationOutcome, Profile, User
 
 
 class SignUpForm(UserCreationForm):
@@ -40,6 +41,13 @@ class AssessmentForm(forms.ModelForm):
     class Meta:
         model = Assessment
         fields = []
+
+
+class FullTextAssessmentForm(forms.ModelForm):
+
+    class Meta:
+        model = Assessment
+        fields = ['note']
 
 
 class PublicationForm(forms.ModelForm):

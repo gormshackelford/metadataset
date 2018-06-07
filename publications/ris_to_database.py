@@ -22,21 +22,43 @@ subject = 'cassava'
 subject = Subject.objects.get(subject=subject)
 
 # Load a csv file with the bibliography (exported from Zotero).
-with open('publications/data/test.txt', 'r') as f:
+with open('publications/data/publications.txt', 'r') as f:
     results = list(readris(f, mapping=TAG_KEY_MAPPING))
 
 for result in results:
     title = result.get('title', '')
+    if title == 'NA':
+        title = ''
     abstract = result.get('abstract', '')
+    if abstract == 'NA':
+        abstract = ''
     authors = result.get('authors', '')
+    if authors == 'NA':
+        authors = ''
     year = result.get('year', '')
-    journal = result.get('secondary_title', '')
+    if year == 'NA':
+        year = ''
+    journal = result.get('journal_name', '')
+    if journal == 'NA':
+        journal = ''
     volume = result.get('volume', '')
+    if volume == 'NA':
+        volume = ''
     issue = result.get('number', '')
+    if issue == 'NA':
+        issue = ''
     start_page = result.get('start_page', '')
+    if start_page == 'NA':
+        start_page = ''
     end_page = result.get('end_page', '')
+    if end_page == 'NA':
+        end_page = ''
     doi = result.get('doi', '')
+    if doi == 'NA':
+        doi = ''
     url = result.get('url', '')
+    if url == 'NA':
+        url = ''
 
     if start_page != '' and end_page != '':
         pages = '{start_page}-{end_page}'.format(start_page=start_page, end_page=end_page)

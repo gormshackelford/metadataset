@@ -16,14 +16,10 @@
   <h1>Outcomes</h1>
   {% recursetree outcomes %}
     <ul class="tree">
-    {% if node.is_root_node %}
-      <li class="root_node"><a href="{% url 'publications_by_outcome' subject=subject.slug path=node.get_path %}">{{ node.outcome }}</a></li>
-    {% else %}
-      <li><a href="{% url 'publications_by_outcome' subject=subject.slug path=node.get_path %}">{{ node.outcome }}</a></li>
-    {% endif %}
-    {% if not node.is_leaf_node %}
-      {{ children }}
-    {% endif %}
+      <li class="outcomes_level_{{ node.level }}"><a href="{% url 'publications_by_outcome' subject=subject.slug path=node.get_path %}">{{ node.outcome }}</a></li>
+      {% if not node.is_leaf_node %}
+        {{ children }}
+      {% endif %}
     </ul>
   {% endrecursetree %}
 

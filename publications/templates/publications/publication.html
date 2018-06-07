@@ -1,5 +1,7 @@
 {% extends 'publications/base.html' %}
 
+{% load metadataset_tags %}
+
 {% block title %}
   Publication | Metadataset | www.metadataset.com
 {% endblock %}
@@ -13,66 +15,73 @@
 
 <form method="post" action="">{% csrf_token %}
 
-  <h1>
-    Relevance to {{ subject }} <span class="red">{{ relevance }}</span>
-  </h1>
+  <h1>Stage 1: Title/Abstract <span class="red">{{ relevance }}</span></h1>
   <p>
-    If this publication is not relevant to this systematic review ({{ subject }}), click "not relevant" (you will automatically be redirected to the next publication). If it is relevant, click "relevant" or select an intervention from the drop-down menus below the abstract (the publication will automatically be marked as "relevant").
-
+    Based on the title/abstract, is this publication relevant to this systematic map?
     <!-- A hidden input so that pressing enter saves the form instead of marking the publication as not relevant -->
-    <input type="submit" name="save" style="visibility: hidden;" value="Save all changes" />
+    <input type="submit" name="save" style="visibility: hidden;" />
   </p>
   <p>
-    <input type="submit" name="is_not_relevant" value="Not relevant" />
     <input type="submit" name="is_relevant" value="Relevant" />
-    <a class="button" href="{% url 'publication' subject=subject.slug publication_pk=previous_pk %}">Back</a>
-    <a class="button" href="{% url 'publication' subject=subject.slug publication_pk=next_pk %}">Forward</a>
-  </p>
-  <p>Click "Back" and "Forward" only to revisit your previous assessments (to check or change them), but not to look for your next assessment. That way, your assessments will be made in a random order, which is best practice.
+    <input type="submit" name="is_not_relevant" value="Not relevant" />
+    <a class="button" href="{% url 'publication' subject=subject.slug publication_pk=previous_pk %}">Previous publication</a>
+    <a class="button" href="{% url 'publication' subject=subject.slug publication_pk=next_pk %}">Next publication</a>
   </p>
 
-  <h1>{{ publication.title|default:'[title not available]' }}</h1>
-
-  <p>
-    Search for the full text: <a target="_blank"
-    href="http://www.google.com/search?q={{ publication.google_string }}">Google</a>
-    {% if publication.doi != '' %}
-       | <a target="_blank" href="http://dx.doi.org/{{ publication.doi }}">DOI</a>
-    {% endif %}
-  </p>
+  <h1>Title</h1>
+  <p>{{ publication.title|default:'[title not available]' }}</p>
 
   <h1>Abstract</h1>
   <p>{{ publication.abstract|default:'[abstract not available]' }}</p>
 
+  <h1>Stage 2: Full Text {% if full_text_assessment_form.instance.note %}<span class="red">(not relevant based on full text)</span>{% endif %}</h1>
+  <p>
+    Search for the full text: <a target="_blank"
+      href="http://www.google.com/search?q={{ publication.google_string }}">Google</a>
+    {% if publication.doi != '' %}
+      | <a target="_blank" href="http://dx.doi.org/{{ publication.doi }}">DOI</a>
+    {% endif %}
+  </p>
+  <p>
+    Based on the full text, is this publication relevant to this systematic map? If it is not relevant, you must write the reason here (but if you assessed this publication as not relevant based on the title/abstract, do not enter any data here and do not click "not relevant based on full text").
+  </p>
+  <p>
+    {{ full_text_assessment_form.note }}
+    <input type="submit" name="full_text_is_not_relevant" value="Not relevant based on the full text" />
+  </p>
+
+  <h1>Interventions</h1>
+  <p>If it is relevant, you must select one or more interventions that were tested in this publication.</p>
+
   <table>
-    <tr><th colspan="4">Interventions</th></tr>
     <tr>
-      <td colspan="3"></td>
+      <td colspan="2">
+        {{ experiment_formset.management_form }}
+      </td>
       <td class="centered">Select</td>
     </tr>
-    {{ experiment_formset.management_form }}
     {% for form in experiment_formset %}
     <tr>
       <td>
         {% for hidden_field in form.hidden_fields %}
           {{ hidden_field }}
         {% endfor %}
-        {% if forloop.first %}
-          {{ form.intervention.label }}:
+        {% if form.instance.intervention %}
+          {{ form.instance.intervention }}{{ form.intervention.as_hidden }}
+        {% else %}
+          {{ form.intervention|add_class:"select_intervention" }}
         {% endif %}
       </td>
-      <td>{{ form.intervention }}</td>
       <td>
-      {% if form.instance.intervention %}
-        <a href="{% url 'experiment' subject=subject publication_pk=publication.pk experiment_index=forloop.counter0 %}">Populations</a>
-      {% endif %}
+        {% if form.instance.intervention %}
+          <a href="{% url 'experiment' subject=subject publication_pk=publication.pk experiment_index=forloop.counter0 %}">Populations</a>
+        {% endif %}
       </td>
       <td class="centered">{{ form.DELETE }}</td>
     </tr>
     {% endfor %}
     <tr>
-      <td class="bottom"></td>
-      <td class="button bottom"><input type="submit" name="save" value="Save all changes" /></td>
+      <td class="button bottom"><input type="submit" name="save" value="Save interventions" /></td>
       <td class="bottom"></td>
       <td class="bottom button"><input type="submit" name="delete" value="Delete selected" /></td>
     </tr>

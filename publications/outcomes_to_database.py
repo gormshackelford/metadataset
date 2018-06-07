@@ -22,23 +22,26 @@ csv = "publications/data/outcomes.csv"
 df = pd.read_csv(csv, encoding="utf-8")
 
 for row in df.itertuples():
+    code = str(row.Code1) + '.'
     level1 = row.Level1
-    level1, created = Outcome.objects.get_or_create(outcome=level1)
+    level1, created = Outcome.objects.get_or_create(outcome=level1, code=code)
+    code = code + str(row.Code2) + '.'
     level2 = row.Level2
     if not pd.isnull(level2):
-        level2, created = Outcome.objects.get_or_create(outcome=level2, parent=level1)
+        level2, created = Outcome.objects.get_or_create(outcome=level2, code=code, parent=level1)
+    code = code + str(row.Code3) + '.'
     level3 = row.Level3
     if not pd.isnull(level3):
-        level3, created = Outcome.objects.get_or_create(outcome=level3, parent=level2)
+        level3, created = Outcome.objects.get_or_create(outcome=level3, code=code, parent=level2)
     level4 = row.Level4
     if not pd.isnull(level4):
-        level4, created = Outcome.objects.get_or_create(outcome=level4, parent=level3)
+        level4, created = Outcome.objects.get_or_create(outcome=level4, code='', parent=level3)
     level5 = row.Level5
     if not pd.isnull(level5):
-        level5, created = Outcome.objects.get_or_create(outcome=level5, parent=level4)
+        level5, created = Outcome.objects.get_or_create(outcome=level5, code='', parent=level4)
     level6 = row.Level6
     if not pd.isnull(level6):
-        level6, created = Outcome.objects.get_or_create(outcome=level6, parent=level5)
+        level6, created = Outcome.objects.get_or_create(outcome=level6, code='', parent=level5)
     level7 = row.Level7
     if not pd.isnull(level7):
-        level7, created = Outcome.objects.get_or_create(outcome=level7, parent=level6)
+        level7, created = Outcome.objects.get_or_create(outcome=level7, code='', parent=level6)

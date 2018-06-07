@@ -9,6 +9,9 @@ config.json
 config.py
 db.sqlite3
 geckodriver.log
+publications/data/publications.txt
+web_scraping/
 venv
+
 
 

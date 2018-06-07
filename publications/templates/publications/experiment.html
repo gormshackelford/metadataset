@@ -12,8 +12,11 @@
 
 <h1>Intervention: {{ experiment.intervention|capfirst }}</h1>
 <p><a href="{% url 'publication' subject=subject.slug publication_pk=publication.pk %}">Back to all interventions</a></p>
+<p>If possible, please select a more specific intervention from this more detailed list.</p>
 
 <form method="post" action="">{% csrf_token %}
+  {{ experiment_form.intervention }}
+
   <table>
     <tr><th colspan="3">Populations</th></tr>
     <tr>

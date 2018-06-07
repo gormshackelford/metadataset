@@ -109,6 +109,10 @@ if DEBUG:
        'INTERCEPT_REDIRECTS': False,
    }
 
+   # For deleting large numbers of uploaded RIS files when testing
+   DATA_UPLOAD_MAX_NUMBER_FIELDS = 50000
+
+
 # Database
 # https://docs.djangoproject.com/en/2.0/ref/settings/#databases
 

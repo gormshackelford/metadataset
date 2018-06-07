@@ -16,14 +16,10 @@
   <h1>Interventions</h1>
   {% recursetree interventions %}
     <ul class="tree">
-    {% if node.is_root_node %}
-      <li class="root_node"><a href="{% url 'publications_by_intervention' subject=subject.slug path=node.get_path %}">{{ node.intervention }}</a></li>
-    {% else %}
-      <li><a href="{% url 'publications_by_intervention' subject=subject.slug path=node.get_path %}">{{ node.intervention }}</a></li>
-    {% endif %}
-    {% if not node.is_leaf_node %}
-      {{ children }}
-    {% endif %}
+      <li class="level_{{ node.level }}"><a href="{% url 'publications_by_intervention' subject=subject.slug path=node.get_path %}">{{ node.intervention }}</a></li>
+      {% if not node.is_leaf_node %}
+        {{ children }}
+      {% endif %}
     </ul>
   {% endrecursetree %}
 

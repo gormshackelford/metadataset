@@ -141,6 +141,7 @@ class Intervention(MPTTModel):
     intervention = models.CharField(max_length=254)
     parent = TreeForeignKey('self', null=True, blank=True, related_name='children', db_index=True, on_delete=models.CASCADE)
     slug = models.SlugField(max_length=510)
+    code = models.CharField(max_length=22, null=True, blank=True)
 
     def save(self, *args, **kwargs):
         self.slug = slugify(self.intervention)
@@ -150,7 +151,7 @@ class Intervention(MPTTModel):
         return self.intervention
 
     class MPTTMeta:
-        order_insertion_by = ['intervention']
+        order_insertion_by = ['code']
 
     class Meta:
         unique_together = ('slug', 'parent')
@@ -164,6 +165,7 @@ class Outcome(MPTTModel):
     outcome = models.CharField(max_length=254)
     parent = TreeForeignKey('self', null=True, blank=True, related_name='children', db_index=True, on_delete=models.CASCADE)
     slug = models.SlugField(max_length=510)
+    code = models.CharField(max_length=22, null=True, blank=True)
 
     def save(self, *args, **kwargs):
         self.slug = slugify(self.outcome)
@@ -173,7 +175,7 @@ class Outcome(MPTTModel):
         return self.outcome
 
     class MPTTMeta:
-        order_insertion_by = ['outcome']
+        order_insertion_by = ['code']
 
     class Meta:
         unique_together = ('slug', 'parent')
@@ -211,10 +213,10 @@ class Design(models.Model):
 
 # Intersection tables
 
-# We define an "experment" as one "intervention" that is described in one "publication". We use the "PICO" terminology for describing experiments ("P" = "Population", "I" = "Intervention", "C" = "Comparison", and "O" = "Outcome"). In our data model, one experiment can have multiple "populations" and one "population" can have multiple "outcomes" (e.g., effects of intercropping [intervention] on crop yield [population = crop; outcome = crop yield] and soil nutrients [population = soil; outcome = soil nitrogen; outcome = soil phosphorus]).
+# We define an "experment" (i.e. a "study") as one "intervention" that is described in one "publication". We use the "PICO" terminology for describing experiments ("P" = "Population", "I" = "Intervention", "C" = "Comparison", and "O" = "Outcome"). In our data model, one experiment can have multiple "populations" and one "population" can have multiple "outcomes" (e.g., effects of intercropping [intervention] on crop yield [population = crop; outcome = crop yield] and soil nutrients [population = soil; outcome = soil nitrogen; outcome = soil phosphorus]).
 class Experiment(models.Model):
     publication = models.ForeignKey(Publication, on_delete=models.CASCADE)
-    intervention = models.ForeignKey(Intervention, on_delete=models.CASCADE)
+    intervention = models.ForeignKey(Intervention, blank=True, null=True, on_delete=models.CASCADE)
     created = models.DateTimeField(auto_now_add=True)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
 
@@ -331,6 +333,8 @@ class ExperimentPopulationOutcome(models.Model):
 class Assessment(models.Model):
     publication = models.ForeignKey(Publication, on_delete=models.CASCADE)
     is_relevant = models.BooleanField()
+    full_text_is_relevant = models.NullBooleanField()
+    note = models.TextField(blank=True, null=True)
     subject = models.ForeignKey(Subject, on_delete=models.CASCADE)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
 
@@ -347,6 +351,8 @@ class AssessmentStatus(models.Model):
     assessment_order = models.TextField()
     next_assessment = models.IntegerField(blank=True, null=True)
     completed_assessments = models.TextField(blank=True)
+    completed_full_text_assessments = models.TextField(blank=True)
+    relevant_publications = models.TextField(blank=True)
 
     def __str__(self):
         return 'Progress report for "{user}" and subject "{subject}"'.format(user=self.user.email, subject=self.subject)

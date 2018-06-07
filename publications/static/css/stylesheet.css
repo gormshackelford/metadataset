@@ -1,351 +1,407 @@
 body {
-    color: black;
-    font-family: "Noto Serif", serif;
-    font-size: 1em;
-    line-height: 1.5em;
-    background: #E0E0E0;
-    width: 97%;
-    margin: 0 auto;
+  color: black;
+  font-family: "Noto Serif", serif;
+  font-size: 1em;
+  line-height: 1.5em;
+  background: #E0E0E0;
+  width: 97%;
+  margin: 0 auto;
 }
 
 a, button, div, form, h1, h2, h3, hr, input, li, option, p, select, sub, sup, table, textarea, td, tr, ul {
-    font-family: inherit;
-    font-size: inherit;
-    line-height: inherit;
-    margin: 0;
-    padding: 0;
-    -webkit-text-size-adjust: 100%;
+  font-family: inherit;
+  font-size: inherit;
+  line-height: inherit;
+  margin: 0;
+  padding: 0;
+  -webkit-text-size-adjust: 100%;
 }
 
 textarea, input[type="text"], input[type="button"], input[type="submit"], input[type="password"], input[type="number"], .input-checkbox {
-    -webkit-appearance: none;
-    -webkit-border-radius: 0;
-    -moz-appearance : none;
-    -moz-border-radius: 0;
-    border-radius: 0;
+  -webkit-appearance: none;
+  -webkit-border-radius: 0;
+  -moz-appearance : none;
+  -moz-border-radius: 0;
+  border-radius: 0;
 }
 
 a, a:visited {
-    color: #3399ff;
-    text-decoration: none;
+  color: #3399ff;
+  text-decoration: none;
 }
 
 a:hover {
-    color: #ff6666;
-    text-decoration: underline;
+  color: #ff6666;
+  text-decoration: underline;
 }
 
 a.button, a.button:visited {
-    display: inline-block;
-    color: black;
-    text-decoration: none;
-    font-size: 1em;
-    padding-left: 0.25em;
-    padding-right: 0.25em;
-    background-color: #E0E0E0;
-    border: solid 1px black;
-    border-radius: 0;
-    line-height: calc(1.5em - 2px);
+  display: inline-block;
+  color: black;
+  text-decoration: none;
+  font-size: 1em;
+  padding-left: 0.25em;
+  padding-right: 0.25em;
+  background-color: #E0E0E0;
+  border: solid 1px black;
+  border-radius: 0;
+  line-height: calc(1.5em - 2px);
 }
 
 a.button:hover {
-    color: black;
-    background-color: #ff6666;
-    text-decoration: none;
+  color: black;
+  background-color: #ff6666;
+  text-decoration: none;
 }
 
 a.navigation_button, a.navigation_button:visited {
-    font-family: "Noto Serif", serif;
-    color: #ff6666;
-    text-decoration: none;
+  font-family: "Noto Serif", serif;
+  color: #ff6666;
+  text-decoration: none;
 }
 
 a.navigation_button:hover {
-    text-decoration: underline;
+  text-decoration: underline;
 }
 
 h1, h2, h3 {
-    font-family: "Noto Serif", serif;
-    font-style: normal;
-    font-weight: normal;
+  font-family: "Noto Serif", serif;
+  font-style: normal;
+  font-weight: normal;
 }
 
 h1 {
-    font-size: 2em;
-    line-height: 1.5em;
-    margin-top: 2.5em;
-    margin-bottom: 0.5em;
+  font-size: 2em;
+  line-height: 1.5em;
+  margin-top: 1.5em;
+  margin-bottom: 0.5em;
 }
 
 h2 {
-    font-weight: bold;
-    margin-top: 2em;
+  font-weight: bold;
+  margin-top: 2em;
 }
 
 h3 {
-    font-style: italic;
-    font-weight: bold;
-    margin-top: 2em;
+  font-style: italic;
+  font-weight: bold;
+  margin-top: 2em;
 }
 
 input[type="number"] {
-    font-size: 1em;
-    padding-left: 0.25em;
-    padding-right: 0.25em;
-    box-sizing: border-box;
-    border-style: none;
-    border: solid 1px #E0E0E0;
-    width: 25%;
-    line-height: calc(1.5em - 2px);
+  font-size: 1em;
+  padding-left: 0.25em;
+  padding-right: 0.25em;
+  box-sizing: border-box;
+  border-style: none;
+  border: solid 1px #E0E0E0;
+  width: 25%;
+  line-height: calc(1.5em - 2px);
 }
 
 input[type=text], input[type=email], input[type=password] {
-    font-size: 1em;
-    padding-left: 0.25em;
-    padding-right: 0.25em;
-    box-sizing: border-box;
-    border-style: none;
-    border: solid 1px #E0E0E0;
-    width: 100%;
-    line-height: calc(1.5em - 2px);
+  font-size: 1em;
+  padding-left: 0.25em;
+  padding-right: 0.25em;
+  box-sizing: border-box;
+  border-style: none;
+  border: solid 1px #E0E0E0;
+  width: 100%;
+  line-height: calc(1.5em - 2px);
 }
 
 input[type="submit"] {
-    color: black;
-    font-size: 1em;
-    padding-left: 0.25em;
-    padding-right: 0.25em;
-    background-color: #E0E0E0;
-    border: solid 1px black;
-    border-radius: 0;
-    line-height: calc(1.5em - 2px);
+  color: black;
+  font-size: 1em;
+  padding-left: 0.25em;
+  padding-right: 0.25em;
+  background-color: #E0E0E0;
+  border: solid 1px black;
+  border-radius: 0;
+  line-height: calc(1.5em - 2px);
 }
 
 input[type="submit"]:hover {
-    color: black;
-    background-color: #ff6666;
-    cursor: pointer;
+  color: black;
+  background-color: #ff6666;
+  cursor: pointer;
 }
 
 li {
-    margin-top: 1.5em;
-    line-height: 1.5em;
+  margin-top: 1.5em;
+  line-height: 1.5em;
 }
 
-li.root_node {
-    font-size: 2em;
+li.level_0 {
+  font-weight: bold;
+}
+
+li.level_1 {
+  text-decoration: underline;
+}
+
+li.level_2 {
+  font-weight: bold;
+  font-style: italic;
+}
+
+li.level_3 {
+}
+
+li.level_4 {
+  list-style-type: disc;
+  font-style: italic;
+}
+
+li.level_5 {
+  list-style-type: circle;
+  font-style: italic;
+}
+
+li.outcomes_level_0 {
+  font-weight: bold;
+}
+
+li.outcomes_level_1 {
+  text-decoration: underline;
+}
+
+li.outcomes_level_2 {
+  list-style-type: disc;
+  font-style: italic;
+}
+
+li.outcomes_level_3 {
+  list-style-type: circle;
+  font-style: italic;
+}
+
+li.outcomes_level_4 {
+  list-style-type: circle;
+  font-style: italic;
+}
+
+li.outcomes_level_5 {
 }
 
 p {
-    line-height: 1.5em;
-    margin-bottom: 1.5em;
+  line-height: 1.5em;
+  margin-bottom: 1.5em;
 }
 
 p.hr {
-    margin-top: 1.5em;
-    margin-top: calc(1.5em - 1px);
-    border-bottom: solid 1px black;
+  margin-top: 1.5em;
+  margin-top: calc(1.5em - 1px);
+  border-bottom: solid 1px black;
 }
 
 select[multiple] {
-    height: 15em;
-    width: 100%;
-    padding-left: 0.25em;
-    padding-right: 0.25em;
-    border-style: none;
-    border: solid 1px #E0E0E0;
-    line-height: calc(1.5em - 2px);
+  height: 15em;
+  width: 100%;
+  padding-left: 0.25em;
+  padding-right: 0.25em;
+  border-style: none;
+  border: solid 1px #E0E0E0;
+  line-height: calc(1.5em - 2px);
+}
+
+select.select_intervention {
+  width: 100%;
 }
 
 span.button {
-    display: inline-block;
-    text-decoration: none;
-    font-size: 1em;
-    padding-left: 0.25em;
-    padding-right: 0.25em;
-    background-color: white;
-    border: solid 1px black;
-    border-radius: 0;
-    line-height: calc(1.5em - 2px);
+  display: inline-block;
+  text-decoration: none;
+  font-size: 1em;
+  padding-left: 0.25em;
+  padding-right: 0.25em;
+  background-color: white;
+  border: solid 1px black;
+  border-radius: 0;
+  line-height: calc(1.5em - 2px);
 }
 
 span.active {
-    background-color: #ff6666;
+  background-color: #ff6666;
 }
 
 span.heading {
-    font-family: "Noto Serif", serif;
-    font-weight: bold;
+  font-family: "Noto Serif", serif;
+  font-weight: bold;
 }
 
 span.red {
-    color: #ff6666;
+  color: #ff6666;
 }
 
 span.underline {
-    text-decoration: underline;
+  text-decoration: underline;
 }
 
 sub, sup {
-    font-size: 0.8em;
-    vertical-align: baseline;
-    position: relative;
-    top: -0.4em;
+  font-size: 0.8em;
+  vertical-align: baseline;
+  position: relative;
+  top: -0.4em;
 }
 
 sub {
-    top: 4em;
+  top: 4em;
 }
 
 table {
-    border-spacing: 0;
-    border-collapse: collapse;
-    margin-top: 3em;
+  border-spacing: 0;
+  border-collapse: collapse;
+  margin-top: 3em;
 }
 
 table.assessment {
-    margin-left: -0.5em;
-    margin-bottom: 1em;
-    border-collapse: separate;
-    border-spacing: 0.5em;
+  margin-left: -0.5em;
+  margin-bottom: 1em;
+  border-collapse: separate;
+  border-spacing: 0.5em;
 }
 
 table.search {
-    width: 100%;
+  width: 100%;
 }
 
 textarea {
-    font-size: 1em;
-    padding: 0.25em;
-    box-sizing: border-box;
-    border-style: none;
-    border: solid 1px #E0E0E0;
-    width: 100%;
-    line-height: calc(1.5em - 2px);
+  font-size: 1em;
+  padding: 0.25em;
+  box-sizing: border-box;
+  border-style: none;
+  border: solid 1px #E0E0E0;
+  width: 100%;
+  line-height: calc(1.5em - 2px);
 }
 
 th {
-    font-size: 2em;
-    font-weight: normal;
-    text-align: left;
-    line-height: 1.5em;
+  font-size: 2em;
+  font-weight: normal;
+  text-align: left;
+  line-height: 1.5em;
 }
 
 td {
-    padding-top: 0.25em;
-    padding-bottom: 0.25em;
-    padding-right: 0.5em;
-    border-top: solid 1px #E0E0E0;
-    border-bottom: solid 1px #E0E0E0;
-    line-height: calc(1.5em - 2px);
+  padding-top: 0.25em;
+  padding-bottom: 0.25em;
+  padding-right: 0.5em;
+  border-top: solid 1px #E0E0E0;
+  border-bottom: solid 1px #E0E0E0;
+  line-height: calc(1.5em - 2px);
 }
 
 td.assessment {
-    padding: 0.5em;
-    border: 0;
+  padding: 0.5em;
+  border: 0;
 }
 
 td.assessment.grey {
-    background-color: #F0F0F0;
+  background-color: #F0F0F0;
 }
 
 td.assessment.red {
-    background-color: #ff6666;
+  background-color: #ff6666;
 }
 
 td.assessment.yellow {
-    background-color: #ffff80;
+  background-color: #ffff80;
 }
 
 td.centered {
-    text-align: center;
+  text-align: center;
 }
 
 td.empty {
-    border: none;
+  border: none;
 }
 
 td.bottom {
-    border-bottom: none;
+  border-bottom: none;
+}
+
+td.input_intervention {
+width: 200px;
 }
 
 td.search {
-    border: none;
+  border: none;
 }
 
 td.ml {
-    padding-right: 1em;
+  padding-right: 1em;
 }
 
 td.scoreboard {
-    padding-right: 1em;
+  padding-right: 1em;
 }
 
 td.top {
-    border-top: none;
+  border-top: none;
 }
 
 tr {
-    line-height: 1.5em;
+  line-height: 1.5em;
 }
 
 ul {
-    margin-top: 1.5em;
-    padding-left: 2em;
+  margin-top: 1.5em;
+  padding-left: 2em;
 }
 
 ul.tree {
-    list-style: none;
-    padding-left: 2em;
+  list-style: none;
+  padding-left: 2em;
 }
 
 #page {
-    background: white;
-    border: solid 1em white;
-    margin-top: 1em;
-    overflow: auto;
+  background: white;
+  border: solid 1em white;
+  margin-top: 1em;
+  overflow: auto;
 }
 
 #header {
-    font-size: 1em;
-    min-height: 4em;
-    padding-bottom: 1em;
-    border-bottom: solid 1px black;
+  font-size: 1em;
+  min-height: 4em;
+  padding-bottom: 1em;
+  border-bottom: solid 1px black;
 }
 
 #logo {
-    float: left;
-    height: 6em;
+  float: left;
+  height: 6em;
 }
 
 #content {
-    margin-bottom: 1.5em;
+  margin-bottom: 1.5em;
 }
 
 #classification_tree {
-    margin-top: 1.5em;
-    width: 75%;
+  margin-top: 1.5em;
+  width: 75%;
 }
 
 .navigation_text, .navigation_text:visited {
-    font-family: "Noto Serif", serif;
-    line-height: 6em;
+  font-family: "Noto Serif", serif;
+  line-height: 6em;
 }
 
 .button {
-    color: black;
-    text-decoration: none;
+  color: black;
+  text-decoration: none;
 }
 
 .indented {
-    margin-left: 2em;
-    margin-right: 2em;
+  margin-left: 2em;
+  margin-right: 2em;
 }
 
 .bold {
-    font-weight: bold;
+  font-weight: bold;
 }
 
 .italic {
-    font-style: italic;
+  font-style: italic;
 }
