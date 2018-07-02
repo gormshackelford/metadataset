@@ -1,6 +1,6 @@
 <h1>{{ subject|capfirst }}: publications</h1>
 <p>
-  <a href="{% url 'publications' subject=subject.slug %}">All publications</a> ({{ publications_count }})
+  <a href="{% url 'publications' subject=subject.slug %}">All publications</a>
   <br />
   <a href="{% url 'browse_publications_by_intervention' subject=subject.slug %}">Publications by intervention</a>
   <br />
@@ -11,20 +11,26 @@
     <a href="{% url 'publication' subject=subject.slug publication_pk=next_assessment %}">Your next assessment</a> <span class="red">(start or restart here)</span>
     <br />
     <br />
-    {{ publications_assessed_count }} of {{ publications_count }} titles/abstracts ({{ publications_assessed_percent }}%)
+    Your assessments of titles/abstracts
     <br />
-    Relevant based on title/abstract
+    {{ publications_assessed_count }} of {{ publications_count }} complete ({{ publications_assessed_percent }}%)
     <br />
-    Not relevant based on title/abstract
+    <a href="{% url 'publications' subject=subject.slug state='relevant' %}">Relevant</a>
+    <br />
+    <a href="{% url 'publications' subject=subject.slug state='not_relevant' %}">Not relevant</a>
+    <br />
+    <a href="{% url 'publications' subject=subject.slug state='not_assessed' %}">Not yet assessed</a>
     <br />
     <br />
-    {{ full_texts_assessed_count }} of {{ relevant_publications_count }} full texts ({{ publications_assessed_percent }}%)
+    Your assessments of full texts
     <br />
-    Relevant based on full text
+    {{ full_texts_assessed_count }} of {{ relevant_publications_count }} complete ({{ full_texts_assessed_percent}}%)
     <br />
-    Not relevant based on full text
+    <a href="{% url 'publications' subject=subject.slug state='relevant_full_texts' %}">Relevant</a>
     <br />
-    Not yet assessed based on full text
+    <a href="{% url 'publications' subject=subject.slug state='not_relevant_full_texts' %}">Not relevant</a>
+    <br />
+    <a href="{% url 'publications' subject=subject.slug state='not_assessed_full_texts' %}">Not yet assessed</a>
   {% endif %}
 </p>
 

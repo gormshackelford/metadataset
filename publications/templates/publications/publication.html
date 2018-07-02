@@ -15,7 +15,14 @@
 
 <form method="post" action="">{% csrf_token %}
 
-  <h1>Stage 1: Title/Abstract <span class="red">{{ relevance }}</span></h1>
+  <h1>
+    Stage 1: Title/Abstract
+    {% if is_relevant == 'True' %}
+      <span class="grey">(relevant)</span>
+    {% elif is_relevant == 'False' %}
+      <span class="red">(not relevant)</span>
+    {% endif %}
+  </h1>
   <p>
     Based on the title/abstract, is this publication relevant to this systematic map?
     <!-- A hidden input so that pressing enter saves the form instead of marking the publication as not relevant -->
@@ -34,7 +41,14 @@
   <h1>Abstract</h1>
   <p>{{ publication.abstract|default:'[abstract not available]' }}</p>
 
-  <h1>Stage 2: Full Text {% if full_text_assessment_form.instance.note %}<span class="red">(not relevant based on full text)</span>{% endif %}</h1>
+  <h1>
+    Stage 2: Full Text
+    {% if full_text_is_relevant == 'True' %}
+      <span class="grey">(relevant)</span>
+    {% elif full_text_is_relevant == 'False' %}
+      <span class="red">(not relevant)</span>
+    {% endif %}
+  </h1>
   <p>
     Search for the full text: <a target="_blank"
       href="http://www.google.com/search?q={{ publication.google_string }}">Google</a>
@@ -43,7 +57,7 @@
     {% endif %}
   </p>
   <p>
-    Based on the full text, is this publication relevant to this systematic map? If it is not relevant, you must write the reason here (but if you assessed this publication as not relevant based on the title/abstract, do not enter any data here and do not click "not relevant based on full text").
+    Based on the full text, is this publication relevant to this systematic map? If it is not relevant, you must write the reason here (but if you already assessed this publication as not relevant based on the title/abstract, do not write anything here and do not click "not relevant based on full text").
   </p>
   <p>
     {{ full_text_assessment_form.note }}
@@ -51,7 +65,7 @@
   </p>
 
   <h1>Interventions</h1>
-  <p>If it is relevant, you must select one or more interventions that were tested in this publication.</p>
+  <p>If this publication is relevant, you must select one or more interventions that were tested in this publication.</p>
 
   <table>
     <tr>

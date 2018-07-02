@@ -68,10 +68,68 @@ def subject(request, subject):
     return render(request, 'publications/subject.html', context)
 
 
-def publications(request, subject):
+def publications(request, subject, state='all'):
     user = request.user
     subject = Subject.objects.get(slug=subject)
-    publications = Publication.objects.filter(subject=subject).order_by('title')
+    # All publications
+    if (state == 'all'):
+        publications = Publication.objects.filter(subject=subject).order_by('title')
+    # Publications that this user has assessed as relevant based on title/abstract
+    elif (state == 'relevant'):
+        publications = Publication.objects.distinct().filter(
+            assessment__in=Assessment.objects.filter(
+                subject=subject,
+                user=user,
+                is_relevant=True
+            )
+        ).order_by('title')
+    # Publications that this user has assessed as not relevant based on title/abstract
+    elif (state == 'not_relevant'):
+        publications = Publication.objects.distinct().filter(
+            assessment__in=Assessment.objects.filter(
+                subject=subject,
+                user=user,
+                is_relevant=False
+            )
+        ).order_by('title')
+    # Publications that this user has not yet assessed based on title/abstract
+    elif (state == 'not_assessed'):
+        publications = Publication.objects.distinct().exclude(
+            assessment__in=Assessment.objects.filter(
+                subject=subject,
+                user=user
+            )
+        ).order_by('title')
+    # Publications that this user has assessed as relevant based on full text
+    elif (state == 'relevant_full_texts'):
+        publications = Publication.objects.distinct().filter(
+            assessment__in=Assessment.objects.filter(
+                subject=subject,
+                user=user,
+                is_relevant=True,  # is_relevant based on title/abstract
+                full_text_is_relevant=True
+            )
+        ).order_by('title')
+    # Publications that this user has assessed as not relevant based on full text
+    elif (state == 'not_relevant_full_texts'):
+        publications = Publication.objects.distinct().filter(
+            assessment__in=Assessment.objects.filter(
+                subject=subject,
+                user=user,
+                is_relevant=True,  # is_relevant based on title/abstract
+                full_text_is_relevant=False
+            )
+        ).order_by('title')
+    # Publications that this user has not yet assessed based on full text
+    elif (state == 'not_assessed_full_texts'):
+        publications = Publication.objects.distinct().filter(
+            assessment__in=Assessment.objects.filter(
+                subject=subject,
+                user=user,
+                is_relevant=True,  # is_relevant based on title/abstract
+                full_text_is_relevant=None
+            )
+        ).order_by('title')
     page = request.GET.get('page', 1)
     paginator = Paginator(publications, 10)
     try:
@@ -210,10 +268,23 @@ def publication(request, subject, publication_pk):
         assessment = Assessment.objects.get(publication=publication, user=user, subject=subject)
         assessment_form = AssessmentForm(data=data, instance=assessment, prefix="assessment_form")
         full_text_assessment_form = FullTextAssessmentForm(data=data, instance=assessment, prefix="full_text_assessment_form")
+        # Get relevance for context.
+        if assessment.is_relevant == True:
+            is_relevant = 'True'
+        else:
+            is_relevant = 'False'
+        if assessment.full_text_is_relevant == True:
+            full_text_is_relevant = 'True'
+        elif assessment.full_text_is_relevant == False:
+            full_text_is_relevant = 'False'
+        else:
+            full_text_is_relevant = ''  # Not yet assessed
     else:
         assessment_form = AssessmentForm(data=data, prefix="assessment_form")
         full_text_assessment_form = FullTextAssessmentForm(data=data, prefix="full_text_assessment_form")
-        relevance = ""
+        is_relevant = ''  # Not yet assessed
+        full_text_is_relevant = ''  # Not yet assessed
+
     # Formset for this publication
     formset = ExperimentFormSet(data=data, queryset=Experiment.objects.filter(publication=publication), prefix="experiment_formset")
     if request.method == 'POST':
@@ -358,21 +429,14 @@ def publication(request, subject, publication_pk):
         # Intervention choices for the formset (high-level choices only)
         for form in formset:
             form.fields['intervention'] = TreeNodeChoiceField(required=False, queryset=Intervention.objects.all().get_descendants(include_self=True).filter(level__lte=1), level_indicator = "---")
-    if Assessment.objects.filter(publication=publication, user=user).exists():
-        assessment = Assessment.objects.get(publication=publication, user=user)
-        if assessment.is_relevant == False:
-            relevance = "(not relevant)"
-        else:
-            relevance = ""
-    else:
-        relevance = ""
     context = {
         'subject': subject,
         'publication': publication,
         'assessment_form': assessment_form,
         'full_text_assessment_form': full_text_assessment_form,
         'experiment_formset': formset,
-        'relevance': relevance,
+        'is_relevant': is_relevant,
+        'full_text_is_relevant': full_text_is_relevant,
         'next_pk': next_pk,
         'previous_pk': previous_pk
     }
@@ -627,19 +691,6 @@ def publications_by_outcome(request, subject, path, instance):
     return render(request, 'publications/publications.html', context)
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
 def get_status(user, subject):
     # Publications should be assessed in a random order, but each user should see the same order from session to session. Therefore, a random assessment_order is created for each user (for each subject), and it is saved in the database.
 
@@ -665,7 +716,7 @@ def get_status(user, subject):
             item.assessment_order = assessment_order
             item.save()
 
-        # If old publications have been deleted from the database (this should not happen in production), then delete their pks from assessment_order.
+        #TODO: If old publications have been deleted from the database (this should not happen in production), then delete their pks from assessment_order.
 
     #TODO: This crashes if there is a subject for which no publications have yet been added to the database.
     # If an assessment_order has not been created for this user and subject, create it and save it in the database.
@@ -688,27 +739,28 @@ def get_status(user, subject):
         )
         item.save()
     item = AssessmentStatus.objects.get(user=user, subject=subject)
-
     publications_count = len(assessment_order)
     publications_assessed_count = len(completed_assessments)
     full_texts_assessed_count = len(completed_full_text_assessments)
     relevant_publications_count = len(relevant_publications)
-
     if publications_count != 0:
         publications_assessed_percent = int(publications_assessed_count / publications_count * 100)
     else:
         publications_assessed_percent = 100
-
+    if full_texts_assessed_count != 0:
+        full_texts_assessed_percent = int(full_texts_assessed_count / relevant_publications_count * 100)
+    else:
+        full_texts_assessed_percent = 100
     status = {
         'item': item,
         'publications_count': publications_count,
         'publications_assessed_count': publications_assessed_count,
         'publications_assessed_percent': publications_assessed_percent,
         'full_texts_assessed_count': full_texts_assessed_count,
+        'full_texts_assessed_percent': full_texts_assessed_percent,
         'relevant_publications_count': relevant_publications_count,
         'next_assessment': next_assessment
     }
-
     return(status)
 
 
