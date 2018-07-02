@@ -153,9 +153,6 @@ class Intervention(MPTTModel):
     class MPTTMeta:
         order_insertion_by = ['code']
 
-    class Meta:
-        unique_together = ('slug', 'parent')
-
 
 # "Comparison" is the "C" in "PICO". It is a field in the model for effect sizes ("ExperimentPopulationOutcome").
 
@@ -177,9 +174,6 @@ class Outcome(MPTTModel):
     class MPTTMeta:
         order_insertion_by = ['code']
 
-    class Meta:
-        unique_together = ('slug', 'parent')
-
 
 class Crop(MPTTModel):
     crop = models.CharField(max_length=126)
@@ -198,9 +192,6 @@ class Crop(MPTTModel):
 
     class MPTTMeta:
         order_insertion_by = ['crop']
-
-    class Meta:
-        unique_together = ('slug', 'parent')
 
 
 # Experimental design (e.g., "replicated", "randomized", "controlled")
