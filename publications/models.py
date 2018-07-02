@@ -219,9 +219,6 @@ class ExperimentCrop(models.Model):
     experiment = models.ForeignKey(Experiment, on_delete=models.CASCADE)
     crop = models.ForeignKey(Crop, on_delete=models.CASCADE)
 
-    class Meta:
-        unique_together = ('experiment', 'crop')
-
     def __str__(self):
         return self.experiment.publication.title
 
