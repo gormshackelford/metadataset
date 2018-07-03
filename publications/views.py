@@ -12,8 +12,8 @@ from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from ast import literal_eval
 from random import shuffle
 from .tokens import account_activation_token
-from .forms import PublicationForm, AssessmentForm, FullTextAssessmentForm, ExperimentForm, ExperimentCropForm, ExperimentDesignForm, ExperimentLatLongForm, ExperimentPopulationForm, ExperimentPopulationOutcomeForm, EffectForm, SignUpForm
-from .models import Assessment, AssessmentStatus, Crop, Experiment, Intervention, Outcome, Population, ExperimentCrop, ExperimentDesign, ExperimentLatLong, ExperimentPopulation, ExperimentPopulationOutcome, Publication, Subject, User
+from .forms import PublicationForm, AssessmentForm, FullTextAssessmentForm, ExperimentForm, ExperimentCountryForm, ExperimentCropForm, ExperimentDesignForm, ExperimentLatLongForm, ExperimentPopulationForm, ExperimentPopulationOutcomeForm, EffectForm, SignUpForm
+from .models import Assessment, AssessmentStatus, Crop, Experiment, Intervention, Outcome, Population, ExperimentCountry, ExperimentCrop, ExperimentDesign, ExperimentLatLong, ExperimentPopulation, ExperimentPopulationOutcome, Publication, Subject, User
 from mptt.forms import TreeNodeChoiceField
 
 
@@ -448,13 +448,14 @@ def publication(request, subject, publication_pk):
 @login_required
 def experiment(request, subject, publication_pk, experiment_index):
     """
-    On this page, the user chooses populations, experimental designs, crops, IUCN actions, IUCN threats, and coordinates for this intervention (AKA "experiment").
+    On this page, the user chooses populations, experimental designs, crops, countries, and coordinates for this intervention (AKA "experiment").
     """
     user = request.user
     data = request.POST or None
     subject = Subject.objects.get(slug=subject)
     ExperimentFormSet = modelformset_factory(Experiment, form=ExperimentForm, extra=0, can_delete=False)
-    ExperimentCropFormSet = modelformset_factory(ExperimentCrop, form=ExperimentCropForm, extra=2, can_delete=True)
+    ExperimentCountryFormSet = modelformset_factory(ExperimentCountry, form=ExperimentCountryForm, extra=1, can_delete=True)
+    ExperimentCropFormSet = modelformset_factory(ExperimentCrop, form=ExperimentCropForm, extra=1, can_delete=True)
     ExperimentDesignFormSet = modelformset_factory(ExperimentDesign, form=ExperimentDesignForm, extra=3, can_delete=True)
     ExperimentLatLongFormSet = modelformset_factory(ExperimentLatLong, form=ExperimentLatLongForm, extra=2, can_delete=True)
     ExperimentPopulationFormSet = modelformset_factory(ExperimentPopulation, form=ExperimentPopulationForm, extra=2, can_delete=True)
@@ -468,6 +469,7 @@ def experiment(request, subject, publication_pk, experiment_index):
     experiment_form.fields['intervention'] = TreeNodeChoiceField(queryset=Intervention.objects.all().get_descendants(include_self=True), level_indicator = "---")
     # Formsets for this experiment
     experiment_population_formset = ExperimentPopulationFormSet(data=data, queryset=ExperimentPopulation.objects.filter(experiment=experiment), prefix="experiment_population_formset")
+    experiment_country_formset = ExperimentCountryFormSet(data=data, queryset=ExperimentCountry.objects.filter(experiment=experiment), prefix="experiment_country_formset")
     experiment_crop_formset = ExperimentCropFormSet(data=data, queryset=ExperimentCrop.objects.filter(experiment=experiment), prefix="experiment_crop_formset")
     # Crop choices for the formset
     for form in experiment_crop_formset:
@@ -493,6 +495,16 @@ def experiment(request, subject, publication_pk, experiment_index):
                             if (instance.old_population != instance.population):
                                 ExperimentPopulationOutcome.objects.filter(experiment_population=instance).delete()
                         instance.old_population = instance.population
+                        instance.save()
+            formset = experiment_country_formset
+            if formset.is_valid():
+                instances = formset.save(commit=False)
+                if 'delete' in request.POST:
+                    for obj in formset.deleted_objects:
+                        obj.delete()
+                else:
+                    for instance in instances:
+                        instance.experiment = experiment
                         instance.save()
             formset = experiment_crop_formset
             if formset.is_valid():
@@ -531,6 +543,7 @@ def experiment(request, subject, publication_pk, experiment_index):
         'experiment': experiment,
         'experiment_index': experiment_index,
         'experiment_form': experiment_form,
+        'experiment_country_formset': experiment_country_formset,
         'experiment_crop_formset': experiment_crop_formset,
         'experiment_design_formset': experiment_design_formset,
         'experiment_lat_long_formset': experiment_lat_long_formset,

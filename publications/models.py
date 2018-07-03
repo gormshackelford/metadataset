@@ -235,6 +235,18 @@ class Design(models.Model):
         return self.design
 
 
+class Country(models.Model):
+    country = models.CharField(max_length=255)
+    un_m49 = models.IntegerField(blank=True, null=True)
+    iso_alpha_3 = models.CharField(max_length=4, blank=True, null=True)
+
+    def __str__(self):
+        return self.country
+
+    class Meta:
+        verbose_name_plural = "countries"
+
+
 # Intersection tables
 
 # We define an "experment" (i.e. a "study") as one "intervention" that is described in one "publication". We use the "PICO" terminology for describing experiments ("P" = "Population", "I" = "Intervention", "C" = "Comparison", and "O" = "Outcome"). In our data model, one experiment can have multiple "populations" and one "population" can have multiple "outcomes" (e.g., effects of intercropping [intervention] on crop yield [population = crop; outcome = crop yield] and soil nutrients [population = soil; outcome = soil nitrogen; outcome = soil phosphorus]).
@@ -247,6 +259,19 @@ class Experiment(models.Model):
 
     def __str__(self):
         return self.publication.title
+
+
+class ExperimentCountry(models.Model):
+    experiment = models.ForeignKey(Experiment, on_delete=models.CASCADE)
+    country = models.ForeignKey(Country, on_delete=models.CASCADE)
+    created = models.DateTimeField(auto_now_add=True)
+    updated = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.experiment.publication.title
+
+    class Meta:
+        verbose_name_plural = "experiment countries"
 
 
 class ExperimentCrop(models.Model):
