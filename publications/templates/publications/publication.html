@@ -24,7 +24,7 @@
     {% endif %}
   </h1>
   <p>
-    Based on the title/abstract, is this publication relevant to this systematic map?
+    Based on the title/abstract, is this publication relevant to this systematic map? If you are not confident, click "Relevant" and then go to <a href="#stage_2">Stage 2: Full Text</a>.
     <!-- A hidden input so that pressing enter saves the form instead of marking the publication as not relevant -->
     <input type="submit" name="save" style="visibility: hidden;" />
   </p>
@@ -41,7 +41,7 @@
   <h1>Abstract</h1>
   <p>{{ publication.abstract|default:'[abstract not available]' }}</p>
 
-  <h1>
+  <h1 id="stage_2">
     Stage 2: Full Text
     {% if full_text_is_relevant == 'True' %}
       <span class="grey">(relevant)</span>

@@ -6,7 +6,7 @@ from .models import Assessment, Publication, Intervention, Experiment, Experimen
 
 
 class SignUpForm(UserCreationForm):
-    institution = forms.CharField(max_length=254)
+    institution = forms.CharField(max_length=255)
 
     class Meta:
         model = User
@@ -29,7 +29,7 @@ class UserForm(forms.ModelForm):
 
 
 class ProfileForm(forms.ModelForm):
-    institution = forms.CharField(max_length=254)
+    institution = forms.CharField(max_length=255)
 
     class Meta:
         model = Profile

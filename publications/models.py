@@ -84,6 +84,8 @@ class Subject(models.Model):
     subject = models.CharField(max_length=255, unique=True)
     slug = models.SlugField(max_length=255, blank=True)
     text = models.TextField(blank=True)
+    created = models.DateTimeField(auto_now_add=True)
+    updated = models.DateTimeField(auto_now=True)
 
     def save(self, *args, **kwargs):
         self.subject = self.subject.lower()
@@ -115,8 +117,9 @@ class Publication(models.Model):
     url = models.CharField(max_length=510, blank=True)
     publisher = models.CharField(max_length=510, blank=True)
     place = models.CharField(max_length=510, blank=True)
-    created = models.DateTimeField(auto_now_add=True)
     subject = models.ForeignKey(Subject, on_delete=models.CASCADE, null=True)
+    created = models.DateTimeField(auto_now_add=True)
+    updated = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return self.title
@@ -239,6 +242,7 @@ class Experiment(models.Model):
     publication = models.ForeignKey(Publication, on_delete=models.CASCADE)
     intervention = models.ForeignKey(Intervention, blank=True, null=True, on_delete=models.CASCADE)
     created = models.DateTimeField(auto_now_add=True)
+    updated = models.DateTimeField(auto_now=True)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
 
     def __str__(self):
@@ -248,6 +252,8 @@ class Experiment(models.Model):
 class ExperimentCrop(models.Model):
     experiment = models.ForeignKey(Experiment, on_delete=models.CASCADE)
     crop = models.ForeignKey(Crop, on_delete=models.CASCADE)
+    created = models.DateTimeField(auto_now_add=True)
+    updated = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return self.experiment.publication.title
@@ -256,6 +262,8 @@ class ExperimentCrop(models.Model):
 class ExperimentDesign(models.Model):
     experiment = models.ForeignKey(Experiment, on_delete=models.CASCADE)
     design = models.ForeignKey(Design, on_delete=models.CASCADE)
+    created = models.DateTimeField(auto_now_add=True)
+    updated = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return self.experiment.publication.title
@@ -265,6 +273,8 @@ class ExperimentLatLong(models.Model):
     experiment = models.ForeignKey(Experiment, on_delete=models.CASCADE)
     latitude = models.FloatField(validators=[MinValueValidator(-90.0), MaxValueValidator(90.0)])
     longitude = models.FloatField(validators=[MinValueValidator(-180.0), MaxValueValidator(180.0)])
+    created = models.DateTimeField(auto_now_add=True)
+    updated = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return self.experiment.publication.title
@@ -274,6 +284,8 @@ class ExperimentPopulation(models.Model):
     experiment = models.ForeignKey(Experiment, on_delete=models.CASCADE)
     population = models.ForeignKey(Population, on_delete=models.CASCADE, related_name="experiment_population")
     old_population = models.ForeignKey(Population, on_delete=models.SET_NULL, blank=True, null=True)
+    created = models.DateTimeField(auto_now_add=True)
+    updated = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return "{intervention}: {population}".format(intervention=self.experiment.intervention, population=self.population)
@@ -343,6 +355,8 @@ class ExperimentPopulationOutcome(models.Model):
     sed = models.FloatField(blank=True, null=True, help_text="Standard error of the difference between the means")
     lsd = models.FloatField(blank=True, null=True, help_text="Least significant difference between the means")
     note = models.TextField(blank=True, null=True)
+    created = models.DateTimeField(auto_now_add=True)
+    updated = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return self.experiment_population.experiment.publication.title
@@ -354,6 +368,8 @@ class Assessment(models.Model):
     full_text_is_relevant = models.NullBooleanField()
     note = models.TextField(blank=True, null=True)
     subject = models.ForeignKey(Subject, on_delete=models.CASCADE)
+    created = models.DateTimeField(auto_now_add=True)
+    updated = models.DateTimeField(auto_now=True)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
 
     def __str__(self):
@@ -371,6 +387,8 @@ class AssessmentStatus(models.Model):
     completed_assessments = models.TextField(blank=True)
     completed_full_text_assessments = models.TextField(blank=True)
     relevant_publications = models.TextField(blank=True)
+    created = models.DateTimeField(auto_now_add=True)
+    updated = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return 'Progress report for "{user}" and subject "{subject}"'.format(user=self.user.email, subject=self.subject)
