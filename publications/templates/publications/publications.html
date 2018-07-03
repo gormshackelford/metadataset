@@ -23,12 +23,19 @@
     {% endif %}
      ({{ publication.year|default:'[year not available]' }}) <span class="italic">{{ publication.journal|default:'[journal not available]' }}</span> {{ publication.volume|default:'[volume not available]'}}, {{ publication.pages|default:'[pages not available]' }}
   </p>
+  <p>
+    Search for the full text: <a target="_blank"
+      href="http://www.google.com/search?q={{ publication.google_string }}">Google</a>
+    {% if publication.doi != '' %}
+      | <a target="_blank" href="http://dx.doi.org/{{ publication.doi }}">DOI</a>
+    {% endif %}
+  </p>
   {% if user.is_authenticated %}
-    <p><a href="{% url 'publication' subject=subject.slug publication_pk=publication.pk %}">Edit metadata</a></p>
+    <p><a href="{% url 'publication' subject=subject.slug publication_pk=publication.pk %}">Assess this publication</a></p>
   {% endif %}
   <p class="hr"></p>
 {% empty %}
-  <h1>No publications</h1>
+  <p>No publications</p>
 {% endfor %}
 
 {% if publications.has_other_pages %}

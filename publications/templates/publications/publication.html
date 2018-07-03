@@ -50,6 +50,14 @@
     {% endif %}
   </h1>
   <p>
+    {% if publication.author_list %}
+      {{ publication.author_list|join:", "|default:'[authors not available]' }}
+    {% else %}
+      {{ publication.authors }}
+    {% endif %}
+     ({{ publication.year|default:'[year not available]' }}) {{ publication.title|default:'[title not available]' }} <span class="italic">{{ publication.journal|default:'[journal not available]' }}</span> {{ publication.volume|default:'[volume not available]'}}, {{ publication.pages|default:'[pages not available]' }}
+  </p>
+  <p>
     Search for the full text: <a target="_blank"
       href="http://www.google.com/search?q={{ publication.google_string }}">Google</a>
     {% if publication.doi != '' %}
