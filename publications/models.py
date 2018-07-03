@@ -9,6 +9,7 @@ from django.utils.text import slugify
 from mptt.models import MPTTModel, TreeForeignKey
 from urllib.parse import quote_plus
 from ast import literal_eval
+import itertools
 
 
 class UserManager(BaseUserManager):
@@ -65,7 +66,7 @@ class User(AbstractUser):
 class Profile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     email_is_confirmed = models.BooleanField(default=False)
-    institution = models.CharField(max_length=254, blank=True)
+    institution = models.CharField(max_length=255, blank=True)
 
     def __str__(self):
         return 'Profile for {email}'.format(email=self.user.email)
@@ -80,13 +81,21 @@ def update_user_profile(sender, instance, created, **kwargs):
 
 # Subjects for systematic reviews (as "subject-wide evidence syntheses")
 class Subject(models.Model):
-    subject = models.CharField(max_length=126, unique=True)
-    slug = models.SlugField(max_length=254, blank=True)
+    subject = models.CharField(max_length=255, unique=True)
+    slug = models.SlugField(max_length=255, blank=True)
     text = models.TextField(blank=True)
 
     def save(self, *args, **kwargs):
         self.subject = self.subject.lower()
-        self.slug = slugify(self.subject)
+        max_length = 255  # For MySQL, unique/indexed fields must be < 256.
+        self.slug = slugify(self.subject)[:max_length]
+        # Check if this slug exists. If it exists, add a hyphen and a number and repeat until the slug is unique.
+        for counter in itertools.count(1):
+            if not Subject.objects.filter(slug=self.slug).exists():
+                break
+            # Add a hyphen and a number (minus the length of the hyphen and the counter, to maintain max_length).
+            self.slug = "{slug}-{counter}".format(slug=self.slug[:max_length - len(str(counter)) - 1], counter=counter)
+
         super(Subject, self).save(*args, **kwargs)
 
     def __str__(self):
@@ -130,7 +139,7 @@ class Publication(models.Model):
 
 # "Population" is the "P" in "PICO" (also referred to as "Patient" or "Problem"). The purpose of this database is to record the effect of an Intervention ("I") on a Population ("P"), measured in terms of an Outcome ("O"), with respect to a Control ("C").
 class Population(models.Model):
-    population = models.CharField(max_length=254, unique=True)
+    population = models.CharField(max_length=255, unique=True)
 
     def __str__(self):
         return self.population
@@ -138,13 +147,20 @@ class Population(models.Model):
 
 # "Intervention" is the "I" in "PICO".
 class Intervention(MPTTModel):
-    intervention = models.CharField(max_length=254)
+    intervention = models.CharField(max_length=255)
     parent = TreeForeignKey('self', null=True, blank=True, related_name='children', db_index=True, on_delete=models.CASCADE)
-    slug = models.SlugField(max_length=510)
-    code = models.CharField(max_length=22, null=True, blank=True)
+    slug = models.SlugField(max_length=255)
+    code = models.CharField(max_length=30, null=True, blank=True)
 
     def save(self, *args, **kwargs):
-        self.slug = slugify(self.intervention)
+        max_length = 255  # For MySQL, unique/indexed fields must be < 256.
+        self.slug = slugify(self.intervention)[:max_length]
+        # Check if this slug exists. If it exists, add a hyphen and a number and repeat until the slug is unique.
+        for counter in itertools.count(1):
+            if not Intervention.objects.filter(slug=self.slug).exists():
+                break
+            # Add a hyphen and a number (minus the length of the hyphen and the counter, to maintain max_length).
+            self.slug = "{slug}-{counter}".format(slug=self.slug[:max_length - len(str(counter)) - 1], counter=counter)
         super(Intervention, self).save(*args, **kwargs)
 
     def __str__(self):
@@ -159,13 +175,20 @@ class Intervention(MPTTModel):
 
 # "Outcome" is the "O" in "PICO".
 class Outcome(MPTTModel):
-    outcome = models.CharField(max_length=254)
+    outcome = models.CharField(max_length=255)
     parent = TreeForeignKey('self', null=True, blank=True, related_name='children', db_index=True, on_delete=models.CASCADE)
-    slug = models.SlugField(max_length=510)
-    code = models.CharField(max_length=22, null=True, blank=True)
+    slug = models.SlugField(max_length=255)
+    code = models.CharField(max_length=30, null=True, blank=True)
 
     def save(self, *args, **kwargs):
-        self.slug = slugify(self.outcome)
+        max_length = 255  # For MySQL, unique/indexed fields must be < 256.
+        self.slug = slugify(self.outcome)[:max_length]
+        # Check if this slug exists. If it exists, add a hyphen and a number and repeat until the slug is unique.
+        for counter in itertools.count(1):
+            if not Outcome.objects.filter(slug=self.slug).exists():
+                break
+            # Add a hyphen and a number (minus the length of the hyphen and the counter, to maintain max_length).
+            self.slug = "{slug}-{counter}".format(slug=self.slug[:max_length - len(str(counter)) - 1], counter=counter)
         super(Outcome, self).save(*args, **kwargs)
 
     def __str__(self):
@@ -176,12 +199,19 @@ class Outcome(MPTTModel):
 
 
 class Crop(MPTTModel):
-    crop = models.CharField(max_length=126)
+    crop = models.CharField(max_length=255)
     parent = TreeForeignKey('self', null=True, blank=True, related_name='children', db_index=True, on_delete=models.CASCADE)
-    slug = models.SlugField(max_length=254)
+    slug = models.SlugField(max_length=255)
 
     def save(self, *args, **kwargs):
-        self.slug = slugify(self.crop)
+        max_length = 255  # For MySQL, unique/indexed fields must be < 256.
+        self.slug = slugify(self.crop)[:max_length]
+        # Check if this slug exists. If it exists, add a hyphen and a number and repeat until the slug is unique.
+        for counter in itertools.count(1):
+            if not Crop.objects.filter(slug=self.slug).exists():
+                break
+            # Add a hyphen and a number (minus the length of the hyphen and the counter, to maintain max_length).
+            self.slug = "{slug}-{counter}".format(slug=self.slug[:max_length - len(str(counter)) - 1], counter=counter)
         super(Crop, self).save(*args, **kwargs)
 
     def __str__(self):
@@ -196,7 +226,7 @@ class Crop(MPTTModel):
 
 # Experimental design (e.g., "replicated", "randomized", "controlled")
 class Design(models.Model):
-    design = models.CharField(max_length=62, unique=True)
+    design = models.CharField(max_length=60, unique=True)
 
     def __str__(self):
         return self.design
@@ -277,7 +307,7 @@ class ExperimentPopulationOutcome(models.Model):
         null=True,
         choices=EFFECT_SIZE_UNIT_CHOICES
     )
-    other_effect_size_unit = models.CharField(max_length=62, blank=True, null=True)
+    other_effect_size_unit = models.CharField(max_length=60, blank=True, null=True)
     lower_limit = models.FloatField(blank=True, null=True, help_text="Lower limit of the confidence interval for the effect size")
     upper_limit = models.FloatField(blank=True, null=True, help_text="Upper limit of the confidence interval for the effect size")
     confidence = models.FloatField(blank=True, null=True,  validators=[MinValueValidator(0), MaxValueValidator(100)], help_text="Confidence of the confidence interval (percent)")
@@ -294,7 +324,7 @@ class ExperimentPopulationOutcome(models.Model):
         ("> 0.1", "> 0.1")
     )
     approximate_p_value = models.CharField(
-        max_length=14,
+        max_length=30,
         blank=True,
         null=True,
         choices=APPROXIMATE_P_VALUE_CHOICES
@@ -303,7 +333,7 @@ class ExperimentPopulationOutcome(models.Model):
     z_value = models.FloatField(blank=True, null=True)
     treatment_mean = models.IntegerField(blank=True, null=True)
     control_mean = models.IntegerField(blank=True, null=True)
-    unit = models.CharField(max_length=62, blank=True, null=True)
+    unit = models.CharField(max_length=60, blank=True, null=True)
     n_treatment = models.IntegerField(blank=True, null=True)
     n_control = models.IntegerField(blank=True, null=True)
     sd_treatment = models.FloatField(blank=True, null=True)
