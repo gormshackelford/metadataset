@@ -30,21 +30,40 @@ class UserAdmin(DjangoUserAdmin):
 
 admin.site.register(Profile)
 
-admin.site.register(Subject)
-admin.site.register(Publication)
-admin.site.register(Population)
-admin.site.register(Design)
-admin.site.register(Experiment)
 admin.site.register(Crop)
+admin.site.register(Design)
+admin.site.register(Population)
+admin.site.register(Publication)
+
+class ExperimentAdmin(admin.ModelAdmin):
+    readonly_fields = ('created', 'updated')
+admin.site.register(Experiment, ExperimentAdmin)
+class SubjectAdmin(admin.ModelAdmin):
+    readonly_fields = ('created', 'updated')
+admin.site.register(Subject, SubjectAdmin)
 
 # Intersection tables
-admin.site.register(Assessment)
-admin.site.register(AssessmentStatus)
-admin.site.register(ExperimentDesign)
-admin.site.register(ExperimentCrop)
-admin.site.register(ExperimentPopulation)
-admin.site.register(ExperimentPopulationOutcome)
-admin.site.register(ExperimentLatLong)
+class AssessmentAdmin(admin.ModelAdmin):
+    readonly_fields = ('created', 'updated')
+admin.site.register(Assessment, AssessmentAdmin)
+class AssessmentStatusAdmin(admin.ModelAdmin):
+    readonly_fields = ('created', 'updated')
+admin.site.register(AssessmentStatus, AssessmentStatusAdmin)
+class ExperimentDesignAdmin(admin.ModelAdmin):
+    readonly_fields = ('created', 'updated')
+admin.site.register(ExperimentDesign, ExperimentDesignAdmin)
+class ExperimentCropAdmin(admin.ModelAdmin):
+    readonly_fields = ('created', 'updated')
+admin.site.register(ExperimentCrop, ExperimentCropAdmin)
+class ExperimentPopulationAdmin(admin.ModelAdmin):
+    readonly_fields = ('created', 'updated')
+admin.site.register(ExperimentPopulation, ExperimentPopulationAdmin)
+class ExperimentPopulationOutcomeAdmin(admin.ModelAdmin):
+    readonly_fields = ('created', 'updated')
+admin.site.register(ExperimentPopulationOutcome, ExperimentPopulationOutcomeAdmin)
+class ExperimentLatLongAdmin(admin.ModelAdmin):
+    readonly_fields = ('created', 'updated')
+admin.site.register(ExperimentLatLong, ExperimentLatLongAdmin)
 
 # DraggableMPTTAdmin for hierarchical models
 admin.site.register(
