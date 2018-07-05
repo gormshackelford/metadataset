@@ -344,27 +344,26 @@ def publication(request, subject, publication_pk):
             with transaction.atomic():
                 if full_text_assessment_form.is_valid():
                     # Update assessments (add the reason for rejection)
-                    assessment = assessment_form.save(commit=False)
-                    if assessment.note != '':
-                        assessment.user = user
-                        assessment.publication = publication
-                        assessment.subject = subject
-                        assessment.is_relevant = True  # It must be relevant based on the title and abstract if it is to be rejected based on the full text.
-                        assessment.full_text_is_relevant = False
-                        assessment.save()
-                        # Update status and get next assessment
-                        if publication_pk not in completed_assessments:
-                            completed_assessments.append(publication_pk)
-                            item.completed_assessments = completed_assessments
-                        if publication_pk not in relevant_publications:
-                            relevant_publications.append(publication_pk)
-                            item.relevant_publications = relevant_publications
-                        next_assessment = get_next_assessment(publication_pk, next_pk, assessment_order, completed_assessments)
-                        item.next_assessment = next_assessment
-                        if publication_pk not in completed_full_text_assessments:
-                            completed_full_text_assessments.append(publication_pk)
-                            item.completed_full_text_assessments = completed_full_text_assessments
-                        item.save()
+                    assessment = full_text_assessment_form.save(commit=False)
+                    assessment.user = user
+                    assessment.publication = publication
+                    assessment.subject = subject
+                    assessment.is_relevant = True  # It must be relevant based on the title and abstract if it is to be rejected based on the full text.
+                    assessment.full_text_is_relevant = False
+                    assessment.save()
+                    # Update status and get next assessment
+                    if publication_pk not in completed_assessments:
+                        completed_assessments.append(publication_pk)
+                        item.completed_assessments = completed_assessments
+                    if publication_pk not in relevant_publications:
+                        relevant_publications.append(publication_pk)
+                        item.relevant_publications = relevant_publications
+                    next_assessment = get_next_assessment(publication_pk, next_pk, assessment_order, completed_assessments)
+                    item.next_assessment = next_assessment
+                    if publication_pk not in completed_full_text_assessments:
+                        completed_full_text_assessments.append(publication_pk)
+                        item.completed_full_text_assessments = completed_full_text_assessments
+                    item.save()
                 return redirect('publication', subject=subject, publication_pk=publication_pk)
         if 'save' in request.POST or 'delete' in request.POST:
             with transaction.atomic():
@@ -456,8 +455,8 @@ def experiment(request, subject, publication_pk, experiment_index):
     ExperimentFormSet = modelformset_factory(Experiment, form=ExperimentForm, extra=0, can_delete=False)
     ExperimentCountryFormSet = modelformset_factory(ExperimentCountry, form=ExperimentCountryForm, extra=1, can_delete=True)
     ExperimentCropFormSet = modelformset_factory(ExperimentCrop, form=ExperimentCropForm, extra=1, can_delete=True)
-    ExperimentDesignFormSet = modelformset_factory(ExperimentDesign, form=ExperimentDesignForm, extra=3, can_delete=True)
-    ExperimentLatLongFormSet = modelformset_factory(ExperimentLatLong, form=ExperimentLatLongForm, extra=2, can_delete=True)
+    ExperimentDesignFormSet = modelformset_factory(ExperimentDesign, form=ExperimentDesignForm, extra=4, max_num=4, can_delete=True)
+    ExperimentLatLongFormSet = modelformset_factory(ExperimentLatLong, form=ExperimentLatLongForm, extra=1, can_delete=True)
     ExperimentPopulationFormSet = modelformset_factory(ExperimentPopulation, form=ExperimentPopulationForm, extra=2, can_delete=True)
     # This publication
     publication = Publication.objects.get(pk=publication_pk)
