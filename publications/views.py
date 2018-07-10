@@ -313,7 +313,7 @@ def publication(request, subject, publication_pk):
                         completed_full_text_assessments.remove(publication_pk)
                         item.completed_full_text_assessments = completed_full_text_assessments
                     item.save()
-                    return redirect('publication', subject=subject, publication_pk=publication_pk)
+                    return redirect('publication', subject=subject, publication_pk=next_assessment)
         if 'is_not_relevant' in request.POST:
             with transaction.atomic():
                 if assessment_form.is_valid():
