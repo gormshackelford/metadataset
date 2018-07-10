@@ -230,8 +230,16 @@ span.heading {
   font-weight: bold;
 }
 
+span.blue {
+  color: #3399ff;
+}
+
 span.red {
   color: #ff6666;
+}
+
+span.yellow {
+  color: #ffff80;
 }
 
 span.underline {

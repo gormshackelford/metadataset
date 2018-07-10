@@ -305,6 +305,33 @@ class ExperimentLatLong(models.Model):
         return self.experiment.publication.title
 
 
+class ExperimentDate(models.Model):
+    experiment = models.ForeignKey(Experiment, on_delete=models.CASCADE)
+    year = models.IntegerField(blank=True, null=True)
+    MONTH_CHOICES = (
+        (1, "January"),
+        (2, "February"),
+        (3, "March"),
+        (4, "April"),
+        (5, "May"),
+        (6, "June"),
+        (7, "July"),
+        (8, "August"),
+        (9, "September"),
+        (10, "October"),
+        (11, "November"),
+        (12, "December")
+    )
+    month = models.IntegerField(blank=True, null=True, choices=MONTH_CHOICES)
+    DAY_CHOICES = tuple((x,x) for x in range(1,32))
+    day = models.IntegerField(choices=DAY_CHOICES, blank=True, null=True)
+    created = models.DateTimeField(auto_now_add=True)
+    updated = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.experiment.publication.title
+
+
 class ExperimentPopulation(models.Model):
     experiment = models.ForeignKey(Experiment, on_delete=models.CASCADE)
     population = models.ForeignKey(Population, on_delete=models.CASCADE, related_name="experiment_population")

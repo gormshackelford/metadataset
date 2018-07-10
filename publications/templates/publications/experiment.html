@@ -133,6 +133,22 @@
       <td>{{ form.latitude.label }}: {{ form.latitude }} {{ form.longitude.label }}: {{ form.longitude }}</td><td class="centered">{{ form.DELETE }}</td>
     </tr>
     {% endfor %}
+    {{ experiment_date_formset.management_form }}
+    {% for form in experiment_date_formset %}
+      <tr>
+        <td>
+          {% for hidden_field in form.hidden_fields %}
+            {{ hidden_field }}
+          {% endfor %}
+          {% if forloop.first %}
+            Date/start date:
+          {% else %}
+            Date/end date:
+          {% endif %}
+        </td>
+        <td>Year: {{ form.year }} Month: {{ form.month }} Day: {{ form.day }}</td><td class="centered">{{ form.DELETE }}</td>
+      </tr>
+    {% endfor %}
     <tr>
       <td class="bottom"></td>
       <td class="button bottom"><input type="submit" name="save" value="Save all changes" /></td>

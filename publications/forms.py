@@ -2,7 +2,7 @@ from django import forms
 from django.db import models
 from django.contrib.auth.forms import UserCreationForm
 from mptt.forms import TreeNodeChoiceField
-from .models import Assessment, Publication, Intervention, Experiment, ExperimentCountry, ExperimentCrop, ExperimentDesign, ExperimentLatLong, ExperimentPopulation, ExperimentPopulationOutcome, Profile, User
+from .models import Assessment, Publication, Intervention, Experiment, ExperimentCountry, ExperimentCrop, ExperimentDate, ExperimentDesign, ExperimentLatLong, ExperimentPopulation, ExperimentPopulationOutcome, Profile, User
 
 
 class SignUpForm(UserCreationForm):
@@ -75,6 +75,13 @@ class ExperimentCropForm(forms.ModelForm):
 
     class Meta:
         model = ExperimentCrop
+        exclude = ['experiment']
+
+
+class ExperimentDateForm(forms.ModelForm):
+
+    class Meta:
+        model = ExperimentDate
         exclude = ['experiment']
 
 

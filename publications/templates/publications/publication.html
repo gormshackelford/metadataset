@@ -18,9 +18,9 @@
   <h1>
     Stage 1: Title/Abstract
     {% if is_relevant == 'True' %}
-      <span class="grey">(relevant)</span>
+      <span class="blue">[relevant]</span>
     {% elif is_relevant == 'False' %}
-      <span class="red">(not relevant)</span>
+      <span class="red">[not relevant]</span>
     {% endif %}
   </h1>
   <p>
@@ -44,9 +44,9 @@
   <h1 id="stage_2">
     Stage 2: Full Text
     {% if full_text_is_relevant == 'True' %}
-      <span class="grey">(relevant)</span>
+      <span class="blue">[relevant]</span>
     {% elif full_text_is_relevant == 'False' %}
-      <span class="red">(not relevant)</span>
+      <span class="red">[not relevant]</span>
     {% endif %}
   </h1>
   <p>

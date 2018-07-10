@@ -3,7 +3,7 @@ from django.contrib.auth.admin import UserAdmin as DjangoUserAdmin
 from django.utils.translation import ugettext_lazy as _
 from mptt.admin import DraggableMPTTAdmin
 from .models import Profile, User  # AbstractUser with email address as username
-from .models import Subject, Publication, Assessment, AssessmentStatus, Intervention, Population, Outcome, Design, Experiment, Country, Crop, ExperimentCountry, ExperimentCrop, ExperimentDesign, ExperimentPopulation, ExperimentLatLong, ExperimentPopulationOutcome
+from .models import Subject, Publication, Assessment, AssessmentStatus, Intervention, Population, Outcome, Design, Experiment, Country, Crop, ExperimentCountry, ExperimentCrop, ExperimentDate, ExperimentDesign, ExperimentPopulation, ExperimentLatLong, ExperimentPopulationOutcome
 
 
 @admin.register(User)
@@ -68,6 +68,9 @@ admin.site.register(ExperimentPopulationOutcome, ExperimentPopulationOutcomeAdmi
 class ExperimentLatLongAdmin(admin.ModelAdmin):
     readonly_fields = ('created', 'updated')
 admin.site.register(ExperimentLatLong, ExperimentLatLongAdmin)
+class ExperimentDateAdmin(admin.ModelAdmin):
+    readonly_fields = ('created', 'updated')
+admin.site.register(ExperimentDate, ExperimentDateAdmin)
 
 # DraggableMPTTAdmin for hierarchical models
 admin.site.register(
