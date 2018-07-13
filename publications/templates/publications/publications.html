@@ -11,59 +11,63 @@
 
 {% block content %}
 
-<h1>Publications</h1>
-
-{% for publication in publications %}
-  <p><span class="bold">{{ publication.title|default:'[title not available]' }}</span></p>
-  <p>
-    {% if publication.author_list %}
-      {{ publication.author_list|join:", "|default:'[authors not available]' }}
-    {% else %}
-      {{ publication.authors }}
-    {% endif %}
-     ({{ publication.year|default:'[year not available]' }}) <span class="italic">{{ publication.journal|default:'[journal not available]' }}</span> {{ publication.volume|default:'[volume not available]'}}, {{ publication.pages|default:'[pages not available]' }}
-  </p>
-  <p>
-    Search for the full text: <a target="_blank"
-      href="http://www.google.com/search?q={{ publication.google_string }}">Google</a>
-    {% if publication.doi != '' %}
-      | <a target="_blank" href="http://dx.doi.org/{{ publication.doi }}">DOI</a>
-    {% endif %}
-  </p>
-  {% if user.is_authenticated %}
-    <p><a href="{% url 'publication' subject=subject.slug publication_pk=publication.pk %}">Assess this publication</a></p>
-  {% endif %}
-  <p class="hr"></p>
-{% empty %}
-  <p>No publications</p>
-{% endfor %}
-
-{% if publications.has_other_pages %}
-  <p>
-    {% if publications.has_previous %}
-      <a class="button" href="?page={{ publications.previous_page_number }}">Previous page</a>
-    {% else %}
-      <a class="button" href="?page={{ publications.paginator.num_pages }}">Previous page</a>
-    {% endif %}
-    {% if publications.has_next %}
-      <a class="button" href="?page={{ publications.next_page_number }}">Next page</a>
-    {% else %}
-      <a class="button" href="?page=1">Next page</a>
-    {% endif %}
-  </p>
-  <p>
-    Page number:
-    {% for i in publications.paginator.page_range %}
-      {% if i == publications.number %}
-        <span class="warning">{{ i }}</span>,
-      {% elif i == publications.paginator.num_pages %}
-        <a href="?page={{ i }}">{{ i }}</a>
+  {% for publication in publications %}
+    <h1>{{ publication.title|default:'[title not available]' }}</h1>
+    <p>
+      {% if publication.author_list %}
+        {{ publication.author_list|join:", "|default:'[authors not available]' }}
       {% else %}
-        <a href="?page={{ i }}">{{ i }}</a>,
+        {{ publication.authors }}
       {% endif %}
-    {% endfor %}
-  </p>
-{% endif %}
+       ({{ publication.year|default:'[year not available]' }}) <span class="italic">{{ publication.journal|default:'[journal not available]' }}</span> {{ publication.volume|default:'[volume not available]'}}, {{ publication.pages|default:'[pages not available]' }}
+    </p>
+    <p>
+      Search for the full text:
+        <a target="_blank" href="http://www.google.com/search?q={{ publication.google_string }}">Google</a>
+        | <a target="_blank" href="https://scholar.google.com/scholar?q={{ publication.google_string }}">Google Scholar</a>
+      {% if publication.doi != '' %}
+        | <a target="_blank" href="http://dx.doi.org/{{ publication.doi }}">DOI</a>
+      {% endif %}
+    </p>
+    {% if user.is_authenticated %}
+      <p><a href="{% url 'publication' subject=subject.slug publication_pk=publication.pk %}">Assess this publication</a></p>
+    {% endif %}
+    <br />
+    <p class="hr"></p>
+  {% empty %}
+    <p>No publications</p>
+  {% endfor %}
+
+  {% if publications.has_other_pages %}
+    <p>
+      {% if publications.has_previous %}
+        <a class="button" href="?page={{ publications.previous_page_number }}">Previous page</a>
+      {% else %}
+        <a class="button" href="?page={{ publications.paginator.num_pages }}">Previous page</a>
+      {% endif %}
+      {% if publications.has_next %}
+        <a class="button" href="?page={{ publications.next_page_number }}">Next page</a>
+      {% else %}
+        <a class="button" href="?page=1">Next page</a>
+      {% endif %}
+    </p>
+    <p>
+      Page number:
+      {% for i in publications.paginator.page_range %}
+        {% if i == publications.paginator.number %}
+          {% if i == publications.paginator.num_pages %}
+            <span class="red">{{ i }}</span>
+          {% else %}
+            <span class="red">{{ i }}</span>,
+          {% endif %}
+        {% elif i == publications.paginator.num_pages %}
+          <a href="?page={{ i }}">{{ i }}</a>
+        {% else %}
+          <a href="?page={{ i }}">{{ i }}</a>,
+        {% endif %}
+      {% endfor %}
+    </p>
+  {% endif %}
 
 {% endblock %}
 

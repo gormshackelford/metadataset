@@ -11,22 +11,63 @@
 
 {% block content %}
 
-  <h1>Search results</h1>
-
-  {% for result in page_obj.object_list %}
+  {% for publication in page_obj.object_list %}
+    <h1>{{ publication.object.title|default:'[title not available]' }}</h1>
     <p>
-      <a href="{% url 'publication' subject='cassava' publication_pk=result.object.pk %}">{{ result.object.title }}</a>
+      {% if publication.object.author_list %}
+        {{ publication.object.author_list|join:", "|default:'[authors not available]' }}
+      {% else %}
+        {{ publication.object.authors }}
+      {% endif %}
+       ({{ publication.object.year|default:'[year not available]' }}) <span class="italic">{{ publication.object.journal|default:'[journal not available]' }}</span> {{ publication.object.volume|default:'[volume not available]'}}, {{ publication.object.pages|default:'[pages not available]' }}
     </p>
+    <p>
+      Search for the full text:
+        <a target="_blank" href="http://www.google.com/search?q={{ publication.object.google_string }}">Google</a>
+        | <a target="_blank" href="https://scholar.google.com/scholar?q={{ publication.object.google_string }}">Google Scholar</a>
+      {% if publication.object.doi != 'NA' and publication.object.doi != '' %}
+        | <a target="_blank" href="http://dx.doi.org/{{ publication.object.doi }}">DOI</a>
+      {% endif %}
+    </p>
+    {% if user.is_authenticated %}
+      <a href="{% url 'publication' subject='cassava' publication_pk=publication.object.pk %}">Assess this publication</a>
+    {% endif %}
+    <br />
+    <p class="hr"></p>
   {% empty %}
-    <p>No results found.</p>
+    <h1>No publications</h1>
   {% endfor %}
 
-  {% if page.has_previous or page.has_next %}
-    <div>
-      {% if page.has_previous %}<a href="?q={{ query }}&amp;page={{ page.previous_page_number }}">{% endif %}&laquo; Previous{% if page.has_previous %}</a>{% endif %}
-      |
-      {% if page.has_next %}<a href="?q={{ query }}&amp;page={{ page.next_page_number }}">{% endif %}Next &raquo;{% if page.has_next %}</a>{% endif %}
-    </div>
+  {% if page_obj %}
+    <p>
+      {% if page_obj.has_previous %}
+        <a class="button" href="?q={{ query }}&amp;page={{ page_obj.previous_page_number }}">Previous page</a>
+      {% else %}
+        <a class="button" href="?q={{ query }}&amp;page={{ page_obj.paginator.num_pages }}">Previous page</a>
+      {% endif %}
+
+      {% if page_obj.has_next %}
+        <a class="button" href="?q={{ query }}&amp;page={{ page_obj.next_page_number }}">Next page</a>
+      {% else %}
+        <a class="button" href="?q={{ query }}&amp;page=1">Next page</a>
+      {% endif %}
+    </p>
+    <p>
+      Page number:
+      {% for i in page_obj.paginator.page_range %}
+        {% if i == page_obj.number %}
+          {% if i == page_obj.paginator.num_pages %}
+            <span class="red">{{ i }}</span>
+          {% else %}
+            <span class="red">{{ i }}</span>,
+          {% endif %}
+        {% elif i == page_obj.paginator.num_pages %}
+          <a href="?q={{ query }}&amp;page={{ i }}">{{ i }}</a>
+        {% else %}
+          <a href="?q={{ query }}&amp;page={{ i }}">{{ i }}</a>,
+        {% endif %}
+      {% endfor %}
+    </p>
   {% endif %}
 
 {% endblock %}
