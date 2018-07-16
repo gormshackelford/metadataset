@@ -4,6 +4,6 @@
 <p>
   {% get_subjects as subjects %}
   {% for subject in subjects %}
-    <a href="{% url 'subject' subject=subject.slug %}">{{ subject|capfirst }}</a><br />
+    <a href="{% url 'subject' subject=subject.slug %}">{{ subject|capfirst }}</a> <span class="red">(work in progress)</span><br />
   {% endfor %}
 </p>
