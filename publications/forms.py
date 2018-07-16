@@ -25,7 +25,7 @@ class UserForm(forms.ModelForm):
 
     class Meta:
         model = User
-        exclude = []
+        fields = ['first_name', 'last_name']
 
 
 class ProfileForm(forms.ModelForm):
@@ -33,7 +33,7 @@ class ProfileForm(forms.ModelForm):
 
     class Meta:
         model = Profile
-        exclude = []
+        fields = ['institution']
 
 
 class AssessmentForm(forms.ModelForm):

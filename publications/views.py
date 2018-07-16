@@ -12,7 +12,7 @@ from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from ast import literal_eval
 from random import shuffle
 from .tokens import account_activation_token
-from .forms import PublicationForm, AssessmentForm, FullTextAssessmentForm, ExperimentForm, ExperimentCountryForm, ExperimentCropForm, ExperimentDateForm, ExperimentDesignForm, ExperimentLatLongForm, ExperimentPopulationForm, ExperimentPopulationOutcomeForm, EffectForm, SignUpForm
+from .forms import PublicationForm, AssessmentForm, EffectForm, ExperimentForm, ExperimentCountryForm, ExperimentCropForm, ExperimentDateForm, ExperimentDesignForm, ExperimentLatLongForm, ExperimentPopulationForm, ExperimentPopulationOutcomeForm, FullTextAssessmentForm, ProfileForm, SignUpForm, UserForm
 from .models import Assessment, AssessmentStatus, Crop, Experiment, Intervention, Outcome, Population, ExperimentCountry, ExperimentCrop, ExperimentDate, ExperimentDesign, ExperimentLatLong, ExperimentPopulation, ExperimentPopulationOutcome, Publication, Subject, User
 from mptt.forms import TreeNodeChoiceField
 
@@ -233,6 +233,31 @@ def confirm_email(request, uidb64, token):
         return render(request, 'publications/email_confirmed.html')
     else:
         return render(request, 'publications/email_not_confirmed.html', {'uid': uid})
+
+
+@login_required
+@transaction.atomic
+def profile(request):
+    if request.method == 'POST':
+        user_form = UserForm(request.POST, instance=request.user)
+        profile_form = ProfileForm(request.POST, instance=request.user.profile)
+        if user_form.is_valid() and profile_form.is_valid():
+            user = user_form.save()
+            user.first_name = user_form.cleaned_data.get('first_name')
+            user.last_name = user_form.cleaned_data.get('last_name')
+            user.profile.institution = profile_form.cleaned_data.get('institution')
+            user.save()
+            return render(request, 'publications/profile_updated.html')
+    else:
+        user_form = UserForm(instance=request.user)
+        profile_form = ProfileForm(instance=request.user.profile)
+
+    context = {
+        'user_form': user_form,
+        'profile_form': profile_form
+    }
+
+    return render(request, 'publications/profile.html', context)
 
 
 @login_required
