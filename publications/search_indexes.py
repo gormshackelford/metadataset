@@ -1,5 +1,5 @@
 from haystack import indexes
-from .models import Publication
+from .models import Publication, Assessment
 
 class PublicationIndex(indexes.SearchIndex, indexes.Indexable):
     text = indexes.EdgeNgramField(document=True, use_template=True)
@@ -10,7 +10,11 @@ class PublicationIndex(indexes.SearchIndex, indexes.Indexable):
 
     def index_queryset(self, using=Publication):
         """Used when the entire index for model is updated."""
-        return self.get_model().objects.all()
+        return self.get_model().objects.distinct().filter(
+            assessment__in=Assessment.objects.filter(
+                full_text_is_relevant=True
+            )
+        )
 
     def get_updated_field(self):
         return "created"
