@@ -193,7 +193,7 @@ def signup(request):
             user.is_active = False
             user.save()
             current_site = get_current_site(request)
-            subject = 'MetaDataSet'
+            subject = 'Metadataset'
             message = render_to_string('publications/confirm_email.html', {
                 'user': user,
                 'domain': current_site.domain,
