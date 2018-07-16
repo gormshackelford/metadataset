@@ -54,7 +54,7 @@
     <p>
       Page number:
       {% for i in publications.paginator.page_range %}
-        {% if i == publications.paginator.number %}
+        {% if i == publications.number %}
           {% if i == publications.paginator.num_pages %}
             <span class="red">{{ i }}</span>
           {% else %}

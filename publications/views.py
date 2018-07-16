@@ -687,7 +687,7 @@ def publications_by_intervention(request, subject, path, instance):
     subject = Subject.objects.get(slug=subject)
     interventions = instance.get_descendants(include_self=True)
     experiments = Experiment.objects.filter(intervention__in=interventions)
-    publications = Publication.objects.filter(subject=subject, experiment__in=experiments).order_by('title')
+    publications = Publication.objects.distinct().filter(subject=subject, experiment__in=experiments).order_by('title')
     context = {
         'subject': subject,
         'publications': publications
@@ -705,7 +705,7 @@ def publications_by_outcome(request, subject, path, instance):
     experiment_population_outcomes = ExperimentPopulationOutcome.objects.filter(outcome__in=outcomes)
     experiment_populations = ExperimentPopulation.objects.filter(experimentpopulationoutcome__in=experiment_population_outcomes)
     experiments = Experiment.objects.filter(experimentpopulation__in=experiment_populations)
-    publications = Publication.objects.filter(subject=subject, experiment__in=experiments).order_by('title')
+    publications = Publication.objects.distinct().filter(subject=subject, experiment__in=experiments).order_by('title')
     context = {
         'subject': subject,
         'publications': publications
