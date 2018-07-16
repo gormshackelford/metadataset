@@ -2,10 +2,10 @@
 
 {% block content %}
 
+    <h1>Log in</h1>
     <form method="post" action="{% url 'login' %}">
 
     {% csrf_token %}
-
         <table>
           <tr>
             <td>{{ form.username.label_tag }}</td>
@@ -22,6 +22,7 @@
 
     </form>
 
+    <br /><br />
     <p><a href="{% url 'password_reset' %}">Reset your password</a></p>
 
     {% if form.errors %}
