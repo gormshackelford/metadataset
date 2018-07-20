@@ -47,7 +47,9 @@ class FullTextAssessmentForm(forms.ModelForm):
 
     class Meta:
         model = Assessment
-        fields = ['note']
+        fields = ['cannot_find', 'cannot_access', 'secondary_literature',
+            'no_population', 'no_intervention', 'no_comparator', 'no_outcome',
+            'note']
 
 
 class PublicationForm(forms.ModelForm):

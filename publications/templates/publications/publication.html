@@ -69,8 +69,40 @@
     <span class="bold">Based on the full text, is this publication relevant to this systematic map?</span> Skip this step and go to the next publication if you already assessed this publication as "Not relevant" based on the title/abstract.
   </p>
   <p>
-    <span class="bold">If this publication is not relevant</span> based on the full text, you must write the reason here and then click "Not relevant based on the full text". If you cannot find or access the full text, write "Cannot find" or "Cannot access" and then click "Not relevant based on the full text".
+    <span class="bold">If this publication is not relevant</span> based on the full text, select the reason (write a note if you want) and then click "Not relevant based on the full text".
   </p>
+  <table>
+    <tr>
+      <td>{{ full_text_assessment_form.cannot_find }}</td><td>Cannot find</td>
+    </tr>
+    <tr>
+      <td>{{ full_text_assessment_form.cannot_access }}</td><td>Cannot access</td>
+    </tr>
+    <tr>
+      <td colspan="2">&nbsp;</td>
+    </tr>
+    <tr>
+      <td>{{ full_text_assessment_form.secondary_literature }}</td><td>Secondary literature</td>
+    </tr>
+    <tr>
+      <td colspan="2">&nbsp;</td>
+    </tr>
+    <tr>
+      <td>{{ full_text_assessment_form.no_population }}</td><td>No relevant population/subject</td>
+    </tr>
+    <tr>
+      <td>{{ full_text_assessment_form.no_intervention }}</td><td>No relevant intervention</td>
+    </tr>
+    <tr>
+      <td>{{ full_text_assessment_form.no_outcome }}</td><td>No relevant outcome</td>
+    </tr>
+    <tr>
+      <td>{{ full_text_assessment_form.no_comparator }}</td><td>No relevant comparator</td>
+    </tr>
+    <tr>
+      <td colspan="2">&nbsp;</td>
+    </tr>
+  </table>
   <p>
     {{ full_text_assessment_form.note }}
     <input type="submit" name="full_text_is_not_relevant" value="Not relevant based on the full text" />

@@ -10,6 +10,7 @@ config.py
 db.sqlite3
 geckodriver.log
 metadataset/whoosh_index
+Notes.txt
 publications/data/publications.txt
 web_scraping/
 venv

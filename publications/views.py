@@ -323,6 +323,13 @@ def publication(request, subject, publication_pk):
                     assessment.subject = subject
                     assessment.is_relevant = True
                     assessment.full_text_is_relevant = None
+                    assessment.cannot_find = False
+                    assessment.cannot_access = False
+                    assessment.secondary_literature = False
+                    assessment.no_population = False
+                    assessment.no_intervention = False
+                    assessment.no_outcome = False
+                    assessment.no_comparator = False
                     assessment.note = ''
                     assessment.save()
                     # Update status and get next assessment
@@ -349,6 +356,13 @@ def publication(request, subject, publication_pk):
                     assessment.subject = subject
                     assessment.is_relevant = False
                     assessment.full_text_is_relevant = None
+                    assessment.cannot_find = False
+                    assessment.cannot_access = False
+                    assessment.secondary_literature = False
+                    assessment.no_population = False
+                    assessment.no_intervention = False
+                    assessment.no_outcome = False
+                    assessment.no_comparator = False
                     assessment.note = ''
                     assessment.save()
                     # Update status and get next assessment
@@ -415,6 +429,13 @@ def publication(request, subject, publication_pk):
                             assessment.subject = subject
                             assessment.is_relevant = True
                             assessment.full_text_is_relevant = True
+                            assessment.cannot_find = False
+                            assessment.cannot_access = False
+                            assessment.secondary_literature = False
+                            assessment.no_population = False
+                            assessment.no_intervention = False
+                            assessment.no_outcome = False
+                            assessment.no_comparator = False
                             assessment.note = ''
                             assessment.save()
                             # Update status and get next assessment
