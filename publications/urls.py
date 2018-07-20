@@ -27,6 +27,7 @@ urlpatterns = [
     path('email_confirmed/', views.email_confirmed, name='email_confirmed'),
     path('email_not_confirmed/', views.email_not_confirmed, name='email_not_confirmed'),
     re_path('confirm_email/(?P<uidb64>[0-9A-Za-z_\-]+)/(?P<token>[0-9A-Za-z]{1,13}-[0-9A-Za-z]{1,20})/', views.confirm_email, name='confirm_email'),
+    path('systematic-review/<subject>/edit-publication/<int:publication_pk>/', views.edit_publication, name='edit_publication'),
     path('systematic-review/<subject>/publication/<int:publication_pk>/', views.publication, name='publication'),
     path('systematic-review/<subject>/publication/<int:publication_pk>/intervention/<int:experiment_index>/', views.experiment, name='experiment'),
     path('systematic-review/<subject>/publication/<int:publication_pk>/intervention/<int:experiment_index>/population/<int:population_index>/', views.population, name='population'),

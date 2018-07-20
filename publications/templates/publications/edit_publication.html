@@ -1,0 +1,43 @@
+{% extends 'publications/base.html' %}
+
+{% load metadataset_tags %}
+
+{% block title %}
+  Edit Publication | Metadataset | www.metadataset.com
+{% endblock %}
+
+{% block css %}
+  {% load staticfiles %}
+  <link href="{% static 'css/sidebar.css' %}" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+
+<h1>Edit Publication</h1>
+
+<p>
+  Please be careful when changing this metadata. Your changes will affect all users, some of whom may already have screened or extracted metadata from this publication.
+</p>
+<p>
+  Please feel free improve the quality of this metadata by ensuring that it matches the original publication. All changes will be version controlled, and so it will be possible to revert to an earlier version. If you make any major changes (e.g., adding an abstract, if no abstract was available), then please leave a note (e.g., the source of the abstract). Your name will be attached to your changes.
+</p>
+
+<form method="post" action="">{% csrf_token %}
+  <table>
+    {% for field in publication_form %}
+      <tr>
+        <td>{{ field.label_tag }}</td>
+        <td>{{ field }}</td>
+      </tr>
+    {% endfor %}
+    <tr>
+      <td class="bottom button"><input type="submit" name="save" value="Save" /></td>
+    </tr>
+  </table>
+</form>
+
+{% endblock %}
+
+{% block sidebar %}
+  {% include 'publications/subject_sidebar.html' %}
+{% endblock %}

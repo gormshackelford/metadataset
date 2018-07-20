@@ -24,7 +24,7 @@
     {% endif %}
   </h1>
   <p>
-    <span class="bold">Based on the title/abstract, should we include this publication?</span> If there is not enough information in the title/abstract, click "Include" and then go to <a href="#stage_2">Stage 2: Full Text</a>.
+    <span class="bold">Based on the title/abstract, should this publication be included in this systematic map?</span> If there is not enough information in the title/abstract, click "Include" and then go to <a href="#stage_2">Stage 2: Full Text</a>.
     <!-- A hidden input so that pressing enter saves the form instead of marking the publication as not relevant -->
     <input type="submit" name="save" style="visibility: hidden;" />
   </p>
@@ -41,6 +41,9 @@
   <h1>Abstract</h1>
   <p>{{ publication.abstract|default:'[abstract not available]' }}</p>
 
+  <br />
+  <p><a href="{% url 'edit_publication' subject=subject.slug publication_pk=publication.pk %}">Edit the title/abstract or other bibliographic metadata</a></p>
+
   <h1 id="stage_2">
     Stage 2: Full Text
     {% if full_text_is_relevant == 'True' %}
@@ -50,12 +53,17 @@
     {% endif %}
   </h1>
   <p>
+    <span class="bold">Based on the full text, should this publication be included in this systematic map?</span> If you excluded this publication at Stage 1, then skip this step and go to the next publication.
+  </p>
+  <h1>Full Text</h1>
+  <p>
     {% if publication.author_list %}
       {{ publication.author_list|join:", "|default:'[authors not available]' }}
     {% else %}
       {{ publication.authors }}
     {% endif %}
      ({{ publication.year|default:'[year not available]' }}) {{ publication.title|default:'[title not available]' }} <span class="italic">{{ publication.journal|default:'[journal not available]' }}</span> {{ publication.volume|default:'[volume not available]'}}, {{ publication.pages|default:'[pages not available]' }}
+     [<a href="{% url 'edit_publication' subject=subject.slug publication_pk=publication.pk %}">Edit the title/abstract or other bibliographic metadata</a>]
   </p>
   <p>
     Search for the full text:
@@ -65,45 +73,44 @@
       | <a target="_blank" href="http://dx.doi.org/{{ publication.doi }}">DOI</a>
     {% endif %}
   </p>
+
+  <h1>Exclude?</h1>
   <p>
-    <span class="bold">Based on the full text, should we include this publication?</span> Skip this step and go to the next publication if you excluded this publication at Stage 1.
-  </p>
-  <p>
-    <span class="bold">If we should exclude it</span>, select one or more reason(s), write a note if you want, and then click "Exclude based on the full text".
+    <span class="bold">If we should exclude it</span>, select one or more reason(s), write a note (if you want), and then click "Exclude based on the full text".
   </p>
   <table>
     <tr>
-      <td>{{ full_text_assessment_form.cannot_find }}</td><td>Cannot find</td>
+      <td class="centered">{{ full_text_assessment_form.cannot_find }}</td><td>Cannot find</td>
     </tr>
     <tr>
-      <td>{{ full_text_assessment_form.cannot_access }}</td><td>Cannot access</td>
-    </tr>
-    <tr>
-      <td colspan="2">&nbsp;</td>
-    </tr>
-    <tr>
-      <td>{{ full_text_assessment_form.secondary_literature }}</td><td>Secondary literature</td>
+      <td class="centered">{{ full_text_assessment_form.cannot_access }}</td><td>Cannot access</td>
     </tr>
     <tr>
       <td colspan="2">&nbsp;</td>
     </tr>
     <tr>
-      <td>{{ full_text_assessment_form.no_population }}</td><td>No relevant population/subject</td>
-    </tr>
-    <tr>
-      <td>{{ full_text_assessment_form.no_intervention }}</td><td>No relevant intervention</td>
-    </tr>
-    <tr>
-      <td>{{ full_text_assessment_form.no_outcome }}</td><td>No relevant outcome</td>
-    </tr>
-    <tr>
-      <td>{{ full_text_assessment_form.no_comparator }}</td><td>No relevant comparator</td>
+      <td class="centered">{{ full_text_assessment_form.secondary_literature }}</td><td>Secondary literature</td>
     </tr>
     <tr>
       <td colspan="2">&nbsp;</td>
     </tr>
     <tr>
-      <td>{{ full_text_assessment_form.other }}</td><td>Other</td>
+      <td class="centered">{{ full_text_assessment_form.no_population }}</td><td>No relevant population/subject</td>
+    </tr>
+    <tr>
+      <td class="centered">{{ full_text_assessment_form.no_intervention }}</td><td>No relevant intervention</td>
+    </tr>
+    <tr>
+      <td class="centered">{{ full_text_assessment_form.no_outcome }}</td><td>No relevant outcome</td>
+    </tr>
+    <tr>
+      <td class="centered">{{ full_text_assessment_form.no_comparator }}</td><td>No relevant comparator</td>
+    </tr>
+    <tr>
+      <td colspan="2">&nbsp;</td>
+    </tr>
+    <tr>
+      <td class="centered">{{ full_text_assessment_form.other }}</td><td>Other</td>
     </tr>
   </table>
   <br />
@@ -114,7 +121,7 @@
     <input type="submit" name="full_text_is_not_relevant" value="Exclude based on the full text" />
   </p>
 
-  <h1>Interventions</h1>
+  <h1>Include?</h1>
   <p><span class="bold">If we should include it</span>, select one or more intervention(s) that were tested in this publication, and then click "Include based on the full text".</p>
 
   <table>

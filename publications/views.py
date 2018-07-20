@@ -12,24 +12,13 @@ from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from ast import literal_eval
 from random import shuffle
 from .tokens import account_activation_token
-from .forms import PublicationForm, AssessmentForm, EffectForm, ExperimentForm, ExperimentCountryForm, ExperimentCropForm, ExperimentDateForm, ExperimentDesignForm, ExperimentLatLongForm, ExperimentPopulationForm, ExperimentPopulationOutcomeForm, FullTextAssessmentForm, ProfileForm, SignUpForm, UserForm
-from .models import Assessment, AssessmentStatus, Crop, Experiment, Intervention, Outcome, Population, ExperimentCountry, ExperimentCrop, ExperimentDate, ExperimentDesign, ExperimentLatLong, ExperimentPopulation, ExperimentPopulationOutcome, Publication, Subject, User
+from .forms import AssessmentForm, EffectForm, ExperimentForm, ExperimentCountryForm, ExperimentCropForm, ExperimentDateForm, ExperimentDesignForm, ExperimentLatLongForm, ExperimentPopulationForm, ExperimentPopulationOutcomeForm, FullTextAssessmentForm, ProfileForm, PublicationForm, SignUpForm, UserForm
+from .models import Assessment, AssessmentStatus, Crop, Experiment, ExperimentCountry, ExperimentCrop, ExperimentDate, ExperimentDesign, ExperimentLatLong, ExperimentPopulation, ExperimentPopulationOutcome, Intervention, Outcome, Population, Publication, Subject, User
 from mptt.forms import TreeNodeChoiceField
-
-
-
-
-
-
-
-
-
-
-
-
 from haystack.generic_views import SearchView
 from haystack.forms import SearchForm
 from haystack.query import SearchQuerySet
+
 
 class MySearchView(SearchView):
     template_name = 'search/search.html'
@@ -44,15 +33,6 @@ class MySearchView(SearchView):
         context = super(MySearchView, self).get_context_data(*args, **kwargs)
         # do something
         return context
-
-
-
-
-
-
-
-
-
 
 
 def subject(request, subject):
@@ -493,6 +473,34 @@ def publication(request, subject, publication_pk):
     status = get_status(user, subject)
     context.update(status)
     return render(request, 'publications/publication.html', context)
+
+
+@login_required
+def edit_publication(request, subject, publication_pk):
+    """
+    On this page, the user edits the title, abstract, etc. for this publication.
+    """
+    user = request.user
+    data = request.POST or None
+    subject = Subject.objects.get(slug=subject)
+    publication_pk = int(publication_pk)
+    publication = Publication.objects.get(pk=publication_pk)
+    if request.method == 'POST':
+        publication_form = PublicationForm(request.POST, instance=publication)
+        if publication_form.is_valid():
+            publication_form.save()
+        return redirect('publication', subject=subject, publication_pk=publication_pk)
+    else:
+        publication_form = PublicationForm(instance=publication)
+    context = {
+        'subject': subject,
+        'publication': publication,
+        'publication_form': publication_form
+    }
+    # Get data for the sidebar.
+    status = get_status(user, subject)
+    context.update(status)
+    return render(request, 'publications/edit_publication.html', context)
 
 
 @login_required

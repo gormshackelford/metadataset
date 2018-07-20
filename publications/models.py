@@ -117,6 +117,7 @@ class Publication(models.Model):
     url = models.CharField(max_length=510, blank=True)
     publisher = models.CharField(max_length=510, blank=True)
     place = models.CharField(max_length=510, blank=True)
+    note = models.TextField(blank=True)
     subject = models.ForeignKey(Subject, on_delete=models.CASCADE, null=True)
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
