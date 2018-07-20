@@ -426,6 +426,7 @@ class Assessment(models.Model):
     no_intervention = models.BooleanField(default=False)
     no_outcome = models.BooleanField(default=False)
     no_comparator = models.BooleanField(default=False)
+    other = models.BooleanField(default=False)
     subject = models.ForeignKey(Subject, on_delete=models.CASCADE)
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)

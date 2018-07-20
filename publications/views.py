@@ -330,6 +330,7 @@ def publication(request, subject, publication_pk):
                     assessment.no_intervention = False
                     assessment.no_outcome = False
                     assessment.no_comparator = False
+                    assessment.other = False
                     assessment.note = ''
                     assessment.save()
                     # Update status and get next assessment
@@ -363,6 +364,7 @@ def publication(request, subject, publication_pk):
                     assessment.no_intervention = False
                     assessment.no_outcome = False
                     assessment.no_comparator = False
+                    assessment.other = False
                     assessment.note = ''
                     assessment.save()
                     # Update status and get next assessment
@@ -436,6 +438,7 @@ def publication(request, subject, publication_pk):
                             assessment.no_intervention = False
                             assessment.no_outcome = False
                             assessment.no_comparator = False
+                            assessment.other = False
                             assessment.note = ''
                             assessment.save()
                             # Update status and get next assessment
@@ -458,10 +461,12 @@ def publication(request, subject, publication_pk):
                             if publication_pk in completed_assessments:
                                 completed_assessments.remove(publication_pk)
                                 item.completed_assessments = completed_assessments
-                                relevant_publications.remove(publication_pk)
-                                item.relevant_publications = relevant_publications
                                 next_assessment = publication_pk
                                 item.next_assessment = next_assessment
+                                item.save()
+                            if publication_pk in relevant_publications:
+                                relevant_publications.remove(publication_pk)
+                                item.relevant_publications = relevant_publications
                                 item.save()
                             if publication_pk in completed_full_text_assessments:
                                 completed_full_text_assessments.remove(publication_pk)

@@ -49,7 +49,7 @@ class FullTextAssessmentForm(forms.ModelForm):
         model = Assessment
         fields = ['cannot_find', 'cannot_access', 'secondary_literature',
             'no_population', 'no_intervention', 'no_comparator', 'no_outcome',
-            'note']
+            'other', 'note']
 
 
 class PublicationForm(forms.ModelForm):

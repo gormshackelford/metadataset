@@ -18,19 +18,19 @@
   <h1>
     Stage 1: Title/Abstract
     {% if is_relevant == 'True' %}
-      <span class="blue">[relevant]</span>
+      <span class="blue">[included at Stage 1]</span>
     {% elif is_relevant == 'False' %}
-      <span class="red">[not relevant]</span>
+      <span class="red">[excluded at Stage 1]</span>
     {% endif %}
   </h1>
   <p>
-    <span class="bold">Based on the title/abstract, is this publication relevant to this systematic map?</span> If there is not enough information in the title/abstract, click "Relevant" and then go to <a href="#stage_2">Stage 2: Full Text</a>.
+    <span class="bold">Based on the title/abstract, should we include this publication?</span> If there is not enough information in the title/abstract, click "Include" and then go to <a href="#stage_2">Stage 2: Full Text</a>.
     <!-- A hidden input so that pressing enter saves the form instead of marking the publication as not relevant -->
     <input type="submit" name="save" style="visibility: hidden;" />
   </p>
   <p>
-    <input type="submit" name="is_relevant" value="Relevant" />
-    <input type="submit" name="is_not_relevant" value="Not relevant" />
+    <input type="submit" name="is_relevant" value="Include" />
+    <input type="submit" name="is_not_relevant" value="Exclude" />
     <a class="button" href="{% url 'publication' subject=subject.slug publication_pk=previous_pk %}">Previous publication</a>
     <a class="button" href="{% url 'publication' subject=subject.slug publication_pk=next_pk %}">Next publication</a>
   </p>
@@ -44,9 +44,9 @@
   <h1 id="stage_2">
     Stage 2: Full Text
     {% if full_text_is_relevant == 'True' %}
-      <span class="blue">[relevant]</span>
+      <span class="blue">[included at Stage 2]</span>
     {% elif full_text_is_relevant == 'False' %}
-      <span class="red">[not relevant]</span>
+      <span class="red">[excluded at Stage 2]</span>
     {% endif %}
   </h1>
   <p>
@@ -66,10 +66,10 @@
     {% endif %}
   </p>
   <p>
-    <span class="bold">Based on the full text, is this publication relevant to this systematic map?</span> Skip this step and go to the next publication if you already assessed this publication as "Not relevant" based on the title/abstract.
+    <span class="bold">Based on the full text, should we include this publication?</span> Skip this step and go to the next publication if you excluded this publication at Stage 1.
   </p>
   <p>
-    <span class="bold">If this publication is not relevant</span> based on the full text, select the reason (write a note if you want) and then click "Not relevant based on the full text".
+    <span class="bold">If we should exclude it</span>, select one or more reason(s), write a note if you want, and then click "Exclude based on the full text".
   </p>
   <table>
     <tr>
@@ -102,14 +102,20 @@
     <tr>
       <td colspan="2">&nbsp;</td>
     </tr>
+    <tr>
+      <td>{{ full_text_assessment_form.other }}</td><td>Other</td>
+    </tr>
   </table>
+  <br />
   <p>
     {{ full_text_assessment_form.note }}
-    <input type="submit" name="full_text_is_not_relevant" value="Not relevant based on the full text" />
+  </p>
+  <p>
+    <input type="submit" name="full_text_is_not_relevant" value="Exclude based on the full text" />
   </p>
 
   <h1>Interventions</h1>
-  <p><span class="bold">If this publication is relevant</span>, you must select one or more interventions that were tested in this publication and then click "Save interventions".</p>
+  <p><span class="bold">If we should include it</span>, select one or more intervention(s) that were tested in this publication, and then click "Include based on the full text".</p>
 
   <table>
     <tr>
@@ -139,7 +145,7 @@
     </tr>
     {% endfor %}
     <tr>
-      <td class="button bottom"><input type="submit" name="save" value="Save interventions" /></td>
+      <td class="button bottom"><input type="submit" name="save" value="Include based on the full text" /></td>
       <td class="bottom"></td>
       <td class="bottom button"><input type="submit" name="delete" value="Delete selected" /></td>
     </tr>
