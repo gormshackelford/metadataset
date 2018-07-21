@@ -259,7 +259,10 @@ def publication(request, subject, publication_pk):
     relevant_publications = literal_eval(item.relevant_publications)
 
     # The next pk and previous pk in assessment_order, to be used for navigation
-    previous_pk = assessment_order[assessment_order.index(publication_pk) - 1]
+    try:
+        previous_pk = assessment_order[assessment_order.index(publication_pk) - 1]
+    except:
+        previous_pk = assessment_order[0]
     try:
         next_pk = assessment_order[assessment_order.index(publication_pk) + 1]
     except:
@@ -325,6 +328,8 @@ def publication(request, subject, publication_pk):
                     if publication_pk in completed_full_text_assessments:
                         completed_full_text_assessments.remove(publication_pk)
                         item.completed_full_text_assessments = completed_full_text_assessments
+                    next_full_text_assessment = get_next_full_text_assessment(publication_pk, relevant_publications, completed_full_text_assessments)
+                    item.next_full_text_assessment = next_full_text_assessment
                     item.save()
                     return redirect('publication', subject=subject, publication_pk=next_assessment)
         if 'is_not_relevant' in request.POST:
@@ -359,6 +364,8 @@ def publication(request, subject, publication_pk):
                     if publication_pk in completed_full_text_assessments:
                         completed_full_text_assessments.remove(publication_pk)
                         item.completed_full_text_assessments = completed_full_text_assessments
+                    next_full_text_assessment = get_next_full_text_assessment(publication_pk, relevant_publications, completed_full_text_assessments)
+                    item.next_full_text_assessment = next_full_text_assessment
                     item.save()
                     return redirect('publication', subject=subject, publication_pk=next_assessment)
         if 'full_text_is_not_relevant' in request.POST:
@@ -381,6 +388,8 @@ def publication(request, subject, publication_pk):
                         item.relevant_publications = relevant_publications
                     next_assessment = get_next_assessment(publication_pk, next_pk, assessment_order, completed_assessments)
                     item.next_assessment = next_assessment
+                    next_full_text_assessment = get_next_full_text_assessment(publication_pk, relevant_publications, completed_full_text_assessments)
+                    item.next_full_text_assessment = next_full_text_assessment
                     if publication_pk not in completed_full_text_assessments:
                         completed_full_text_assessments.append(publication_pk)
                         item.completed_full_text_assessments = completed_full_text_assessments
@@ -435,6 +444,8 @@ def publication(request, subject, publication_pk):
                             if publication_pk not in completed_full_text_assessments:
                                 completed_full_text_assessments.append(publication_pk)
                                 item.completed_full_text_assessments = completed_full_text_assessments
+                                next_full_text_assessment = get_next_full_text_assessment(publication_pk, relevant_publications, completed_full_text_assessments)
+                                item.next_full_text_assessment = next_full_text_assessment
                                 item.save()
                         # If all interventions have been deleted, remove this publication from the completed assessments.
                         elif 'delete' in request.POST:
@@ -451,6 +462,8 @@ def publication(request, subject, publication_pk):
                             if publication_pk in completed_full_text_assessments:
                                 completed_full_text_assessments.remove(publication_pk)
                                 item.completed_full_text_assessments = completed_full_text_assessments
+                                next_full_text_assessment = get_next_full_text_assessment(publication_pk, relevant_publications, completed_full_text_assessments)
+                                item.next_full_text_assessment = next_full_text_assessment
                                 item.save()
                             if Assessment.objects.filter(publication=publication, user=user).exists():
                                 Assessment.objects.filter(publication=publication, user=user).delete()
@@ -783,6 +796,7 @@ def get_status(user, subject):
         item = AssessmentStatus.objects.get(user=user, subject=subject)
         assessment_order = literal_eval(item.assessment_order)
         next_assessment = item.next_assessment
+        next_full_text_assessment = item.next_full_text_assessment
         completed_assessments = literal_eval(item.completed_assessments)
         completed_full_text_assessments = literal_eval(item.completed_full_text_assessments)
         relevant_publications = literal_eval(item.relevant_publications)
@@ -809,6 +823,7 @@ def get_status(user, subject):
         assessment_order = list(pks)
         shuffle(assessment_order)
         next_assessment = assessment_order[0]
+        next_full_text_assessment = assessment_order[0]
         completed_assessments = []
         completed_full_text_assessments = []
         relevant_publications = []
@@ -817,6 +832,7 @@ def get_status(user, subject):
             user=user,
             assessment_order=assessment_order,
             next_assessment=next_assessment,
+            next_full_text_assessment=next_full_text_assessment,
             completed_assessments=completed_assessments,
             completed_full_text_assessments=completed_full_text_assessments,
             relevant_publications=relevant_publications
@@ -843,7 +859,8 @@ def get_status(user, subject):
         'full_texts_assessed_count': full_texts_assessed_count,
         'full_texts_assessed_percent': full_texts_assessed_percent,
         'relevant_publications_count': relevant_publications_count,
-        'next_assessment': next_assessment
+        'next_assessment': next_assessment,
+        'next_full_text_assessment': next_full_text_assessment
     }
     return(status)
 
@@ -860,3 +877,16 @@ def get_next_assessment(publication_pk, next_pk, assessment_order, completed_ass
             except:
                 next_assessment = assessment_order[0]
     return(next_assessment)
+
+
+def get_next_full_text_assessment(publication_pk, relevant_publications, completed_full_text_assessments):
+    next_full_text_assessment = relevant_publications[0]
+    for i in relevant_publications:
+        if next_full_text_assessment not in completed_full_text_assessments:
+            if next_full_text_assessment != publication_pk:
+                break
+        try:
+            next_full_text_assessment = relevant_publications[relevant_publications.index(next_full_text_assessment) + 1]
+        except:
+            next_full_text_assessment = relevant_publications[0]
+    return(next_full_text_assessment)

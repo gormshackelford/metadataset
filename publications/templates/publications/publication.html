@@ -42,7 +42,7 @@
   <p>{{ publication.abstract|default:'[abstract not available]' }}</p>
 
   <br />
-  <p><a href="{% url 'edit_publication' subject=subject.slug publication_pk=publication.pk %}">Edit the title/abstract or other bibliographic metadata</a></p>
+  <p><a href="{% url 'edit_publication' subject=subject.slug publication_pk=publication.pk %}">Edit this title/abstract and other bibliographic metadata</a></p>
 
   <h1 id="stage_2">
     Stage 2: Full Text
@@ -63,7 +63,6 @@
       {{ publication.authors }}
     {% endif %}
      ({{ publication.year|default:'[year not available]' }}) {{ publication.title|default:'[title not available]' }} <span class="italic">{{ publication.journal|default:'[journal not available]' }}</span> {{ publication.volume|default:'[volume not available]'}}, {{ publication.pages|default:'[pages not available]' }}
-     [<a href="{% url 'edit_publication' subject=subject.slug publication_pk=publication.pk %}">Edit the title/abstract or other bibliographic metadata</a>]
   </p>
   <p>
     Search for the full text:
