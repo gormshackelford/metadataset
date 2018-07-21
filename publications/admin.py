@@ -2,6 +2,7 @@ from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as DjangoUserAdmin
 from django.utils.translation import ugettext_lazy as _
 from mptt.admin import DraggableMPTTAdmin
+from reversion.admin import VersionAdmin
 from .models import Profile, User  # AbstractUser with email address as username
 from .models import Subject, Publication, Assessment, AssessmentStatus, Intervention, Population, Outcome, Design, Experiment, Country, Crop, ExperimentCountry, ExperimentCrop, ExperimentDate, ExperimentDesign, ExperimentPopulation, ExperimentLatLong, ExperimentPopulationOutcome
 
@@ -28,51 +29,66 @@ class UserAdmin(DjangoUserAdmin):
     ordering = ('email',)
 
 
-admin.site.register(Profile)
-
 admin.site.register(Country)
 admin.site.register(Crop)
 admin.site.register(Design)
 admin.site.register(Population)
-admin.site.register(Publication)
+admin.site.register(Profile)
 
+
+# Admin for models with version control (django-reversion)
+@admin.register(Publication)
+class PublicationAdmin(VersionAdmin):
+    pass
+    
+
+# Admin for models with readonly fields (created and updated)
 class ExperimentAdmin(admin.ModelAdmin):
     readonly_fields = ('created', 'updated')
 admin.site.register(Experiment, ExperimentAdmin)
+
 class SubjectAdmin(admin.ModelAdmin):
     readonly_fields = ('created', 'updated')
 admin.site.register(Subject, SubjectAdmin)
 
-# Intersection tables
 class AssessmentAdmin(admin.ModelAdmin):
     readonly_fields = ('created', 'updated')
 admin.site.register(Assessment, AssessmentAdmin)
+
 class AssessmentStatusAdmin(admin.ModelAdmin):
     readonly_fields = ('created', 'updated')
 admin.site.register(AssessmentStatus, AssessmentStatusAdmin)
+
 class ExperimentDesignAdmin(admin.ModelAdmin):
     readonly_fields = ('created', 'updated')
 admin.site.register(ExperimentDesign, ExperimentDesignAdmin)
+
 class ExperimentCountryAdmin(admin.ModelAdmin):
     readonly_fields = ('created', 'updated')
 admin.site.register(ExperimentCountry, ExperimentCountryAdmin)
+
 class ExperimentCropAdmin(admin.ModelAdmin):
     readonly_fields = ('created', 'updated')
 admin.site.register(ExperimentCrop, ExperimentCropAdmin)
+
 class ExperimentPopulationAdmin(admin.ModelAdmin):
     readonly_fields = ('created', 'updated')
 admin.site.register(ExperimentPopulation, ExperimentPopulationAdmin)
+
 class ExperimentPopulationOutcomeAdmin(admin.ModelAdmin):
     readonly_fields = ('created', 'updated')
 admin.site.register(ExperimentPopulationOutcome, ExperimentPopulationOutcomeAdmin)
+
 class ExperimentLatLongAdmin(admin.ModelAdmin):
     readonly_fields = ('created', 'updated')
 admin.site.register(ExperimentLatLong, ExperimentLatLongAdmin)
+
 class ExperimentDateAdmin(admin.ModelAdmin):
     readonly_fields = ('created', 'updated')
 admin.site.register(ExperimentDate, ExperimentDateAdmin)
 
-# DraggableMPTTAdmin for hierarchical models
+
+# Admin for hierarchical models (django-mptt)
 admin.site.register(
     Intervention,
     DraggableMPTTAdmin,

@@ -18,7 +18,7 @@ from mptt.forms import TreeNodeChoiceField
 from haystack.generic_views import SearchView
 from haystack.forms import SearchForm
 from haystack.query import SearchQuerySet
-
+import reversion
 
 class MySearchView(SearchView):
     template_name = 'search/search.html'
@@ -501,7 +501,9 @@ def edit_publication(request, subject, publication_pk):
     if request.method == 'POST':
         publication_form = PublicationForm(request.POST, instance=publication)
         if publication_form.is_valid():
-            publication_form.save()
+            with reversion.create_revision():  # Version control (django-revision)
+                publication_form.save()
+                reversion.set_user(request.user)
         return redirect('publication', subject=subject, publication_pk=publication_pk)
     else:
         publication_form = PublicationForm(instance=publication)
