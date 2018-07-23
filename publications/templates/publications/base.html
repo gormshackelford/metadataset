@@ -27,10 +27,10 @@
 
         {% if user.is_authenticated %}
 
-          <a class="navigation_text" href="{% url 'logout' %}">Log out</a>
+          <a class="navigation_text" href="{% url 'profile' %}">Your profile</a>
 
           &nbsp;&nbsp;|&nbsp;&nbsp;
-          <a class="navigation_text" href="{% url 'profile' %}">Your profile</a>
+          <a class="navigation_text" href="{% url 'logout' %}">Log out</a>
 
         {% else %}
 
