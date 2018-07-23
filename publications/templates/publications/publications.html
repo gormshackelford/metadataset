@@ -30,7 +30,7 @@
       {% endif %}
     </p>
     {% if user.is_authenticated %}
-      <p><a href="{% url 'publication' subject=subject.slug publication_pk=publication.pk %}">Assess this publication</a></p>
+      <p><a href="{% url 'publication' subject=subject.slug publication_pk=publication.pk %}">Edit this publication</a></p>
     {% endif %}
     <br />
     <p class="hr"></p>

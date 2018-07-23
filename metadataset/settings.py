@@ -12,13 +12,20 @@ https://docs.djangoproject.com/en/2.0/ref/settings/
 
 import os
 import json
+import config
 
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 
-# Load the configuration file
+# The SSL certificate is installed for production, but not for development.
+SECURE_SSL_REDIRECT = bool(config.SECURE_SSL_REDIRECT)
+
+# Debug is off for production, but on for development.
+DEBUG = bool(config.DEBUG)
+
+# Load the configuration file (config.json, not config.py)
 config_file = os.path.join(BASE_DIR, "config.json")
 with open(config_file, 'r') as f:
     config = json.load(f)
@@ -77,9 +84,6 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'metadataset.wsgi.application'
-
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = bool(config['DEBUG'])
 
 if DEBUG:
    INTERNAL_IPS = ('127.0.0.1', 'localhost')

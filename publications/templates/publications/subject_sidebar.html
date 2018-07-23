@@ -8,23 +8,23 @@
   <h2>Titles/Abstracts</h2>
   <a href="{% url 'publication' subject=subject.slug publication_pk=next_assessment %}">Your next title/abstract</a> <span class="red">(start or restart here)</span>
   <br />
-  {{ publications_assessed_count }} of {{ publications_count }} complete ({{ publications_assessed_percent }}%)
+  {{ publications_assessed_count }} of {{ publications_count }} completed ({{ publications_assessed_percent }}%)
   <br />
   <a href="{% url 'publications' subject=subject.slug state='relevant' %}">Included</a>
   <br />
   <a href="{% url 'publications' subject=subject.slug state='not_relevant' %}">Excluded</a>
   <br />
-  <a href="{% url 'publications' subject=subject.slug state='not_assessed' %}">Incomplete</a>
+  <a href="{% url 'publications' subject=subject.slug state='not_assessed' %}">Not completed</a>
   <h2>Full Texts</h2>
   <a href="{% url 'publication' subject=subject.slug publication_pk=next_full_text_assessment %}">Your next full text</a>
   <br />
-  {{ full_texts_assessed_count }} of {{ relevant_publications_count }} complete ({{ full_texts_assessed_percent}}%)
+  {{ full_texts_assessed_count }} of {{ relevant_publications_count }} completed ({{ full_texts_assessed_percent}}%)
   <br />
   <a href="{% url 'publications' subject=subject.slug state='relevant_full_texts' %}">Included</a>
   <br />
   <a href="{% url 'publications' subject=subject.slug state='not_relevant_full_texts' %}">Excluded</a>
   <br />
-  <a href="{% url 'publications' subject=subject.slug state='not_assessed_full_texts' %}">Incomplete</a>
+  <a href="{% url 'publications' subject=subject.slug state='not_assessed_full_texts' %}">Not completed</a>
 {% endif %}
 
 <form action="/search/{{ subject.slug }}/" method="get">
