@@ -330,19 +330,15 @@ td.bottom {
 }
 
 td.input_intervention {
-width: 200px;
+  width: 200px;
 }
 
 td.search {
   border: none;
 }
 
-td.ml {
-  padding-right: 1em;
-}
-
-td.scoreboard {
-  padding-right: 1em;
+td.select {
+  width: 3em;
 }
 
 td.top {

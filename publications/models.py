@@ -418,6 +418,7 @@ class ExperimentPopulationOutcome(models.Model):
 class Assessment(models.Model):
     publication = models.ForeignKey(Publication, on_delete=models.CASCADE)
     is_relevant = models.BooleanField()
+    is_completed = models.BooleanField(default=False)
     full_text_is_relevant = models.NullBooleanField()
     note = models.TextField(blank=True, null=True)
     cannot_find = models.BooleanField(default=False)

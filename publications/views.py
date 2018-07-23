@@ -410,11 +410,12 @@ def publication(request, subject, publication_pk):
                             instance.publication = publication
                             instance.user = user
                             instance.save()
-                    if assessment_form.is_valid():
+                    if full_text_assessment_form.is_valid():
                         # If interventions have been selected, mark this publication as "relevant" to this systematic review.
                         if Experiment.objects.filter(publication=publication, user=user).exists():
                             # Update assessment
-                            assessment = assessment_form.save(commit=False)
+                            assessment = full_text_assessment_form.save(commit=False)
+                            is_completed = assessment.is_completed
                             assessment.user = user
                             assessment.publication = publication
                             assessment.subject = subject
@@ -441,12 +442,19 @@ def publication(request, subject, publication_pk):
                                 relevant_publications.append(publication_pk)
                                 item.relevant_publications = relevant_publications
                                 item.save()
-                            if publication_pk not in completed_full_text_assessments:
-                                completed_full_text_assessments.append(publication_pk)
-                                item.completed_full_text_assessments = completed_full_text_assessments
-                                next_full_text_assessment = get_next_full_text_assessment(publication_pk, relevant_publications, completed_full_text_assessments)
-                                item.next_full_text_assessment = next_full_text_assessment
-                                item.save()
+                            if is_completed:    # If the user has marked this publication as completed
+                                if publication_pk not in completed_full_text_assessments:
+                                    completed_full_text_assessments.append(publication_pk)
+                                    item.completed_full_text_assessments = completed_full_text_assessments
+                                    item.save()
+                            else:               # If the user has not marked this publication as completed
+                                if publication_pk in completed_full_text_assessments:
+                                    completed_full_text_assessments.remove(publication_pk)
+                                    item.completed_full_text_assessments = completed_full_text_assessments
+                                    item.save()
+                            next_full_text_assessment = get_next_full_text_assessment(publication_pk, relevant_publications, completed_full_text_assessments)
+                            item.next_full_text_assessment = next_full_text_assessment
+                            item.save()
                         # If all interventions have been deleted, remove this publication from the completed assessments.
                         elif 'delete' in request.POST:
                             if publication_pk in completed_assessments:

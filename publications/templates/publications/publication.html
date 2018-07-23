@@ -79,37 +79,37 @@
   </p>
   <table>
     <tr>
-      <td class="centered">{{ full_text_assessment_form.cannot_find }}</td><td>Cannot find</td>
+      <td class="select centered">{{ full_text_assessment_form.cannot_find }}</td><td>Cannot find</td>
     </tr>
     <tr>
-      <td class="centered">{{ full_text_assessment_form.cannot_access }}</td><td>Cannot access</td>
-    </tr>
-    <tr>
-      <td colspan="2">&nbsp;</td>
-    </tr>
-    <tr>
-      <td class="centered">{{ full_text_assessment_form.secondary_literature }}</td><td>Secondary literature</td>
+      <td class="select centered">{{ full_text_assessment_form.cannot_access }}</td><td>Cannot access</td>
     </tr>
     <tr>
       <td colspan="2">&nbsp;</td>
     </tr>
     <tr>
-      <td class="centered">{{ full_text_assessment_form.no_population }}</td><td>No relevant population/subject</td>
-    </tr>
-    <tr>
-      <td class="centered">{{ full_text_assessment_form.no_intervention }}</td><td>No relevant intervention</td>
-    </tr>
-    <tr>
-      <td class="centered">{{ full_text_assessment_form.no_outcome }}</td><td>No relevant outcome</td>
-    </tr>
-    <tr>
-      <td class="centered">{{ full_text_assessment_form.no_comparator }}</td><td>No relevant comparator</td>
+      <td class="select centered">{{ full_text_assessment_form.secondary_literature }}</td><td>Secondary literature</td>
     </tr>
     <tr>
       <td colspan="2">&nbsp;</td>
     </tr>
     <tr>
-      <td class="centered">{{ full_text_assessment_form.other }}</td><td>Other</td>
+      <td class="select centered">{{ full_text_assessment_form.no_population }}</td><td>No relevant population/subject</td>
+    </tr>
+    <tr>
+      <td class="select centered">{{ full_text_assessment_form.no_intervention }}</td><td>No relevant intervention</td>
+    </tr>
+    <tr>
+      <td class="select centered">{{ full_text_assessment_form.no_outcome }}</td><td>No relevant outcome</td>
+    </tr>
+    <tr>
+      <td class="select centered">{{ full_text_assessment_form.no_comparator }}</td><td>No relevant comparator</td>
+    </tr>
+    <tr>
+      <td colspan="2">&nbsp;</td>
+    </tr>
+    <tr>
+      <td class="select centered">{{ full_text_assessment_form.other }}</td><td>Other</td>
     </tr>
   </table>
   <br />
@@ -154,6 +154,17 @@
       <td class="button bottom"><input type="submit" name="save" value="Include based on the full text" /></td>
       <td class="bottom"></td>
       <td class="bottom button"><input type="submit" name="delete" value="Delete selected" /></td>
+    </tr>
+  </table>
+
+  <h1>Complete?</h1>
+  <p>After you have selected and saved the intervention(s), a link will appear for "populations". When you have entered all of the metadata for this publication (not only "populations" but also "outcomes"), tick this box and click "Save".</p>
+  <table>
+    <tr>
+      <td class="select centered">{{ full_text_assessment_form.is_completed }}</td><td>Completed</td>
+    </tr>
+    <tr>
+      <td class="button bottom"><input type="submit" name="save" value="Save" /></td>
     </tr>
   </table>
 
