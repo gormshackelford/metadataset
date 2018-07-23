@@ -1,7 +1,7 @@
 {% extends 'publications/base.html' %}
 
 {% block title %}
-    Your Profile | Metadataset | www.metadataset.com
+    Your Account | Metadataset | www.metadataset.com
 {% endblock %}
 
 {% block css %}{% load staticfiles %}
@@ -10,7 +10,7 @@
 
 {% block content %}
 
-    <h1>Your Profile</h1>
+    <h1>Your Account</h1>
     <p>Please click "Save" after making changes. To change your email address, please <a href="{% url 'contact' %}">contact us</a>.
     <form method="POST">
       {% csrf_token %}

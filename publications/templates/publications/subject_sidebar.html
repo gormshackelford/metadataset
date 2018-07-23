@@ -16,7 +16,7 @@
   <br />
   <a href="{% url 'publications' subject=subject.slug state='not_assessed' %}">Not completed</a>
   <h2>Full Texts</h2>
-  <a href="{% url 'publication' subject=subject.slug publication_pk=next_full_text_assessment %}">Your next full text</a>
+  <a href="{% url 'full_text_navigation' subject=subject.slug state='next-incomplete' %}">Your next full text</a>
   <br />
   {{ full_texts_assessed_count }} of {{ relevant_publications_count }} completed ({{ full_texts_assessed_percent}}%)
   <br />

@@ -255,8 +255,6 @@ def publication(request, subject, publication_pk):
     item = status.get('item')  # item = AssessmentStatus instance for this user and subject
     assessment_order = literal_eval(item.assessment_order)
     completed_assessments = literal_eval(item.completed_assessments)
-    completed_full_text_assessments = literal_eval(item.completed_full_text_assessments)
-    relevant_publications = literal_eval(item.relevant_publications)
 
     # The next pk and previous pk in assessment_order, to be used for navigation
     try:
@@ -305,6 +303,7 @@ def publication(request, subject, publication_pk):
                     assessment.publication = publication
                     assessment.subject = subject
                     assessment.is_relevant = True
+                    assessment.is_completed = False
                     assessment.full_text_is_relevant = None
                     assessment.cannot_find = False
                     assessment.cannot_access = False
@@ -320,16 +319,8 @@ def publication(request, subject, publication_pk):
                     if publication_pk not in completed_assessments:
                         completed_assessments.append(publication_pk)
                         item.completed_assessments = completed_assessments
-                    if publication_pk not in relevant_publications:
-                        relevant_publications.append(publication_pk)
-                        item.relevant_publications = relevant_publications
                     next_assessment = get_next_assessment(publication_pk, next_pk, assessment_order, completed_assessments)
                     item.next_assessment = next_assessment
-                    if publication_pk in completed_full_text_assessments:
-                        completed_full_text_assessments.remove(publication_pk)
-                        item.completed_full_text_assessments = completed_full_text_assessments
-                    next_full_text_assessment = get_next_full_text_assessment(publication_pk, relevant_publications, completed_full_text_assessments)
-                    item.next_full_text_assessment = next_full_text_assessment
                     item.save()
                     return redirect('publication', subject=subject, publication_pk=next_assessment)
         if 'is_not_relevant' in request.POST:
@@ -341,6 +332,7 @@ def publication(request, subject, publication_pk):
                     assessment.publication = publication
                     assessment.subject = subject
                     assessment.is_relevant = False
+                    assessment.is_completed = False
                     assessment.full_text_is_relevant = None
                     assessment.cannot_find = False
                     assessment.cannot_access = False
@@ -358,14 +350,6 @@ def publication(request, subject, publication_pk):
                         item.completed_assessments = completed_assessments
                     next_assessment = get_next_assessment(publication_pk, next_pk, assessment_order, completed_assessments)
                     item.next_assessment = next_assessment
-                    if publication_pk in relevant_publications:
-                        relevant_publications.remove(publication_pk)
-                        item.relevant_publications = relevant_publications
-                    if publication_pk in completed_full_text_assessments:
-                        completed_full_text_assessments.remove(publication_pk)
-                        item.completed_full_text_assessments = completed_full_text_assessments
-                    next_full_text_assessment = get_next_full_text_assessment(publication_pk, relevant_publications, completed_full_text_assessments)
-                    item.next_full_text_assessment = next_full_text_assessment
                     item.save()
                     return redirect('publication', subject=subject, publication_pk=next_assessment)
         if 'full_text_is_not_relevant' in request.POST:
@@ -377,22 +361,15 @@ def publication(request, subject, publication_pk):
                     assessment.publication = publication
                     assessment.subject = subject
                     assessment.is_relevant = True  # It must be relevant based on the title and abstract if it is to be rejected based on the full text.
+                    assessment.is_completed = True
                     assessment.full_text_is_relevant = False
                     assessment.save()
                     # Update status and get next assessment
                     if publication_pk not in completed_assessments:
                         completed_assessments.append(publication_pk)
                         item.completed_assessments = completed_assessments
-                    if publication_pk not in relevant_publications:
-                        relevant_publications.append(publication_pk)
-                        item.relevant_publications = relevant_publications
                     next_assessment = get_next_assessment(publication_pk, next_pk, assessment_order, completed_assessments)
                     item.next_assessment = next_assessment
-                    next_full_text_assessment = get_next_full_text_assessment(publication_pk, relevant_publications, completed_full_text_assessments)
-                    item.next_full_text_assessment = next_full_text_assessment
-                    if publication_pk not in completed_full_text_assessments:
-                        completed_full_text_assessments.append(publication_pk)
-                        item.completed_full_text_assessments = completed_full_text_assessments
                     item.save()
                 return redirect('publication', subject=subject, publication_pk=publication_pk)
         if 'save' in request.POST or 'delete' in request.POST:
@@ -411,11 +388,20 @@ def publication(request, subject, publication_pk):
                             instance.user = user
                             instance.save()
                     if full_text_assessment_form.is_valid():
-                        # If interventions have been selected, mark this publication as "relevant" to this systematic review.
+                        # If an intervention has been selected, mark this publication as "relevant" to this systematic map.
+                        # Check if this publication was already marked as "completed" before saving the form. If it was, mark it as not "completed" (because a new intervention has been added, and the user will need to add new metadata).
                         if Experiment.objects.filter(publication=publication, user=user).exists():
-                            # Update assessment
+                            if Assessment.objects.filter(publication=publication, user=user).exists():
+                                old_assessment = Assessment.objects.get(publication=publication, user=user)
+                                was_completed = old_assessment.is_completed
+                            else:
+                                was_completed = False
+                            # Get the form data for the new assessment.
                             assessment = full_text_assessment_form.save(commit=False)
-                            is_completed = assessment.is_completed
+                            if was_completed == True:
+                                assessment.is_completed = False
+                            else:
+                                assessment.is_completed = assessment.is_completed
                             assessment.user = user
                             assessment.publication = publication
                             assessment.subject = subject
@@ -435,44 +421,17 @@ def publication(request, subject, publication_pk):
                             if publication_pk not in completed_assessments:
                                 completed_assessments.append(publication_pk)
                                 item.completed_assessments = completed_assessments
-                                next_assessment = get_next_assessment(publication_pk, next_pk, assessment_order, completed_assessments)
-                                item.next_assessment = next_assessment
-                                item.save()
-                            if publication_pk not in relevant_publications:
-                                relevant_publications.append(publication_pk)
-                                item.relevant_publications = relevant_publications
-                                item.save()
-                            if is_completed:    # If the user has marked this publication as completed
-                                if publication_pk not in completed_full_text_assessments:
-                                    completed_full_text_assessments.append(publication_pk)
-                                    item.completed_full_text_assessments = completed_full_text_assessments
-                                    item.save()
-                            else:               # If the user has not marked this publication as completed
-                                if publication_pk in completed_full_text_assessments:
-                                    completed_full_text_assessments.remove(publication_pk)
-                                    item.completed_full_text_assessments = completed_full_text_assessments
-                                    item.save()
-                            next_full_text_assessment = get_next_full_text_assessment(publication_pk, relevant_publications, completed_full_text_assessments)
-                            item.next_full_text_assessment = next_full_text_assessment
+                            next_assessment = get_next_assessment(publication_pk, next_pk, assessment_order, completed_assessments)
+                            item.next_assessment = next_assessment
                             item.save()
                         # If all interventions have been deleted, remove this publication from the completed assessments.
                         elif 'delete' in request.POST:
                             if publication_pk in completed_assessments:
                                 completed_assessments.remove(publication_pk)
                                 item.completed_assessments = completed_assessments
-                                next_assessment = publication_pk
-                                item.next_assessment = next_assessment
-                                item.save()
-                            if publication_pk in relevant_publications:
-                                relevant_publications.remove(publication_pk)
-                                item.relevant_publications = relevant_publications
-                                item.save()
-                            if publication_pk in completed_full_text_assessments:
-                                completed_full_text_assessments.remove(publication_pk)
-                                item.completed_full_text_assessments = completed_full_text_assessments
-                                next_full_text_assessment = get_next_full_text_assessment(publication_pk, relevant_publications, completed_full_text_assessments)
-                                item.next_full_text_assessment = next_full_text_assessment
-                                item.save()
+                            next_assessment = publication_pk
+                            item.next_assessment = next_assessment
+                            item.save()
                             if Assessment.objects.filter(publication=publication, user=user).exists():
                                 Assessment.objects.filter(publication=publication, user=user).delete()
                 return redirect('publication', subject=subject, publication_pk=publication_pk)
@@ -806,10 +765,7 @@ def get_status(user, subject):
         item = AssessmentStatus.objects.get(user=user, subject=subject)
         assessment_order = literal_eval(item.assessment_order)
         next_assessment = item.next_assessment
-        next_full_text_assessment = item.next_full_text_assessment
         completed_assessments = literal_eval(item.completed_assessments)
-        completed_full_text_assessments = literal_eval(item.completed_full_text_assessments)
-        relevant_publications = literal_eval(item.relevant_publications)
 
         # If new publications have been added to the database, then randomly append their pks to the end of assessment_order.
         max_assessment_pks = max(assessment_order)
@@ -833,31 +789,41 @@ def get_status(user, subject):
         assessment_order = list(pks)
         shuffle(assessment_order)
         next_assessment = assessment_order[0]
-        next_full_text_assessment = assessment_order[0]
+        previous_full_text_assessment = -1
         completed_assessments = []
-        completed_full_text_assessments = []
-        relevant_publications = []
         item = AssessmentStatus(
             subject=subject,
             user=user,
             assessment_order=assessment_order,
             next_assessment=next_assessment,
-            next_full_text_assessment=next_full_text_assessment,
-            completed_assessments=completed_assessments,
-            completed_full_text_assessments=completed_full_text_assessments,
-            relevant_publications=relevant_publications
+            previous_full_text_assessment=previous_full_text_assessment,
+            completed_assessments=completed_assessments
         )
         item.save()
     item = AssessmentStatus.objects.get(user=user, subject=subject)
     publications_count = len(assessment_order)
     publications_assessed_count = len(completed_assessments)
-    full_texts_assessed_count = len(completed_full_text_assessments)
-    relevant_publications_count = len(relevant_publications)
     if publications_count != 0:
         publications_assessed_percent = int(publications_assessed_count / publications_count * 100)
     else:
         publications_assessed_percent = 100
-    if full_texts_assessed_count != 0:
+    # Count the publications that have been assessed as relevant based on the title/abstract
+    if Publication.objects.filter(assessment__in=Assessment.objects.filter(
+        subject=subject, user=user, is_relevant=True)).exists():
+        relevant_publications_count = Publication.objects.filter(
+            assessment__in=Assessment.objects.filter(
+                subject=subject, user=user, is_relevant=True)).count()
+    else:
+        relevant_publications_count = 0
+    # Count the publications that have been marked as completed
+    if Publication.objects.filter(assessment__in=Assessment.objects.filter(
+        subject=subject, user=user, is_completed=True)).exists():
+        full_texts_assessed_count = Publication.objects.filter(
+            assessment__in=Assessment.objects.filter(
+                subject=subject, user=user, is_completed=True)).count()
+    else:
+        full_texts_assessed_count = 0
+    if relevant_publications_count != 0:
         full_texts_assessed_percent = int(full_texts_assessed_count / relevant_publications_count * 100)
     else:
         full_texts_assessed_percent = 100
@@ -869,12 +835,14 @@ def get_status(user, subject):
         'full_texts_assessed_count': full_texts_assessed_count,
         'full_texts_assessed_percent': full_texts_assessed_percent,
         'relevant_publications_count': relevant_publications_count,
-        'next_assessment': next_assessment,
-        'next_full_text_assessment': next_full_text_assessment
+        'next_assessment': next_assessment
     }
     return(status)
 
 
+# This method is needed (as are the lists of completed_assessments), because
+# we need to maintain a unique random order for each user. Otherwise, we could
+# use querysets for navigation, as we do for full_text_navigation.
 def get_next_assessment(publication_pk, next_pk, assessment_order, completed_assessments):
     next_assessment = next_pk
     for i in assessment_order:
@@ -889,14 +857,81 @@ def get_next_assessment(publication_pk, next_pk, assessment_order, completed_ass
     return(next_assessment)
 
 
-def get_next_full_text_assessment(publication_pk, relevant_publications, completed_full_text_assessments):
-    next_full_text_assessment = relevant_publications[0]
-    for i in relevant_publications:
-        if next_full_text_assessment not in completed_full_text_assessments:
-            if next_full_text_assessment != publication_pk:
-                break
-        try:
-            next_full_text_assessment = relevant_publications[relevant_publications.index(next_full_text_assessment) + 1]
-        except:
-            next_full_text_assessment = relevant_publications[0]
-    return(next_full_text_assessment)
+@login_required
+def full_text_navigation(request, subject, state):
+    user = request.user
+    subject = Subject.objects.get(slug=subject)
+    previous_full_text_assessment = AssessmentStatus.objects.get(
+        subject=subject, user=user).previous_full_text_assessment
+    if (previous_full_text_assessment == -1):  # If this is a new user, the initial value will be -1.
+        previous_full_text_assessment = Publication.objects.filter(
+            subject=subject
+        ).order_by('-title').values_list('pk', flat=True)[0]
+        assessment_status = AssessmentStatus.objects.get(
+            subject=subject, user=user)
+        assessment_status.previous_full_text_assessment = previous_full_text_assessment
+        assessment_status.save()
+    publication = Publication.objects.get(pk=previous_full_text_assessment)
+    publications = Publication.objects.filter(subject=subject)
+    if (state == 'next-incomplete' or state == 'previous-incomplete'):
+        # If there are publications for this subject that this user has assessed as relevant and has not yet marked as completed
+        if publications.filter(assessment__in=Assessment.objects.filter(
+            subject=subject, user=user, is_relevant=True, is_completed=False
+        )).exists():
+            publications = publications.filter(assessment__in=Assessment.objects.filter(
+                subject=subject, user=user, is_relevant=True, is_completed=False
+            ))
+        # Else if there are publications for this subject that this user has assessed as relevant but all of them have been marked as completed
+        elif publications.filter(assessment__in=Assessment.objects.filter(
+            subject=subject, user=user, is_relevant=True
+        )).exists():
+            publications = publications.filter(assessment__in=Assessment.objects.filter(
+                subject=subject, user=user, is_relevant=True
+            ))
+        if (state == 'next-incomplete'):
+            try:
+                publication_pk = publications.filter(
+                    title__gt=publication.title  # Titles later in the alphabet
+                ).order_by('title').values_list('pk', flat=True)[0]
+            except:
+                publication_pk = publications.order_by('title').values_list('pk', flat=True)[0]
+        elif (state == 'previous-incomplete'):
+            try:
+                publication_pk = publications.filter(
+                    title__lt=publication.title  # Titles earlier in the alphabet
+                ).order_by('-title').values_list('pk', flat=True)[0]
+            except:
+                publication_pk = publications.order_by('-title').values_list('pk', flat=True)[0]
+    elif (state == 'next' or state == 'previous'):
+        if publications.filter(assessment__in=Assessment.objects.filter(
+            subject=subject, user=user, is_relevant=True
+        )).exists():
+            publications = publications.filter(assessment__in=Assessment.objects.filter(
+                subject=subject, user=user, is_relevant=True
+            ))
+            if (state == 'next'):
+                try:
+                    publication_pk = publications.filter(
+                        title__gt=publication.title  # Titles later in the alphabet
+                    ).order_by('title').values_list('pk', flat=True)[0]
+                except:
+                    publication_pk = publications.order_by('title').values_list('pk', flat=True)[0]
+            elif (state == 'previous'):
+                try:
+                    publication_pk = publications.filter(
+                        title__lt=publication.title  # Titles earlier in the alphabet
+                    ).order_by('-title').values_list('pk', flat=True)[0]
+                except:
+                    publication_pk = publications.order_by('-title').values_list('pk', flat=True)[0]
+    # If there are no full texts for this subject that the user has assessed as relevant
+    if not publications.filter(assessment__in=Assessment.objects.filter(
+        subject=subject, user=user, is_relevant=True
+    )).exists():
+        publication_pk = Publication.objects.filter(
+            subject=subject
+        ).order_by('title').values_list('pk', flat=True)[0]
+    # Update the current full_text_assessment
+    assessment_status = AssessmentStatus.objects.get(subject=subject, user=user)
+    assessment_status.previous_full_text_assessment = publication_pk
+    assessment_status.save()
+    return redirect('publication', subject=subject, publication_pk=publication_pk)

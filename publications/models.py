@@ -446,10 +446,8 @@ class AssessmentStatus(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     assessment_order = models.TextField()
     next_assessment = models.IntegerField(blank=True, null=True)
-    next_full_text_assessment = models.IntegerField(blank=True, null=True)
+    previous_full_text_assessment = models.IntegerField(blank=True, null=True)
     completed_assessments = models.TextField(blank=True)
-    completed_full_text_assessments = models.TextField(blank=True)
-    relevant_publications = models.TextField(blank=True)
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
 
