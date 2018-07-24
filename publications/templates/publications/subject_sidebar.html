@@ -10,7 +10,7 @@
   <br />
   {{ publications_assessed_count }} of {{ publications_count }} completed ({{ publications_assessed_percent }}%)
   <br />
-  <a href="{% url 'publications' subject=subject.slug state='all' %}">All titles/abstracts</a>
+  <a href="{% url 'publications' subject=subject.slug state='all' %}">Your titles/abstracts</a>
   <br />
   <a href="{% url 'publications' subject=subject.slug state='relevant' %}">Included</a>
   <br />
@@ -22,11 +22,13 @@
   <br />
   {{ full_texts_assessed_count }} of {{ relevant_publications_count }} completed ({{ full_texts_assessed_percent}}%)
   <br />
-  <a href="{% url 'publications' subject=subject.slug state='relevant' %}">All full texts</a>
+  <a href="{% url 'publications' subject=subject.slug state='relevant' %}">Your full texts</a>
   <br />
   <a href="{% url 'publications' subject=subject.slug state='relevant_full_texts' %}">Included</a>
   <br />
   <a href="{% url 'publications' subject=subject.slug state='not_relevant_full_texts' %}">Excluded</a>
+  <br />
+  <a href="{% url 'publications' subject=subject.slug state='completed' %}">Completed</a>
   <br />
   <a href="{% url 'publications' subject=subject.slug state='not_assessed_full_texts' %}">Not completed</a>
 {% endif %}
