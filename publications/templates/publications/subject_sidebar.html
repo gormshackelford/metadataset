@@ -28,6 +28,16 @@
   <br />
   <a href="{% url 'publications' subject=subject.slug state='not_relevant_full_texts' %}">Excluded</a>
   <br />
+  <a class="indented" href="{% url 'publications' subject=subject.slug state='cannot_find' %}">Cannot find</a>
+  <br />
+  <a class="indented" href="{% url 'publications' subject=subject.slug state='cannot_access' %}">Cannot access</a>
+  <br />
+  <a class="indented" href="{% url 'publications' subject=subject.slug state='secondary_literature' %}">Secondary literature</a>
+  <br />
+  <a class="indented" href="{% url 'publications' subject=subject.slug state='no_pico' %}">No relevant PICO component</a>
+  <br />
+  <a class="indented" href="{% url 'publications' subject=subject.slug state='other' %}">Other</a>
+  <br />
   <a href="{% url 'publications' subject=subject.slug state='completed' %}">Completed</a>
   <br />
   <a href="{% url 'publications' subject=subject.slug state='not_assessed_full_texts' %}">Not completed</a>

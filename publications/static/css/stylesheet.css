@@ -64,6 +64,10 @@ a.navigation_button:hover {
   text-decoration: underline;
 }
 
+a.indented {
+  margin-left: 1em;
+}
+
 h1, h2, h3 {
   font-family: "Noto Serif", serif;
   font-style: normal;

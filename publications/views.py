@@ -3,6 +3,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.sites.shortcuts import get_current_site
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.db import transaction
+from django.db.models import Q
 from django.forms import modelformset_factory
 from django.shortcuts import render, redirect
 from django.template import loader
@@ -98,6 +99,52 @@ def publications(request, subject, state='all'):
                 user=user,
                 is_relevant=True,  # is_relevant based on title/abstract
                 full_text_is_relevant=False
+            )
+        ).order_by('title')
+    # Cannot find
+    elif (state == 'cannot_find'):
+        publications = Publication.objects.distinct().filter(
+            assessment__in=Assessment.objects.filter(
+                subject=subject,
+                user=user,
+                cannot_find = True
+            )
+        ).order_by('title')
+    # Cannot find
+    elif (state == 'cannot_access'):
+        publications = Publication.objects.distinct().filter(
+            assessment__in=Assessment.objects.filter(
+                subject=subject,
+                user=user,
+                cannot_access = True
+            )
+        ).order_by('title')
+    elif (state == 'secondary_literature'):
+        publications = Publication.objects.distinct().filter(
+            assessment__in=Assessment.objects.filter(
+                subject=subject,
+                user=user,
+                secondary_literature = True
+            )
+        ).order_by('title')
+    elif (state == 'other'):
+        publications = Publication.objects.distinct().filter(
+            assessment__in=Assessment.objects.filter(
+                subject=subject,
+                user=user,
+                other = True
+            )
+        ).order_by('title')
+    elif (state == 'no_pico'):
+        publications = Publication.objects.distinct().filter(
+            assessment__in=Assessment.objects.filter(
+                subject=subject,
+                user=user
+            ).filter(
+                Q(no_population=True) |
+                Q(no_intervention=True) |
+                Q(no_comparator=True) |
+                Q(no_outcome=True)
             )
         ).order_by('title')
     # Publications that this user has marked as completed
