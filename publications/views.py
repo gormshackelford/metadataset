@@ -379,7 +379,7 @@ def publication(request, subject, publication_pk):
                     next_assessment = get_next_assessment(publication_pk, next_pk, assessment_order, completed_assessments)
                     item.next_assessment = next_assessment
                     item.save()
-                    return redirect('publication', subject=subject, publication_pk=next_assessment)
+                    return redirect(reverse('publication', kwargs={'subject': subject, 'publication_pk': next_assessment}) + '#stage_1')
         if 'is_not_relevant' in request.POST:
             with transaction.atomic():
                 if assessment_form.is_valid():
@@ -408,7 +408,7 @@ def publication(request, subject, publication_pk):
                     next_assessment = get_next_assessment(publication_pk, next_pk, assessment_order, completed_assessments)
                     item.next_assessment = next_assessment
                     item.save()
-                    return redirect('publication', subject=subject, publication_pk=next_assessment)
+                    return redirect(reverse('publication', kwargs={'subject': subject, 'publication_pk': next_assessment}) + '#stage_1')
         if 'full_text_is_not_relevant' in request.POST:
             with transaction.atomic():
                 if full_text_assessment_form.is_valid():

@@ -56,7 +56,7 @@
     Based on the full text, should this publication be included or excluded? If you excluded this publication at Stage 1, then skip this step and go to the next publication.
   </p>
   <h1>Full Text</h1>
-  <p><span class="bold">{{ publication.title|default:'[title not available]' }}</span></p>
+  <p>{{ publication.title|default:'[title not available]' }}</p>
   <p>
     {% if publication.author_list %}
       {{ publication.author_list|join:", "|default:'[authors not available]' }}
