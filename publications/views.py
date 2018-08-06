@@ -429,7 +429,7 @@ def publication(request, subject, publication_pk):
                     item.next_assessment = next_assessment
                     item.save()
                 return redirect(reverse('full_text_navigation', kwargs={'subject': subject, 'state': 'next-incomplete'}) + '#stage_2')
-        if 'save' in request.POST or 'delete' in request.POST:
+        if 'save' in request.POST or 'delete' in request.POST or 'complete' in request.POST:
             with transaction.atomic():
                 # Before the formset is validated, the choices for the intervention field need to be redefined, or the validation will fail. This is because only a subset of all choices (high level choices in the MPTT tree) were initially shown in the dropdown (for better UI).
                 for form in formset:
@@ -491,6 +491,8 @@ def publication(request, subject, publication_pk):
                             item.save()
                             if Assessment.objects.filter(publication=publication, user=user).exists():
                                 Assessment.objects.filter(publication=publication, user=user).delete()
+                if 'complete' in request.POST:
+                    return redirect(reverse('full_text_navigation', kwargs={'subject': subject, 'state': 'next-incomplete'}) + '#stage_2')
                 return redirect(reverse('publication', kwargs={'subject': subject, 'publication_pk': publication_pk}) + '#stage_3')
     else:
         # Intervention choices for the formset (high-level choices only)
