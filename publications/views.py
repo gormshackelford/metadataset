@@ -8,6 +8,7 @@ from django.forms import modelformset_factory
 from django.shortcuts import render, redirect
 from django.template import loader
 from django.template.loader import render_to_string
+from django.urls import reverse
 from django.utils.encoding import force_bytes, force_text
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from ast import literal_eval
@@ -427,7 +428,7 @@ def publication(request, subject, publication_pk):
                     next_assessment = get_next_assessment(publication_pk, next_pk, assessment_order, completed_assessments)
                     item.next_assessment = next_assessment
                     item.save()
-                return redirect('publication', subject=subject, publication_pk=publication_pk)
+                return redirect(reverse('full_text_navigation', kwargs={'subject': subject, 'state': 'next-incomplete'}) + '#stage_2')
         if 'save' in request.POST or 'delete' in request.POST:
             with transaction.atomic():
                 # Before the formset is validated, the choices for the intervention field need to be redefined, or the validation will fail. This is because only a subset of all choices (high level choices in the MPTT tree) were initially shown in the dropdown (for better UI).
@@ -490,7 +491,7 @@ def publication(request, subject, publication_pk):
                             item.save()
                             if Assessment.objects.filter(publication=publication, user=user).exists():
                                 Assessment.objects.filter(publication=publication, user=user).delete()
-                return redirect('publication', subject=subject, publication_pk=publication_pk)
+                return redirect(reverse('publication', kwargs={'subject': subject, 'publication_pk': publication_pk}) + '#stage_3')
     else:
         # Intervention choices for the formset (high-level choices only)
         for form in formset:
@@ -917,14 +918,12 @@ def get_next_assessment(publication_pk, next_pk, assessment_order, completed_ass
 def full_text_navigation(request, subject, state):
     user = request.user
     subject = Subject.objects.get(slug=subject)
-    previous_full_text_assessment = AssessmentStatus.objects.get(
-        subject=subject, user=user).previous_full_text_assessment
+    assessment_status = AssessmentStatus.objects.get(subject=subject, user=user)
+    previous_full_text_assessment = assessment_status.previous_full_text_assessment
     if (previous_full_text_assessment == -1):  # If this is a new user, the initial value will be -1.
         previous_full_text_assessment = Publication.objects.filter(
             subject=subject
         ).order_by('-title').values_list('pk', flat=True)[0]
-        assessment_status = AssessmentStatus.objects.get(
-            subject=subject, user=user)
         assessment_status.previous_full_text_assessment = previous_full_text_assessment
         assessment_status.save()
     publication = Publication.objects.get(pk=previous_full_text_assessment)
@@ -987,7 +986,6 @@ def full_text_navigation(request, subject, state):
             subject=subject
         ).order_by('title').values_list('pk', flat=True)[0]
     # Update the current full_text_assessment
-    assessment_status = AssessmentStatus.objects.get(subject=subject, user=user)
     assessment_status.previous_full_text_assessment = publication_pk
     assessment_status.save()
-    return redirect('publication', subject=subject, publication_pk=publication_pk)
+    return redirect(reverse('publication', kwargs={'subject': subject, 'publication_pk': publication_pk}) + '#stage_2')
