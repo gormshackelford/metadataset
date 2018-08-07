@@ -916,20 +916,25 @@ def get_next_assessment(publication_pk, next_pk, assessment_order, completed_ass
 
 
 @login_required
-def full_text_navigation(request, subject, state):
+def full_text_navigation(request, subject, state, publication_pk='default'):
     user = request.user
     subject = Subject.objects.get(slug=subject)
-    previous_full_text_assessment = AssessmentStatus.objects.get(
-        subject=subject, user=user).previous_full_text_assessment
-    if (previous_full_text_assessment == -1):  # If this is a new user, the initial value will be -1.
-        previous_full_text_assessment = Publication.objects.filter(
-            subject=subject
-        ).order_by('-title').values_list('pk', flat=True)[0]
-        assessment_status = AssessmentStatus.objects.get(
-            subject=subject, user=user)
-        assessment_status.previous_full_text_assessment = previous_full_text_assessment
-        assessment_status.save()
-    publication = Publication.objects.get(pk=previous_full_text_assessment)
+    # Get the publication from which to calculate "next" and "previous" (either the previous_full_text_assessment or the publication from which the request was sent).
+    if (publication_pk=='default'):
+        previous_full_text_assessment = AssessmentStatus.objects.get(
+            subject=subject, user=user).previous_full_text_assessment
+        if (previous_full_text_assessment == -1):  # If this is a new user, the initial value will be -1.
+            previous_full_text_assessment = Publication.objects.filter(
+                subject=subject
+            ).order_by('-title').values_list('pk', flat=True)[0]
+            assessment_status = AssessmentStatus.objects.get(
+                subject=subject, user=user)
+            assessment_status.previous_full_text_assessment = previous_full_text_assessment
+            assessment_status.save
+        publication = Publication.objects.get(pk=previous_full_text_assessment)
+    else:
+        publication = Publication.objects.get(pk=int(publication_pk))
+    # Get all the publications.
     publications = Publication.objects.filter(subject=subject)
     if (state == 'next-incomplete' or state == 'previous-incomplete'):
         # If there are publications for this subject that this user has assessed as relevant and has not yet marked as completed

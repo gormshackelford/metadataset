@@ -33,6 +33,7 @@ urlpatterns = [
     path('systematic-review/<subject>/publication/<int:publication_pk>/intervention/<int:experiment_index>/population/<int:population_index>/', views.population, name='population'),
     path('systematic-review/<subject>/publication/<int:publication_pk>/intervention/<int:experiment_index>/population/<int:population_index>/outcome/<int:outcome_index>/', views.outcome, name='outcome'),
     path('systematic-review/<subject>/full-text-navigation/<state>/', views.full_text_navigation, name='full_text_navigation'),
+    path('systematic-review/<subject>/full-text-navigation/<state>/<publication_pk>/', views.full_text_navigation, name='full_text_navigation'),
 ]
 
 if settings.DEBUG:

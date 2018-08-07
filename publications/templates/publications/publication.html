@@ -174,13 +174,13 @@
 </form>
 
 <p>
-  <a class="button" href="{% url 'full_text_navigation' subject=subject.slug state='previous' %}">Previous full text</a>
-  <a class="button" href="{% url 'full_text_navigation' subject=subject.slug state='next' %}">Next full text</a>
+  <a class="button" href="{% url 'full_text_navigation' subject=subject.slug state='previous' publication_pk=publication.pk %}">Previous full text</a>
+  <a class="button" href="{% url 'full_text_navigation' subject=subject.slug state='next' publication_pk=publication.pk %}">Next full text</a>
 </p>
 <p>If you would prefer to complete this publication later, you can click "next not yet completed" or "previous not yet completed" to move between full texts that you have not yet completed.</p>
 <p>
-  <a class="button" href="{% url 'full_text_navigation' subject=subject.slug state='previous-incomplete' %}">Previous not yet completed</a>
-  <a class="button" href="{% url 'full_text_navigation' subject=subject.slug state='next-incomplete' %}">Next not yet completed</a>
+  <a class="button" href="{% url 'full_text_navigation' subject=subject.slug state='previous-incomplete'  publication_pk=publication.pk %}">Previous not yet completed</a>
+  <a class="button" href="{% url 'full_text_navigation' subject=subject.slug state='next-incomplete' publication_pk=publication.pk %}">Next not yet completed</a>
 </p>
 
 {% endblock %}
