@@ -24,7 +24,7 @@
     {% endif %}
   </h1>
   <p>
-    Based on the title/abstract, should this publication be included or excluded? If there is not enough information in the title/abstract, click "Include" and then go to <a href="#stage_2">Stage 2: Full Text</a>.
+    <span class="bold">Based on the title/abstract, should this publication be included or excluded?</span> If there is not enough information in the title/abstract, click "Include" and then go to <a href="#stage_2">Stage 2: Full Text</a>.
     <!-- A hidden input so that pressing enter saves the form instead of marking the publication as not relevant -->
     <input type="submit" name="save" style="visibility: hidden;" />
   </p>
@@ -53,19 +53,16 @@
     {% endif %}
   </h1>
   <p>
-    Based on the full text, should this publication be included or excluded? If you excluded this publication at Stage 1, then skip this step and go to the next publication.
+    <span class="bold">Based on the full text, should this publication be included or excluded?</span> If you excluded this publication at Stage 1, then skip this step and go to the next publication.
   </p>
   <h1>Full Text</h1>
-  <p>
-    <a target="_blank" href="https://www.google.com/search?q=%22{{ publication.google_string }}%22">{{ publication.title|default:'[title not available]' }}</a>
-  </p>
   <p>
     {% if publication.author_list %}
       {{ publication.author_list|join:", "|default:'[authors not available]' }}
     {% else %}
       {{ publication.authors }}
     {% endif %}
-     ({{ publication.year|default:'[year not available]' }}) <span class="italic">{{ publication.journal|default:'[journal not available]' }}</span> {{ publication.volume|default:'[volume not available]'}}, {{ publication.pages|default:'[pages not available]' }}
+     ({{ publication.year|default:'[year not available]' }}) {{ publication.title|default:'[title not available]' }} <span class="italic">{{ publication.journal|default:'[journal not available]' }}</span> {{ publication.volume|default:'[volume not available]'}}, {{ publication.pages|default:'[pages not available]' }}
   </p>
   <p>
     Search for the full text:
@@ -160,8 +157,8 @@
     </tr>
   </table>
 
-  <h1 id="stage_3">Stage 3: Metadata</h1>
-  <p>After you have selected and saved an intervention, you will see a link for "populations". Use this link to enter the metadata for this intervention. When you have entered all of the metadata for this publication (not only "populations" but also "outcomes"), tick the box for "Completed" (below) and then click "Include based on the full text".</p>
+  <h1>Included and completed?</h1>
+  <p>After you have selected and saved the intervention(s), a link will appear for "populations". When you have entered all of the metadata for this publication (not only "populations" but also "outcomes"), tick the box marked "Completed" (below) and then click "Save or update".</p>
   <table>
     <tr>
       <td class="select centered">{{ full_text_assessment_form.is_completed }}</td><td>Completed</td>
@@ -169,14 +166,16 @@
   </table>
 
   <br />
-  <p><input type="submit" name="complete" value="Include based on the full text" /></p>
+  <p><input type="submit" name="save" value="Save or update" /></p>
 
 </form>
 
-<p>If you would prefer to complete this publication later, you can click "next not yet completed" or "previous not yet completed" to move between full texts that you have not yet completed. You will see the full texts in alphabetical order, to help you detect duplicates.</p>
 <p>
   <a class="button" href="{% url 'full_text_navigation' subject=subject.slug state='previous' %}">Previous full text</a>
   <a class="button" href="{% url 'full_text_navigation' subject=subject.slug state='next' %}">Next full text</a>
+</p>
+<p>If you would prefer to complete this publication later, you can click "next not yet completed" or "previous not yet completed" to move between full texts that you have not yet completed.</p>
+<p>
   <a class="button" href="{% url 'full_text_navigation' subject=subject.slug state='previous-incomplete' %}">Previous not yet completed</a>
   <a class="button" href="{% url 'full_text_navigation' subject=subject.slug state='next-incomplete' %}">Next not yet completed</a>
 </p>
