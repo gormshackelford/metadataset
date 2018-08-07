@@ -431,9 +431,8 @@ def publication(request, subject, publication_pk):
         if 'save' in request.POST or 'delete' in request.POST:
             with transaction.atomic():
                 # Before the formset is validated, the choices for the intervention field need to be redefined, or the validation will fail. This is because only a subset of all choices (high level choices in the MPTT tree) were initially shown in the dropdown (for better UI).
-                interventions = TreeNodeChoiceField(required=False, queryset=Intervention.objects.all().get_descendants(include_self=True).filter(level__lte=1), level_indicator = "---")
                 for form in formset:
-                    form.fields['intervention'] = interventions
+                    form.fields['intervention'] = TreeNodeChoiceField(queryset=Intervention.objects.all().get_descendants(include_self=True), level_indicator = "---")
                 if formset.is_valid():
                     instances = formset.save(commit=False)
                     if 'delete' in request.POST:
@@ -494,9 +493,8 @@ def publication(request, subject, publication_pk):
                 return redirect('publication', subject=subject, publication_pk=publication_pk)
     else:
         # Intervention choices for the formset (high-level choices only)
-        interventions = TreeNodeChoiceField(required=False, queryset=Intervention.objects.all().get_descendants(include_self=True).filter(level__lte=1), level_indicator = "---")
         for form in formset:
-            form.fields['intervention'] = interventions
+            form.fields['intervention'] = TreeNodeChoiceField(required=False, queryset=Intervention.objects.all().get_descendants(include_self=True).filter(level__lte=1), level_indicator = "---")
     context = {
         'subject': subject,
         'publication': publication,
