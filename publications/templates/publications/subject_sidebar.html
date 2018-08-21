@@ -13,8 +13,10 @@
   <a href="{% url 'publications' subject=subject.slug state='all' %}">Your titles/abstracts</a>
   <br />
   <a href="{% url 'publications' subject=subject.slug state='relevant' %}">Included</a>
+  <a href="{% url 'publications' subject=subject.slug state='relevant' download='CSV' %}">(CSV)</a>
   <br />
   <a href="{% url 'publications' subject=subject.slug state='not_relevant' %}">Excluded</a>
+  <a href="{% url 'publications' subject=subject.slug state='not_relevant' download='CSV' %}">(CSV)</a>
   <br />
   <a href="{% url 'publications' subject=subject.slug state='not_assessed' %}">Not completed</a>
   <h1>Full Texts</h1>
@@ -25,8 +27,10 @@
   <a href="{% url 'publications' subject=subject.slug state='relevant' %}">Your full texts</a>
   <br />
   <a href="{% url 'publications' subject=subject.slug state='relevant_full_texts' %}">Included</a>
+  <a href="{% url 'publications' subject=subject.slug state='relevant_full_texts' download='CSV' %}">(CSV)</a>
   <br />
   <a href="{% url 'publications' subject=subject.slug state='not_relevant_full_texts' %}">Excluded</a>
+  <a href="{% url 'publications' subject=subject.slug state='not_relevant_full_texts' download='CSV' %}">(CSV)</a>
   <br />
   <a class="indented" href="{% url 'publications' subject=subject.slug state='cannot_find' %}">Cannot find</a>
   <br />

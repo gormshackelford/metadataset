@@ -5,9 +5,11 @@ from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.db import transaction
 from django.db.models import Q
 from django.forms import modelformset_factory
+from django.http import HttpResponse
 from django.shortcuts import render, redirect
 from django.template import loader
 from django.template.loader import render_to_string
+from django.urls import reverse
 from django.utils.encoding import force_bytes, force_text
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from ast import literal_eval
@@ -20,6 +22,7 @@ from haystack.generic_views import SearchView
 from haystack.forms import SearchForm
 from haystack.query import SearchQuerySet
 import reversion
+import csv
 
 class MySearchView(SearchView):
     template_name = 'search/search.html'
@@ -49,7 +52,7 @@ def subject(request, subject):
     return render(request, 'publications/subject.html', context)
 
 
-def publications(request, subject, state='all'):
+def publications(request, subject, state='all', download='none'):
     user = request.user
     subject = Subject.objects.get(slug=subject)
     # All publications
@@ -166,6 +169,28 @@ def publications(request, subject, state='all'):
                 full_text_is_relevant=None
             )
         ).order_by('title')
+    # If the request is to download the publications, rather than viewing them online
+    if download == 'CSV':
+        # Create the HttpResponse object with the appropriate CSV header.
+        response = HttpResponse(content_type='text/csv; charset=utf-8')
+        response['Content-Disposition'] = 'attachment; filename="bibliography.csv"'
+        # Write the CSV
+        writer = csv.writer(response, quoting=csv.QUOTE_ALL)
+        writer.writerow(['Authors', 'Year', 'Title', 'Journal', 'Volume', 'Issue', 'DOI', 'URL'])
+        slug = subject.slug
+        current_site = get_current_site(request)
+        domain = current_site.domain
+        for publication in publications:
+            try:
+                separator = ', '
+                authors = separator.join(publication.author_list)
+            except:
+                authors = publication.authors
+            path = reverse('publication', args=(), kwargs={'subject': slug, 'publication_pk': publication.pk})
+            url = "http://{domain}{path}".format(domain=domain, path=path)
+            writer.writerow([authors, publication.year, publication.title, publication.journal, publication.volume, publication.issue, publication.doi, url])
+        return response
+    # If the request is not to download the publications
     page = request.GET.get('page', 1)
     paginator = Paginator(publications, 10)
     try:
@@ -427,7 +452,7 @@ def publication(request, subject, publication_pk):
                     next_assessment = get_next_assessment(publication_pk, next_pk, assessment_order, completed_assessments)
                     item.next_assessment = next_assessment
                     item.save()
-                return redirect('full_text_navigation', subject=subject, state='next', publication_pk=publication_pk)
+                return redirect('publication', subject=subject, publication_pk=publication_pk)
         if 'save' in request.POST or 'delete' in request.POST:
             with transaction.atomic():
                 # Before the formset is validated, the choices for the intervention field need to be redefined, or the validation will fail. This is because only a subset of all choices (high level choices in the MPTT tree) were initially shown in the dropdown (for better UI).

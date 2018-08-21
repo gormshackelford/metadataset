@@ -14,6 +14,7 @@ urlpatterns = [
     path('systematic-review/<subject>/', views.subject, name='subject'),
     path('systematic-review/<subject>/publications', views.publications, name='publications'),
     path('systematic-review/<subject>/publications/<state>', views.publications, name='publications'),
+    path('systematic-review/<subject>/publications/<state>/<download>', views.publications, name='publications'),
     path('systematic-review/<subject>/publications-by-intervention', views.browse_publications_by_intervention, name='browse_publications_by_intervention'),
     re_path('systematic-review/(?P<subject>[a-zA-Z-]+)/publications-by-intervention/(?P<path>.*)', mptt_urls.view(model=Intervention, view=views.publications_by_intervention, slug_field='slug'), name='publications_by_intervention'),
     path('systematic-review/<subject>/publications-by-outcome', views.browse_publications_by_outcome, name='browse_publications_by_outcome'),
