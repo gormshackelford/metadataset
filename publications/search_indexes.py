@@ -17,4 +17,4 @@ class PublicationIndex(indexes.SearchIndex, indexes.Indexable):
         )
 
     def get_updated_field(self):
-        return "created"
+        return "updated"

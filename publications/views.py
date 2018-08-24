@@ -928,15 +928,16 @@ def get_status(user, subject):
 # use querysets for navigation, as we do for full_text_navigation.
 def get_next_assessment(publication_pk, next_pk, assessment_order, completed_assessments):
     next_assessment = next_pk
-    for i in assessment_order:
-        if next_assessment not in completed_assessments:
-            if next_assessment != publication_pk:
-                break
-        else:
-            try:
-                next_assessment = assessment_order[assessment_order.index(next_assessment) + 1]
-            except:
-                next_assessment = assessment_order[0]
+    if (len(completed_assessments) != len(assessment_order)):  # If all assessments have not yet been completed
+        for i in assessment_order:
+            if next_assessment not in completed_assessments:
+                if next_assessment != publication_pk:
+                    break
+            else:
+                try:
+                    next_assessment = assessment_order[assessment_order.index(next_assessment) + 1]
+                except:
+                    next_assessment = assessment_order[0]
     return(next_assessment)
 
 
