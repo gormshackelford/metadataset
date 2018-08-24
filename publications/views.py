@@ -176,7 +176,7 @@ def publications(request, subject, state='all', download='none'):
         response['Content-Disposition'] = 'attachment; filename="bibliography.csv"'
         # Write the CSV
         writer = csv.writer(response, quoting=csv.QUOTE_ALL)
-        writer.writerow(['Authors', 'Year', 'Title', 'Journal', 'Volume', 'Issue', 'DOI', 'URL'])
+        writer.writerow(['Authors', 'Year', 'Title', 'Journal', 'Volume', 'Issue', 'DOI', 'URL', 'Abstract'])
         slug = subject.slug
         current_site = get_current_site(request)
         domain = current_site.domain
@@ -188,7 +188,7 @@ def publications(request, subject, state='all', download='none'):
                 authors = publication.authors
             path = reverse('publication', args=(), kwargs={'subject': slug, 'publication_pk': publication.pk})
             url = "http://{domain}{path}".format(domain=domain, path=path)
-            writer.writerow([authors, publication.year, publication.title, publication.journal, publication.volume, publication.issue, publication.doi, url])
+            writer.writerow([authors, publication.year, publication.title, publication.journal, publication.volume, publication.issue, publication.doi, url, publication.abstract])
         return response
     # If the request is not to download the publications
     page = request.GET.get('page', 1)
