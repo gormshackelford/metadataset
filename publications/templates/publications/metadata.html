@@ -1,0 +1,126 @@
+{% extends 'publications/base.html' %}
+
+{% block title %}
+  Other Metadata | Metadataset | www.metadataset.com
+{% endblock %}
+
+{% block css %}
+  {% load staticfiles %}
+{% endblock %}
+
+{% block content %}
+
+<h1>Other Metadata</h1>
+<p><a href="{% url 'publication' subject=subject publication_pk=publication.pk %}">Back to all metadata for this publication</a></p>
+
+<form method="post" action="">{% csrf_token %}
+  <table>
+    <tr><th colspan="4">Populations</th></tr>
+    <tr>
+    </tr>
+    <tr>
+      <td colspan="3"></td>
+      <td class="centered">Select</td>
+    </tr>
+    {{ publication_population_formset.management_form }}
+    {% for form in publication_population_formset %}
+      <tr>
+        <td>
+          {% for hidden_field in form.hidden_fields %}
+            {{ hidden_field }}
+          {% endfor %}
+          {% if forloop.first %}
+            Population:
+          {% endif %}
+        </td>
+        <td>
+          {% if form.instance.population %}
+            {{ form.instance.population }}{{ form.population.as_hidden }}
+          {% else %}
+            {{ form.population }}
+          {% endif %}
+        </td>
+        <td>
+          {% if form.instance.population %}
+            <a href="{% url 'publication_population' subject=subject.slug publication_pk=publication.pk publication_population_index=forloop.counter0 %}">Outcomes</a>
+          {% endif %}
+        </td>
+        <td class="centered">{{ form.DELETE }}</td>
+      </tr>
+    {% endfor %}
+    <tr>
+      <td class="bottom"></td>
+      <td class="button bottom"><input type="submit" name="save" value="Save all changes" /></td>
+      <td class="bottom"></td>
+      <td class="button bottom centered"><input type="submit" name="delete" value="Delete selected" /></td>
+    </tr>
+
+    <tr><td class="empty" colspan="4">&nbsp;</td></tr>
+
+    <tr><th colspan="4">Tags</th></tr>
+    <tr>
+    </tr>
+    <tr>
+      <td colspan="3"></td>
+      <td class="centered">Select</td>
+    </tr>
+    {{ publication_country_formset.management_form }}
+    {% for form in publication_country_formset %}
+      <tr>
+        <td>
+          {% for hidden_field in form.hidden_fields %}
+            {{ hidden_field }}
+          {% endfor %}
+          {% if forloop.first %}
+            {{ form.country.label }}:
+          {% endif %}
+        </td>
+        <td>{{ form.country }}</td>
+        <td></td>
+        <td class="centered">{{ form.DELETE }}</td>
+      </tr>
+    {% endfor %}
+    {{ publication_lat_long_formset.management_form }}
+    {% for form in publication_lat_long_formset %}
+    <tr>
+      <td>
+        {% for hidden_field in form.hidden_fields %}
+          {{ hidden_field }}
+        {% endfor %}
+        {% if forloop.first %}
+          Coordinates:
+        {% endif %}
+      </td>
+      <td>{{ form.latitude.label }}: {{ form.latitude }} {{ form.longitude.label }}: {{ form.longitude }}</td>
+      <td></td>
+      <td class="centered">{{ form.DELETE }}</td>
+    </tr>
+    {% endfor %}
+    {{ publication_date_formset.management_form }}
+    {% for form in publication_date_formset %}
+      <tr>
+        <td>
+          {% for hidden_field in form.hidden_fields %}
+            {{ hidden_field }}
+          {% endfor %}
+          {% if forloop.first %}
+            Date/start date:
+          {% else %}
+            Date/end date:
+          {% endif %}
+        </td>
+        <td>Year: {{ form.year }} Month: {{ form.month }} Day: {{ form.day }}</td>
+        <td></td>
+        <td class="centered">{{ form.DELETE }}</td>
+      </tr>
+    {% endfor %}
+    <tr>
+      <td class="bottom"></td>
+      <td class="button bottom"><input type="submit" name="save" value="Save all changes" /></td>
+      <td class="bottom"></td>
+      <td class="button bottom centered"><input type="submit" name="delete" value="Delete selected" /></td>
+    </tr>
+  </table>
+</form>
+
+{% endblock %}

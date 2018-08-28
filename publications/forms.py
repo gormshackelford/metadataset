@@ -2,7 +2,7 @@ from django import forms
 from django.db import models
 from django.contrib.auth.forms import UserCreationForm
 from mptt.forms import TreeNodeChoiceField
-from .models import Assessment, Experiment, ExperimentCountry, ExperimentCrop, ExperimentDate, ExperimentDesign, ExperimentLatLong, ExperimentPopulation, ExperimentPopulationOutcome, Intervention, Profile, Publication, User
+from .models import Assessment, Experiment, ExperimentCountry, ExperimentCrop, ExperimentDate, ExperimentDesign, ExperimentLatLong, ExperimentPopulation, ExperimentPopulationOutcome, Intervention, Profile, Publication, PublicationCountry, PublicationDate, PublicationLatLong, PublicationPopulation, PublicationPopulationOutcome, User
 
 
 class SignUpForm(UserCreationForm):
@@ -57,6 +57,41 @@ class PublicationForm(forms.ModelForm):
     class Meta:
         model = Publication
         exclude = ['subject']
+
+
+class PublicationCountryForm(forms.ModelForm):
+
+    class Meta:
+        model = PublicationCountry
+        exclude = ['publication', 'user']
+
+
+class PublicationDateForm(forms.ModelForm):
+
+    class Meta:
+        model = PublicationDate
+        exclude = ['publication', 'user']
+
+
+class PublicationLatLongForm(forms.ModelForm):
+
+    class Meta:
+        model = PublicationLatLong
+        exclude = ['publication', 'user']
+
+
+class PublicationPopulationForm(forms.ModelForm):
+
+    class Meta:
+        model = PublicationPopulation
+        exclude = ['publication', 'user']
+
+
+class PublicationPopulationOutcomeForm(forms.ModelForm):
+
+    class Meta:
+        model = PublicationPopulationOutcome
+        exclude = ['publication_population', 'user']
 
 
 class ExperimentForm(forms.ModelForm):

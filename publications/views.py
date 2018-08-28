@@ -15,8 +15,8 @@ from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from ast import literal_eval
 from random import shuffle
 from .tokens import account_activation_token
-from .forms import AssessmentForm, EffectForm, ExperimentForm, ExperimentCountryForm, ExperimentCropForm, ExperimentDateForm, ExperimentDesignForm, ExperimentLatLongForm, ExperimentPopulationForm, ExperimentPopulationOutcomeForm, FullTextAssessmentForm, ProfileForm, PublicationForm, SignUpForm, UserForm
-from .models import Assessment, AssessmentStatus, Crop, Experiment, ExperimentCountry, ExperimentCrop, ExperimentDate, ExperimentDesign, ExperimentLatLong, ExperimentPopulation, ExperimentPopulationOutcome, Intervention, Outcome, Population, Publication, Subject, User
+from .forms import AssessmentForm, EffectForm, ExperimentForm, ExperimentCountryForm, ExperimentCropForm, ExperimentDateForm, ExperimentDesignForm, ExperimentLatLongForm, ExperimentPopulationForm, ExperimentPopulationOutcomeForm, FullTextAssessmentForm, ProfileForm, PublicationForm, PublicationCountryForm, PublicationDateForm, PublicationLatLongForm, PublicationPopulationForm, PublicationPopulationOutcomeForm, SignUpForm, UserForm
+from .models import Assessment, AssessmentStatus, Crop, Experiment, ExperimentCountry, ExperimentCrop, ExperimentDate, ExperimentDesign, ExperimentLatLong, ExperimentPopulation, ExperimentPopulationOutcome, Intervention, Outcome, Population, Publication, PublicationCountry, PublicationDate, PublicationLatLong, PublicationPopulation, PublicationPopulationOutcome, Subject, User
 from mptt.forms import TreeNodeChoiceField
 from haystack.generic_views import SearchView
 from haystack.forms import SearchForm
@@ -455,7 +455,7 @@ def publication(request, subject, publication_pk):
                 return redirect('publication', subject=subject, publication_pk=publication_pk)
         if 'save' in request.POST or 'delete' in request.POST:
             with transaction.atomic():
-                # Before the formset is validated, the choices for the intervention field need to be redefined, or the validation will fail. This is because only a subset of all choices (high level choices in the MPTT tree) were initially shown in the dropdown (for better UI).
+                # Before the formset is validated, the choices need to be redefined, or the validation will fail. This is because only a subset of all choices (high level choices in the MPTT tree) were initially shown in the dropdown (for better UI).
                 interventions = TreeNodeChoiceField(queryset=Intervention.objects.all().get_descendants(include_self=True), level_indicator = "---")
                 for form in formset:
                     form.fields['intervention'] = interventions
@@ -539,6 +539,136 @@ def publication(request, subject, publication_pk):
 
 
 @login_required
+def metadata(request, subject, publication_pk):
+    """
+    On this page, the user edits the publication-level metadata for this publication (i.e. metadata that is applicable to all interventions).
+    """
+    user = request.user
+    data = request.POST or None
+    subject = Subject.objects.get(slug=subject)
+    publication_pk = int(publication_pk)
+    PublicationCountryFormSet = modelformset_factory(PublicationCountry, form=PublicationCountryForm, extra=2, can_delete=True)
+    PublicationDateFormSet = modelformset_factory(PublicationDate, form=PublicationDateForm, extra=2, max_num=2, can_delete=True)
+    PublicationLatLongFormSet = modelformset_factory(PublicationLatLong, form=PublicationLatLongForm, extra=2, can_delete=True)
+    PublicationPopulationFormSet = modelformset_factory(PublicationPopulation, form=PublicationPopulationForm, extra=2, can_delete=True)
+    # This publication
+    publication = Publication.objects.get(pk=publication_pk)
+    # Formsets for this publication
+    publication_country_formset = PublicationCountryFormSet(data=data, queryset=PublicationCountry.objects.filter(publication=publication), prefix="publication_country_formset")
+    publication_date_formset = PublicationDateFormSet(data=data, queryset=PublicationDate.objects.filter(publication=publication), prefix="publication_date_formset")
+    publication_lat_long_formset = PublicationLatLongFormSet(data=data, queryset=PublicationLatLong.objects.filter(publication=publication), prefix="publication_lat_long_formset")
+    publication_population_formset = PublicationPopulationFormSet(data=data, queryset=PublicationPopulation.objects.filter(publication=publication), prefix="publication_population_formset")
+    if request.method == 'POST':
+        if 'save' in request.POST or 'delete' in request.POST:
+            with transaction.atomic():
+                # Before the formset is validated, the choices need to be redefined, or the validation will fail. This is because only a subset of all choices (high level choices in the MPTT tree) were initially shown in the dropdown (for better UI).
+                populations = TreeNodeChoiceField(queryset=Outcome.objects.all().get_descendants(include_self=True), level_indicator = "---")
+                formset = publication_country_formset
+                if formset.is_valid():
+                    instances = formset.save(commit=False)
+                    if 'delete' in request.POST:
+                        for obj in formset.deleted_objects:
+                            obj.delete()
+                    else:
+                        for instance in instances:
+                            instance.publication = publication
+                            instance.user = user
+                            instance.save()
+                formset = publication_date_formset
+                if formset.is_valid():
+                    instances = formset.save(commit=False)
+                    if 'delete' in request.POST:
+                        for obj in formset.deleted_objects:
+                            obj.delete()
+                    else:
+                        for instance in instances:
+                            instance.publication = publication
+                            instance.user = user
+                            instance.save()
+                formset = publication_lat_long_formset
+                if formset.is_valid():
+                    instances = formset.save(commit=False)
+                    if 'delete' in request.POST:
+                        for obj in formset.deleted_objects:
+                            obj.delete()
+                    else:
+                        for instance in instances:
+                            instance.publication = publication
+                            instance.user = user
+                            instance.save()
+                formset = publication_population_formset
+                for form in formset:
+                    form.fields['population'] = populations
+                if formset.is_valid():
+                    instances = formset.save(commit=False)
+                    if 'delete' in request.POST:
+                        for obj in formset.deleted_objects:
+                            obj.delete()
+                    else:
+                        for instance in instances:
+                            instance.publication = publication
+                            instance.user = user
+                            instance.save()
+                return redirect('metadata', subject=subject, publication_pk=publication_pk)
+    else:
+        # Population choices for the formset (populations are the first level in the classification of outcomes)
+        populations = TreeNodeChoiceField(required=False, queryset=Outcome.objects.all().get_descendants(include_self=True).filter(level__lte=0), level_indicator = "---")
+        for form in publication_population_formset:
+            form.fields['population'] = populations
+    context = {
+        'subject': subject,
+        'publication': publication,
+        'publication_country_formset': publication_country_formset,
+        'publication_date_formset': publication_date_formset,
+        'publication_lat_long_formset': publication_lat_long_formset,
+        'publication_population_formset': publication_population_formset
+    }
+    return render(request, 'publications/metadata.html', context)
+
+
+@login_required
+def publication_population(request, subject, publication_pk, publication_population_index):
+    """
+    On this page, the user chooses an outcome for this publication (not for a specific intervention).
+    """
+    user = request.user
+    data = request.POST or None
+    subject = Subject.objects.get(slug=subject)
+    PublicationPopulationOutcomeFormSet = modelformset_factory(PublicationPopulationOutcome, form=PublicationPopulationOutcomeForm, extra=2, can_delete=True)
+    # This publication
+    publication = Publication.objects.get(pk=publication_pk)
+    # This publication_population
+    publication_populations = PublicationPopulation.objects.filter(publication=publication).order_by('pk')
+    publication_population = publication_populations[publication_population_index]
+    # Formset for this publication_population
+    formset = PublicationPopulationOutcomeFormSet(data=data, queryset=PublicationPopulationOutcome.objects.filter(publication_population=publication_population), prefix="publication_population_outcome_formset")
+    # Outcome choices for the formset
+    for form in formset:
+        form.fields['outcome'] = TreeNodeChoiceField(queryset=Outcome.objects.get(outcome=publication_population.population).get_descendants(include_self=True), level_indicator = "---")
+    if request.method == 'POST':
+        with transaction.atomic():
+            if formset.is_valid():
+                instances = formset.save(commit=False)
+                if 'delete' in request.POST:
+                    for obj in formset.deleted_objects:
+                        obj.delete()
+                else:
+                    for instance in instances:
+                        instance.publication_population = publication_population
+                        instance.user = user
+                        instance.save()
+            return redirect('publication_population', subject=subject.slug, publication_pk=publication_pk, publication_population_index=publication_population_index)
+    context = {
+        'subject': subject,
+        'publication': publication,
+        'publication_population': publication_population,
+        'publication_population_index': publication_population_index,
+        'formset': formset
+    }
+    return render(request, 'publications/publication_population.html', context)
+
+
+@login_required
 def edit_publication(request, subject, publication_pk):
     """
     On this page, the user edits the title, abstract, etc. for this publication.
@@ -578,7 +708,6 @@ def experiment(request, subject, publication_pk, experiment_index):
     subject = Subject.objects.get(slug=subject)
     ExperimentFormSet = modelformset_factory(Experiment, form=ExperimentForm, extra=0, can_delete=False)
     ExperimentCountryFormSet = modelformset_factory(ExperimentCountry, form=ExperimentCountryForm, extra=2, can_delete=True)
-    ExperimentCropFormSet = modelformset_factory(ExperimentCrop, form=ExperimentCropForm, extra=2, can_delete=True)
     ExperimentDateFormSet = modelformset_factory(ExperimentDate, form=ExperimentDateForm, extra=2, max_num=2, can_delete=True)
     ExperimentDesignFormSet = modelformset_factory(ExperimentDesign, form=ExperimentDesignForm, extra=4, max_num=4, can_delete=True)
     ExperimentLatLongFormSet = modelformset_factory(ExperimentLatLong, form=ExperimentLatLongForm, extra=2, can_delete=True)
@@ -594,10 +723,6 @@ def experiment(request, subject, publication_pk, experiment_index):
     # Formsets for this experiment
     experiment_population_formset = ExperimentPopulationFormSet(data=data, queryset=ExperimentPopulation.objects.filter(experiment=experiment), prefix="experiment_population_formset")
     experiment_country_formset = ExperimentCountryFormSet(data=data, queryset=ExperimentCountry.objects.filter(experiment=experiment), prefix="experiment_country_formset")
-    experiment_crop_formset = ExperimentCropFormSet(data=data, queryset=ExperimentCrop.objects.filter(experiment=experiment), prefix="experiment_crop_formset")
-    # Crop choices for the formset
-    for form in experiment_crop_formset:
-        form.fields['crop'] = TreeNodeChoiceField(queryset=Crop.objects.all().get_descendants(include_self=True), level_indicator = "---")
     experiment_date_formset = ExperimentDateFormSet(data=data, queryset=ExperimentDate.objects.filter(experiment=experiment), prefix="experiment_date_formset")
     experiment_design_formset = ExperimentDesignFormSet(data=data, queryset=ExperimentDesign.objects.filter(experiment=experiment), prefix="experiment_design_formset")
     experiment_lat_long_formset = ExperimentLatLongFormSet(data=data, queryset=ExperimentLatLong.objects.filter(experiment=experiment), prefix="experiment_lat_long_formset")
@@ -622,16 +747,6 @@ def experiment(request, subject, publication_pk, experiment_index):
                         instance.old_population = instance.population
                         instance.save()
             formset = experiment_country_formset
-            if formset.is_valid():
-                instances = formset.save(commit=False)
-                if 'delete' in request.POST:
-                    for obj in formset.deleted_objects:
-                        obj.delete()
-                else:
-                    for instance in instances:
-                        instance.experiment = experiment
-                        instance.save()
-            formset = experiment_crop_formset
             if formset.is_valid():
                 instances = formset.save(commit=False)
                 if 'delete' in request.POST:
@@ -679,7 +794,6 @@ def experiment(request, subject, publication_pk, experiment_index):
         'experiment_index': experiment_index,
         'experiment_form': experiment_form,
         'experiment_country_formset': experiment_country_formset,
-        'experiment_crop_formset': experiment_crop_formset,
         'experiment_date_formset': experiment_date_formset,
         'experiment_design_formset': experiment_design_formset,
         'experiment_lat_long_formset': experiment_lat_long_formset,

@@ -1,0 +1,49 @@
+{% extends 'publications/base.html' %}
+
+{% block title %}
+  Outcome | Metadataset | www.metadataset.com
+{% endblock %}
+
+{% block css %}
+  {% load staticfiles %}
+{% endblock %}
+
+{% block content %}
+
+<h1>Population: {{ publication_population.population|capfirst }}</h1>
+
+<p><a href="{% url 'metadata' subject=subject.slug publication_pk=publication.pk %}">Back to all populations</a></p>
+
+<form method="post" action="">{% csrf_token %}
+  <table>
+    <tr><th colspan="3">Outcomes</th></tr>
+    <tr>
+      <td colspan="2"></td>
+      <td class="centered">Select</td>
+    </tr>
+    {{ formset.management_form }}
+    {% for form in formset %}
+      <tr>
+        <td>
+          {% for hidden_field in form.hidden_fields %}
+            {{ hidden_field }}
+          {% endfor %}
+          {% if forloop.first %}
+            {{ form.outcome.label }}:
+          {% endif %}
+        </td>
+        <td>
+          {{ form.outcome }}
+        </td>
+        <td class="centered">{{ form.DELETE }}</td>
+      </tr>
+    {% endfor %}
+    <tr>
+      <td class="button bottom"><input type="submit" name="save" value="Save all changes" /></td>
+      <td class="bottom"></td>
+      <td class="button bottom centered"><input type="submit" name="delete" value="Delete selected" /></td>
+    </tr>
+  </table>
+</form>
+
+{% endblock %}

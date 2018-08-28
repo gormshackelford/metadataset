@@ -20,7 +20,6 @@
   <table>
     <tr><th colspan="3">Populations</th></tr>
     <tr>
-      <td class="top" colspan="3">Population is the "P" in a "PICO" experiment. It could refer to a population in a literal sense, such as a population of people, or it could refer to a population in a statistical sense, such as a population of costs. One intervention could have effects on multiple populations, and these effects could be measured in terms of multiple outcomes. For example, adding fertilizer to the soil (an intervention) could have effects on crops (a population), measured in terms of crop yield (an outcome), and it could also have effects on soils (a population), measured in terms of soil nitrogen (an outcome) and soil organic matter (another outcome).</td>
     </tr>
     <tr>
       <td colspan="2"></td>
@@ -85,26 +84,12 @@
 
     <tr><th colspan="3">Tags</th></tr>
     <tr>
-      <td class="top" colspan="3">If you have already tagged another intervention from this publication, then you do not have to tag this intervention. We will assume that all tags are relevant to all interventions from this publication. If that is not true, then please tag each intervention.</td>
+      <td class="top" colspan="3">If you have already entered the following metadata for this publication (see <a href="{% url 'metadata' subject=subject.slug publication_pk=publication.pk %}">other metadata</a> ), then you do not have to enter it here. However, if there is metadata that applies to this intervention only, then you should enter it here.</td>
     </tr>
     <tr>
       <td colspan="2"></td>
       <td class="centered">Select</td>
     </tr>
-    {{ experiment_crop_formset.management_form }}
-    {% for form in experiment_crop_formset %}
-      <tr>
-        <td>
-          {% for hidden_field in form.hidden_fields %}
-            {{ hidden_field }}
-          {% endfor %}
-          {% if forloop.first %}
-            {{ form.crop.label }}:
-          {% endif %}
-        </td>
-        <td>{{ form.crop }}</td><td class="centered">{{ form.DELETE }}</td>
-      </tr>
-    {% endfor %}
     {{ experiment_country_formset.management_form }}
     {% for form in experiment_country_formset %}
       <tr>

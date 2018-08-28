@@ -250,7 +250,86 @@ class Country(models.Model):
 
 # Intersection tables
 
-# We define an "experment" (i.e. a "study") as one "intervention" that is described in one "publication". We use the "PICO" terminology for describing experiments ("P" = "Population", "I" = "Intervention", "C" = "Comparison", and "O" = "Outcome"). In our data model, one experiment can have multiple "populations" and one "population" can have multiple "outcomes" (e.g., effects of intercropping [intervention] on crop yield [population = crop; outcome = crop yield] and soil nutrients [population = soil; outcome = soil nitrogen; outcome = soil phosphorus]).
+# The country in which the experiments were done (not necessarily the country of the publication authors)
+class PublicationCountry(models.Model):
+    publication = models.ForeignKey(Publication, on_delete=models.CASCADE)
+    country = models.ForeignKey(Country, on_delete=models.CASCADE)
+    created = models.DateTimeField(auto_now_add=True)
+    updated = models.DateTimeField(auto_now=True)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return self.publication.title
+
+    class Meta:
+        verbose_name_plural = "publication countries"
+
+
+# The lat/long at which the experiments were done
+class PublicationLatLong(models.Model):
+    publication = models.ForeignKey(Publication, on_delete=models.CASCADE)
+    latitude = models.FloatField(validators=[MinValueValidator(-90.0), MaxValueValidator(90.0)])
+    longitude = models.FloatField(validators=[MinValueValidator(-180.0), MaxValueValidator(180.0)])
+    created = models.DateTimeField(auto_now_add=True)
+    updated = models.DateTimeField(auto_now=True)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return self.publication.title
+
+
+# The date on which the experiments were done (not the date of publication)
+class PublicationDate(models.Model):
+    publication = models.ForeignKey(Publication, on_delete=models.CASCADE)
+    year = models.IntegerField(blank=True, null=True)
+    MONTH_CHOICES = (
+        (1, "January"),
+        (2, "February"),
+        (3, "March"),
+        (4, "April"),
+        (5, "May"),
+        (6, "June"),
+        (7, "July"),
+        (8, "August"),
+        (9, "September"),
+        (10, "October"),
+        (11, "November"),
+        (12, "December")
+    )
+    month = models.IntegerField(blank=True, null=True, choices=MONTH_CHOICES)
+    DAY_CHOICES = tuple((x,x) for x in range(1,32))
+    day = models.IntegerField(choices=DAY_CHOICES, blank=True, null=True)
+    created = models.DateTimeField(auto_now_add=True)
+    updated = models.DateTimeField(auto_now=True)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return self.publication.title
+
+
+class PublicationPopulation(models.Model):
+    publication = models.ForeignKey(Publication, on_delete=models.CASCADE)
+    population = models.ForeignKey(Outcome, blank=True, null=True, on_delete=models.CASCADE)  # Populations are the first level in the classification of outcomes.
+    created = models.DateTimeField(auto_now_add=True)
+    updated = models.DateTimeField(auto_now=True)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return self.publication.title
+
+
+class PublicationPopulationOutcome(models.Model):
+    publication_population = models.ForeignKey(PublicationPopulation, on_delete=models.CASCADE)
+    outcome = models.ForeignKey(Outcome, blank=True, null=True, on_delete=models.CASCADE)
+    created = models.DateTimeField(auto_now_add=True)
+    updated = models.DateTimeField(auto_now=True)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return self.publication_population.publication.title
+
+
+# We define one "experment" (i.e. one "study") as one "intervention" that is described in one "publication". We use the "PICO" terminology for describing experiments ("P" = "Population", "I" = "Intervention", "C" = "Comparison", and "O" = "Outcome"). In our data model, one experiment can have multiple "populations" and one "population" can have multiple "outcomes" (e.g., effects of intercropping [intervention] on crop yield [population = crop; outcome = crop yield] and soil nutrients [population = soil; outcome = soil nitrogen; outcome = soil phosphorus]).
 class Experiment(models.Model):
     publication = models.ForeignKey(Publication, on_delete=models.CASCADE)
     intervention = models.ForeignKey(Intervention, blank=True, null=True, on_delete=models.CASCADE)
@@ -262,6 +341,7 @@ class Experiment(models.Model):
         return self.publication.title
 
 
+# This and other intersection tables that begin with "Experiment" apply to only one experiment in a publication, whereas those that begin with "Publication" (e.g., "PublicationCountry") apply to all experiments within a publication.
 class ExperimentCountry(models.Model):
     experiment = models.ForeignKey(Experiment, on_delete=models.CASCADE)
     country = models.ForeignKey(Country, on_delete=models.CASCADE)
@@ -335,13 +415,14 @@ class ExperimentDate(models.Model):
 
 class ExperimentPopulation(models.Model):
     experiment = models.ForeignKey(Experiment, on_delete=models.CASCADE)
+    new_population = models.ForeignKey(Outcome, blank=True, null=True, on_delete=models.CASCADE)
     population = models.ForeignKey(Population, on_delete=models.CASCADE, related_name="experiment_population")
     old_population = models.ForeignKey(Population, on_delete=models.SET_NULL, blank=True, null=True)
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return "{intervention}: {population}".format(intervention=self.experiment.intervention, population=self.population)
+        return self.experiment.publication.title
 
 
 class ExperimentPopulationOutcome(models.Model):

@@ -160,8 +160,14 @@
     </tr>
   </table>
 
-  <h1>Included and completed?</h1>
-  <p>After you have selected and saved the intervention(s), a link will appear for "populations". When you have entered all of the metadata for this publication (not only "populations" but also "outcomes"), tick the box marked "Completed" (below) and then click "Save or update".</p>
+  <h1>Other Metadata?</h1>
+  <p>When you select and save an intervention, a link will appear for "Populations". Click this link to enter other metadata for that intervention. To enter other metadata for this publication in general (not for each specific intervention), click the following link:</p>
+  <p>
+    <a href="{% url 'metadata' subject=subject.slug publication_pk=publication.pk %}">Other metadata</a>
+  </p>
+
+  <h1>Completed?</h1>
+  <p>When you have entered all of the metadata for this publication, tick the box marked "Completed" (below) and then click "Save or update" (do not do this if you clicked "Exclude based on the full text").</p>
   <table>
     <tr>
       <td class="select centered">{{ full_text_assessment_form.is_completed }}</td><td>Completed</td>
@@ -177,7 +183,7 @@
   <a class="button" href="{% url 'full_text_navigation' subject=subject.slug state='previous' publication_pk=publication.pk %}">Previous full text</a>
   <a class="button" href="{% url 'full_text_navigation' subject=subject.slug state='next' publication_pk=publication.pk %}">Next full text</a>
 </p>
-<p>If you would prefer to complete this publication later, you can click "next not yet completed" or "previous not yet completed" to move between full texts that you have not yet completed.</p>
+<p>If you would prefer to complete this publication later, you can click "Next not yet completed" or "Previous not yet completed" to move between full texts that you have not yet completed.</p>
 <p>
   <a class="button" href="{% url 'full_text_navigation' subject=subject.slug state='previous-incomplete'  publication_pk=publication.pk %}">Previous not yet completed</a>
   <a class="button" href="{% url 'full_text_navigation' subject=subject.slug state='next-incomplete' publication_pk=publication.pk %}">Next not yet completed</a>
