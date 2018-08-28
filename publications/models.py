@@ -141,12 +141,7 @@ class Publication(models.Model):
             return list
 
 
-# "Population" is the "P" in "PICO" (also referred to as "Patient" or "Problem"). The purpose of this database is to record the effect of an Intervention ("I") on a Population ("P"), measured in terms of an Outcome ("O"), with respect to a Control ("C").
-class Population(models.Model):
-    population = models.CharField(max_length=255, unique=True)
-
-    def __str__(self):
-        return self.population
+# "Population" is the "P" in "PICO" (also referred to as "Patient" or "Problem"). The purpose of this database is to record the effect of an Intervention ("I") on a Population ("P"), measured in terms of an Outcome ("O"), with respect to a Control ("C"). Population is not a model in itself, but is the first level in the Outcome model.
 
 
 # "Intervention" is the "I" in "PICO".
@@ -415,9 +410,7 @@ class ExperimentDate(models.Model):
 
 class ExperimentPopulation(models.Model):
     experiment = models.ForeignKey(Experiment, on_delete=models.CASCADE)
-    new_population = models.ForeignKey(Outcome, blank=True, null=True, on_delete=models.CASCADE)
-    population = models.ForeignKey(Population, on_delete=models.CASCADE, related_name="experiment_population")
-    old_population = models.ForeignKey(Population, on_delete=models.SET_NULL, blank=True, null=True)
+    population = models.ForeignKey(Outcome, blank=True, null=True, on_delete=models.CASCADE)  # Populations are the first level in the classification of outcomes.
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
 

@@ -4,7 +4,7 @@ from django.utils.translation import ugettext_lazy as _
 from mptt.admin import DraggableMPTTAdmin
 from reversion.admin import VersionAdmin
 from .models import Profile, User  # AbstractUser with email address as username
-from .models import Subject, Publication, Assessment, AssessmentStatus, Intervention, Population, Outcome, Design, Experiment, Country, Crop, ExperimentCountry, ExperimentCrop, ExperimentDate, ExperimentDesign, ExperimentPopulation, ExperimentLatLong, ExperimentPopulationOutcome, PublicationCountry, PublicationDate, PublicationLatLong, PublicationPopulation, PublicationPopulationOutcome
+from .models import Subject, Publication, Assessment, AssessmentStatus, Intervention, Outcome, Design, Experiment, Country, Crop, ExperimentCountry, ExperimentCrop, ExperimentDate, ExperimentDesign, ExperimentPopulation, ExperimentLatLong, ExperimentPopulationOutcome, PublicationCountry, PublicationDate, PublicationLatLong, PublicationPopulation, PublicationPopulationOutcome
 
 
 @admin.register(User)
@@ -32,7 +32,6 @@ class UserAdmin(DjangoUserAdmin):
 admin.site.register(Country)
 admin.site.register(Crop)
 admin.site.register(Design)
-admin.site.register(Population)
 admin.site.register(Profile)
 
 

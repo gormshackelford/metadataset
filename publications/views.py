@@ -16,7 +16,7 @@ from ast import literal_eval
 from random import shuffle
 from .tokens import account_activation_token
 from .forms import AssessmentForm, EffectForm, ExperimentForm, ExperimentCountryForm, ExperimentCropForm, ExperimentDateForm, ExperimentDesignForm, ExperimentLatLongForm, ExperimentPopulationForm, ExperimentPopulationOutcomeForm, FullTextAssessmentForm, ProfileForm, PublicationForm, PublicationCountryForm, PublicationDateForm, PublicationLatLongForm, PublicationPopulationForm, PublicationPopulationOutcomeForm, SignUpForm, UserForm
-from .models import Assessment, AssessmentStatus, Crop, Experiment, ExperimentCountry, ExperimentCrop, ExperimentDate, ExperimentDesign, ExperimentLatLong, ExperimentPopulation, ExperimentPopulationOutcome, Intervention, Outcome, Population, Publication, PublicationCountry, PublicationDate, PublicationLatLong, PublicationPopulation, PublicationPopulationOutcome, Subject, User
+from .models import Assessment, AssessmentStatus, Crop, Experiment, ExperimentCountry, ExperimentCrop, ExperimentDate, ExperimentDesign, ExperimentLatLong, ExperimentPopulation, ExperimentPopulationOutcome, Intervention, Outcome, Publication, PublicationCountry, PublicationDate, PublicationLatLong, PublicationPopulation, PublicationPopulationOutcome, Subject, User
 from mptt.forms import TreeNodeChoiceField
 from haystack.generic_views import SearchView
 from haystack.forms import SearchForm
@@ -561,8 +561,6 @@ def metadata(request, subject, publication_pk):
     if request.method == 'POST':
         if 'save' in request.POST or 'delete' in request.POST:
             with transaction.atomic():
-                # Before the formset is validated, the choices need to be redefined, or the validation will fail. This is because only a subset of all choices (high level choices in the MPTT tree) were initially shown in the dropdown (for better UI).
-                populations = TreeNodeChoiceField(queryset=Outcome.objects.all().get_descendants(include_self=True), level_indicator = "---")
                 formset = publication_country_formset
                 if formset.is_valid():
                     instances = formset.save(commit=False)
@@ -597,6 +595,8 @@ def metadata(request, subject, publication_pk):
                             instance.user = user
                             instance.save()
                 formset = publication_population_formset
+                # Before the formset is validated, the choices need to be redefined, or the validation will fail. This is because only a subset of all choices (high level choices in the MPTT tree) were initially shown in the dropdown (for better UI).
+                populations = TreeNodeChoiceField(queryset=Outcome.objects.all().get_descendants(include_self=True), level_indicator = "---")
                 for form in formset:
                     form.fields['population'] = populations
                 if formset.is_valid():
@@ -629,7 +629,7 @@ def metadata(request, subject, publication_pk):
 @login_required
 def publication_population(request, subject, publication_pk, publication_population_index):
     """
-    On this page, the user chooses an outcome for this publication (not for a specific intervention).
+    On this page, the user chooses an outcome for this publication population (not for a specific intervention).
     """
     user = request.user
     data = request.POST or None
@@ -701,7 +701,7 @@ def edit_publication(request, subject, publication_pk):
 @login_required
 def experiment(request, subject, publication_pk, experiment_index):
     """
-    On this page, the user chooses populations, experimental designs, crops, countries, and coordinates for this intervention (AKA "experiment").
+    On this page, the user chooses populations, experimental designs, and tags for this intervention (i.e. this "experiment").
     """
     user = request.user
     data = request.POST or None
@@ -732,6 +732,10 @@ def experiment(request, subject, publication_pk, experiment_index):
             if form.is_valid():
                 form.save()
             formset = experiment_population_formset
+            # Before the formset is validated, the choices need to be redefined, or the validation will fail. This is because only a subset of all choices (high level choices in the MPTT tree) were initially shown in the dropdown (for better UI).
+            populations = TreeNodeChoiceField(queryset=Outcome.objects.all().get_descendants(include_self=True), level_indicator = "---")
+            for form in formset:
+                form.fields['population'] = populations
             if formset.is_valid():
                 instances = formset.save(commit=False)
                 if 'delete' in request.POST:
@@ -740,11 +744,6 @@ def experiment(request, subject, publication_pk, experiment_index):
                 else:
                     for instance in instances:
                         instance.experiment = experiment
-                        if instance.old_population is not None:
-                        # If the user changes the population, then we need to delete the instances of ExperimentPopulationOutcome that depend on the old population.
-                            if (instance.old_population != instance.population):
-                                ExperimentPopulationOutcome.objects.filter(experiment_population=instance).delete()
-                        instance.old_population = instance.population
                         instance.save()
             formset = experiment_country_formset
             if formset.is_valid():
@@ -787,6 +786,11 @@ def experiment(request, subject, publication_pk, experiment_index):
                         instance.experiment = experiment
                         instance.save()
             return redirect('experiment', subject=subject, publication_pk=publication_pk, experiment_index=experiment_index)
+    else:
+        # Population choices for the formset (populations are the first level in the classification of outcomes)
+        populations = TreeNodeChoiceField(required=False, queryset=Outcome.objects.all().get_descendants(include_self=True).filter(level__lte=0), level_indicator = "---")
+        for form in experiment_population_formset:
+            form.fields['population'] = populations
     context = {
         'subject': subject,
         'publication': publication,
@@ -805,7 +809,7 @@ def experiment(request, subject, publication_pk, experiment_index):
 @login_required
 def population(request, subject, publication_pk, experiment_index, population_index):
     """
-    On this page, the user chooses populations for this intervention (AKA "experiment").
+    On this page, the user chooses outcomes for this population.
     """
     data = request.POST or None
     subject = Subject.objects.get(slug=subject)
@@ -850,7 +854,7 @@ def population(request, subject, publication_pk, experiment_index, population_in
 @login_required
 def outcome(request, subject, publication_pk, experiment_index, population_index, outcome_index):
     """
-    On this page, the user chooses outcomes for this population.
+    On this page, the user enters effect sizes and related data for this outcome.
     """
     data = request.POST or None
     subject = Subject.objects.get(slug=subject)
