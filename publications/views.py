@@ -930,6 +930,14 @@ def publications_by_intervention(request, subject, path, instance):
     interventions = instance.get_descendants(include_self=True)
     experiments = Experiment.objects.filter(intervention__in=interventions)
     publications = Publication.objects.distinct().filter(subject=subject, experiment__in=experiments).order_by('title')
+    page = request.GET.get('page', 1)
+    paginator = Paginator(publications, 10)
+    try:
+        publications = paginator.page(page)
+    except PageNotAnInteger:
+        publications = paginator.page(1)
+    except EmptyPage:
+        publications = paginator.page(paginator.num_pages)
     context = {
         'subject': subject,
         'publications': publications
@@ -944,10 +952,26 @@ def publications_by_outcome(request, subject, path, instance):
     user = request.user
     subject = Subject.objects.get(slug=subject)
     outcomes = instance.get_descendants(include_self=True)
+    # Outcomes related to interventions within publications
     experiment_population_outcomes = ExperimentPopulationOutcome.objects.filter(outcome__in=outcomes)
     experiment_populations = ExperimentPopulation.objects.filter(experimentpopulationoutcome__in=experiment_population_outcomes)
     experiments = Experiment.objects.filter(experimentpopulation__in=experiment_populations)
-    publications = Publication.objects.distinct().filter(subject=subject, experiment__in=experiments).order_by('title')
+    # Outcomes related to publications
+    publication_population_outcomes = PublicationPopulationOutcome.objects.filter(outcome__in=outcomes)
+    publication_populations = PublicationPopulation.objects.filter(publicationpopulationoutcome__in=publication_population_outcomes)
+    # Publications based on both of the above sources of outcomes
+    publications = Publication.objects.distinct().filter(subject=subject).filter(
+            Q(experiment__in=experiments) |
+            Q(publicationpopulation__in=publication_populations)
+        ).order_by('title')
+    page = request.GET.get('page', 1)
+    paginator = Paginator(publications, 10)
+    try:
+        publications = paginator.page(page)
+    except PageNotAnInteger:
+        publications = paginator.page(1)
+    except EmptyPage:
+        publications = paginator.page(paginator.num_pages)
     context = {
         'subject': subject,
         'publications': publications

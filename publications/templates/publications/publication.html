@@ -161,9 +161,9 @@
   </table>
 
   <h1>Other Metadata?</h1>
-  <p>When you select and save an intervention, a link will appear for "Populations". Click this link to enter other metadata for that intervention. To enter other metadata for this publication in general (not for each specific intervention), click the following link:</p>
+  <p>When you select and save an intervention, a link will appear for "Populations" (above). Click this link to enter other metadata for that intervention. To enter other metadata for this publication in general (not for each specific intervention within this publication), click "Other metadata".</p>
   <p>
-    <a href="{% url 'metadata' subject=subject.slug publication_pk=publication.pk %}">Other metadata</a>
+    <a class="button" href="{% url 'metadata' subject=subject.slug publication_pk=publication.pk %}">Other metadata</a>
   </p>
 
   <h1>Completed?</h1>

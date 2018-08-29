@@ -11,8 +11,9 @@
 
 {% block content %}
 
+  <h1>Publications</h1>
   {% for publication in publications %}
-    <h1>{{ publication.title|default:'[title not available]' }}</h1>
+    <p><span class="bold">{{ publication.title|default:'[title not available]' }}</span></p>
     <p>
       {% if publication.author_list %}
         {{ publication.author_list|join:", "|default:'[authors not available]' }}
@@ -35,7 +36,7 @@
     <br />
     <p class="hr"></p>
   {% empty %}
-    <h1>No publications</h1>
+    <p>No publications</p>
   {% endfor %}
 
   {% if publications.has_other_pages %}
