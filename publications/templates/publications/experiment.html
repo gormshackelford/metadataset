@@ -1,5 +1,7 @@
 {% extends 'publications/base.html' %}
 
+{% load metadataset_tags %}
+
 {% block title %}
   Experiment | Metadataset | www.metadataset.com
 {% endblock %}
@@ -19,8 +21,7 @@
 
   <table>
     <tr><th colspan="3">Populations</th></tr>
-    <tr>
-    </tr>
+    <tr><td colspan="3">When you select and save a population, a link will appear for "Outcomes". Click that link to select outcomes for this population.</td></tr>
     <tr>
       <td colspan="2"></td>
       <td class="centered">Select</td>
@@ -53,9 +54,7 @@
     <tr><td class="empty" colspan="3">&nbsp;</td></tr>
 
     <tr><th colspan="3">Experimental design</th></tr>
-    <tr>
-      <td class="top" colspan="3">We will assume that the same experimental design was used to test the effects of this intervention on all of the populations that you selected above. If different experimental designs were used, please create a separate intervention (on the <a href="{% url 'publication' subject=subject.slug publication_pk=publication.pk %}">previous page</a>) for each experimental design.</td>
-    </tr>
+    <tr><td class="top" colspan="3">We will assume that the same experimental design was used to test the effects of this intervention on all of the populations that you selected above. If different experimental designs were used, please create a separate intervention (on the <a href="{% url 'publication' subject=subject.slug publication_pk=publication.pk %}">previous page</a>) for each experimental design.</td></tr>
     <tr>
       <td colspan="2"></td>
       <td class="centered">Select</td>
@@ -104,8 +103,8 @@
         <td>{{ form.country }}</td><td class="centered">{{ form.DELETE }}</td>
       </tr>
     {% endfor %}
-    {{ experiment_lat_long_formset.management_form }}
-    {% for form in experiment_lat_long_formset %}
+    {{ experiment_lat_long_dms_formset.management_form }}
+    {% for form in experiment_lat_long_dms_formset %}
     <tr>
       <td>
         {% for hidden_field in form.hidden_fields %}
@@ -115,7 +114,34 @@
           Coordinates:
         {% endif %}
       </td>
-      <td>{{ form.latitude.label }}: {{ form.latitude }} {{ form.longitude.label }}: {{ form.longitude }}</td><td class="centered">{{ form.DELETE }}</td>
+      <td>Latitude (DMS): {{ form.latitude_degrees|add_class:"coordinates" }} &#176; {{ form.latitude_minutes|add_class:"coordinates" }} ' {{ form.latitude_seconds|add_class:"coordinates" }} " {{ form.latitude_direction }}</td>
+      <td></td>
+      <td class="centered">{{ form.DELETE }}</td>
+    </tr>
+    <tr>
+      <td></td>
+      <td>Longitude (DMS): {{ form.longitude_degrees|add_class:"coordinates" }} &#176; {{ form.longitude_minutes|add_class:"coordinates" }} ' {{ form.longitude_seconds|add_class:"coordinates" }} " {{ form.longitude_direction }}</td>
+      <td></td>
+      <td></td>
+    </tr>
+    {% endfor %}
+    {{ experiment_lat_long_formset.management_form }}
+    {% for form in experiment_lat_long_formset %}
+    <tr>
+      <td>
+        {% for hidden_field in form.hidden_fields %}
+          {{ hidden_field }}
+        {% endfor %}
+      </td>
+      <td>Latitude (decimal): {{ form.latitude }} &#176;</td>
+      <td></td>
+      <td class="centered">{{ form.DELETE }}</td>
+    </tr>
+    <tr>
+      <td></td>
+      <td>Longitude (decimal): {{ form.longitude }} &#176;</td>
+      <td></td>
+      <td></td>
     </tr>
     {% endfor %}
     {{ experiment_date_formset.management_form }}

@@ -1,5 +1,7 @@
 {% extends 'publications/base.html' %}
 
+{% load metadataset_tags %}
+
 {% block title %}
   Other Metadata | Metadataset | www.metadataset.com
 {% endblock %}
@@ -16,8 +18,7 @@
 <form method="post" action="">{% csrf_token %}
   <table>
     <tr><th colspan="4">Populations</th></tr>
-    <tr>
-    </tr>
+    <tr><td colspan="4">When you select and save a population, a link will appear for "Outcomes". Click that link to select outcomes for this population.</td></tr>
     <tr>
       <td colspan="3"></td>
       <td class="centered">Select</td>
@@ -80,8 +81,8 @@
         <td class="centered">{{ form.DELETE }}</td>
       </tr>
     {% endfor %}
-    {{ publication_lat_long_formset.management_form }}
-    {% for form in publication_lat_long_formset %}
+    {{ publication_lat_long_dms_formset.management_form }}
+    {% for form in publication_lat_long_dms_formset %}
     <tr>
       <td>
         {% for hidden_field in form.hidden_fields %}
@@ -91,9 +92,34 @@
           Coordinates:
         {% endif %}
       </td>
-      <td>{{ form.latitude.label }}: {{ form.latitude }} {{ form.longitude.label }}: {{ form.longitude }}</td>
+      <td>Latitude (DMS): {{ form.latitude_degrees|add_class:"coordinates" }} &#176; {{ form.latitude_minutes|add_class:"coordinates" }} ' {{ form.latitude_seconds|add_class:"coordinates" }} " {{ form.latitude_direction }}</td>
       <td></td>
       <td class="centered">{{ form.DELETE }}</td>
+    </tr>
+    <tr>
+      <td></td>
+      <td>Longitude (DMS): {{ form.longitude_degrees|add_class:"coordinates" }} &#176; {{ form.longitude_minutes|add_class:"coordinates" }} ' {{ form.longitude_seconds|add_class:"coordinates" }} " {{ form.longitude_direction }}</td>
+      <td></td>
+      <td></td>
+    </tr>
+    {% endfor %}
+    {{ publication_lat_long_formset.management_form }}
+    {% for form in publication_lat_long_formset %}
+    <tr>
+      <td>
+        {% for hidden_field in form.hidden_fields %}
+          {{ hidden_field }}
+        {% endfor %}
+      </td>
+      <td>Latitude (decimal): {{ form.latitude }} &#176;</td>
+      <td></td>
+      <td class="centered">{{ form.DELETE }}</td>
+    </tr>
+    <tr>
+      <td></td>
+      <td>Longitude (decimal): {{ form.longitude }} &#176;</td>
+      <td></td>
+      <td></td>
     </tr>
     {% endfor %}
     {{ publication_date_formset.management_form }}

@@ -2,7 +2,7 @@ from django import forms
 from django.db import models
 from django.contrib.auth.forms import UserCreationForm
 from mptt.forms import TreeNodeChoiceField
-from .models import Assessment, Experiment, ExperimentCountry, ExperimentCrop, ExperimentDate, ExperimentDesign, ExperimentLatLong, ExperimentPopulation, ExperimentPopulationOutcome, Intervention, Profile, Publication, PublicationCountry, PublicationDate, PublicationLatLong, PublicationPopulation, PublicationPopulationOutcome, User
+from .models import Assessment, Experiment, ExperimentCountry, ExperimentCrop, ExperimentDate, ExperimentDesign, ExperimentLatLong, ExperimentLatLongDMS, ExperimentPopulation, ExperimentPopulationOutcome, Intervention, Profile, Publication, PublicationCountry, PublicationDate, PublicationLatLong, PublicationLatLongDMS, PublicationPopulation, PublicationPopulationOutcome, User
 
 
 class SignUpForm(UserCreationForm):
@@ -74,9 +74,24 @@ class PublicationDateForm(forms.ModelForm):
 
 
 class PublicationLatLongForm(forms.ModelForm):
+    latitude = forms.FloatField(min_value=-90.0, max_value=90.0, required=False)
+    longitude = forms.FloatField(min_value=-180.0, max_value=180.0, required=False)
 
     class Meta:
         model = PublicationLatLong
+        exclude = ['publication', 'user']
+
+
+class PublicationLatLongDMSForm(forms.ModelForm):
+    latitude_degrees = forms.FloatField(min_value=0.0, max_value=90.0, required=False)
+    latitude_minutes = forms.FloatField(min_value=0.0, max_value=60.0, required=False)
+    latitude_seconds = forms.FloatField(min_value=0.0, max_value=60.0, required=False)
+    longitude_degrees = forms.FloatField(min_value=0.0, max_value=180.0, required=False)
+    longitude_minutes = forms.FloatField(min_value=0.0, max_value=60.0, required=False)
+    longitude_seconds = forms.FloatField(min_value=0.0, max_value=60.0, required=False)
+
+    class Meta:
+        model = PublicationLatLongDMS
         exclude = ['publication', 'user']
 
 
@@ -130,8 +145,21 @@ class ExperimentDesignForm(forms.ModelForm):
 
 
 class ExperimentLatLongForm(forms.ModelForm):
-    latitude = forms.FloatField(min_value=-90.0, max_value=90.0)
-    longitude = forms.FloatField(min_value=-180.0, max_value=180.0)
+    latitude = forms.FloatField(min_value=-90.0, max_value=90.0, required=False)
+    longitude = forms.FloatField(min_value=-180.0, max_value=180.0, required=False)
+
+    class Meta:
+        model = ExperimentLatLong
+        exclude = ['experiment']
+
+
+class ExperimentLatLongDMSForm(forms.ModelForm):
+    latitude_degrees = forms.FloatField(min_value=0.0, max_value=90.0, required=False)
+    latitude_minutes = forms.FloatField(min_value=0.0, max_value=60.0, required=False)
+    latitude_seconds = forms.FloatField(min_value=0.0, max_value=60.0, required=False)
+    longitude_degrees = forms.FloatField(min_value=0.0, max_value=180.0, required=False)
+    longitude_minutes = forms.FloatField(min_value=0.0, max_value=60.0, required=False)
+    longitude_seconds = forms.FloatField(min_value=0.0, max_value=60.0, required=False)
 
     class Meta:
         model = ExperimentLatLong

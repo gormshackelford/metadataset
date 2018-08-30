@@ -4,7 +4,7 @@ from django.utils.translation import ugettext_lazy as _
 from mptt.admin import DraggableMPTTAdmin
 from reversion.admin import VersionAdmin
 from .models import Profile, User  # AbstractUser with email address as username
-from .models import Subject, Publication, Assessment, AssessmentStatus, Intervention, Outcome, Design, Experiment, Country, Crop, ExperimentCountry, ExperimentCrop, ExperimentDate, ExperimentDesign, ExperimentPopulation, ExperimentLatLong, ExperimentPopulationOutcome, PublicationCountry, PublicationDate, PublicationLatLong, PublicationPopulation, PublicationPopulationOutcome
+from .models import Subject, Publication, Assessment, AssessmentStatus, Intervention, Outcome, Design, Experiment, Country, Crop, ExperimentCountry, ExperimentCrop, ExperimentDate, ExperimentDesign, ExperimentPopulation, ExperimentLatLong, ExperimentLatLongDMS, ExperimentPopulationOutcome, PublicationCountry, PublicationDate, PublicationLatLong, PublicationLatLongDMS, PublicationPopulation, PublicationPopulationOutcome
 
 
 @admin.register(User)
@@ -78,6 +78,10 @@ class ExperimentLatLongAdmin(admin.ModelAdmin):
     readonly_fields = ('created', 'updated')
 admin.site.register(ExperimentLatLong, ExperimentLatLongAdmin)
 
+class ExperimentLatLongDMSAdmin(admin.ModelAdmin):
+    readonly_fields = ('created', 'updated')
+admin.site.register(ExperimentLatLongDMS, ExperimentLatLongDMSAdmin)
+
 class ExperimentDateAdmin(admin.ModelAdmin):
     readonly_fields = ('created', 'updated')
 admin.site.register(ExperimentDate, ExperimentDateAdmin)
@@ -93,6 +97,10 @@ admin.site.register(PublicationDate, PublicationDateAdmin)
 class PublicationLatLongAdmin(admin.ModelAdmin):
     readonly_fields = ('created', 'updated')
 admin.site.register(PublicationLatLong, PublicationLatLongAdmin)
+
+class PublicationLatLongDMSAdmin(admin.ModelAdmin):
+    readonly_fields = ('created', 'updated')
+admin.site.register(PublicationLatLongDMS, PublicationLatLongDMSAdmin)
 
 class PublicationPopulationOutcomeAdmin(admin.ModelAdmin):
     readonly_fields = ('created', 'updated')

@@ -131,6 +131,10 @@ input[type="submit"]:hover {
   cursor: pointer;
 }
 
+input.coordinates {
+  width: 6em;
+}
+
 li {
   margin-top: 1.5em;
   line-height: 1.5em;
