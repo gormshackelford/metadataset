@@ -5,11 +5,14 @@ __pycache__
 /static
 .DS_Store
 
+bibliography.csv
 config.json
 config.py
 db.sqlite3
 geckodriver.log
+.ipynb_checkpoints/
 metadataset/whoosh_index
+notebook.ipynb
 Notes.txt
 publications/data/publications.txt
 web_scraping/

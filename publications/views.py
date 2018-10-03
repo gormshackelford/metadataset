@@ -17,6 +17,7 @@ from random import shuffle
 from .tokens import account_activation_token
 from .forms import AssessmentForm, EffectForm, ExperimentForm, ExperimentCountryForm, ExperimentCropForm, ExperimentDateForm, ExperimentDesignForm, ExperimentLatLongForm, ExperimentLatLongDMSForm, ExperimentPopulationForm, ExperimentPopulationOutcomeForm, FullTextAssessmentForm, ProfileForm, PublicationForm, PublicationCountryForm, PublicationDateForm, PublicationLatLongForm, PublicationLatLongDMSForm, PublicationPopulationForm, PublicationPopulationOutcomeForm, SignUpForm, UserForm
 from .models import Assessment, AssessmentStatus, Crop, Experiment, ExperimentCountry, ExperimentCrop, ExperimentDate, ExperimentDesign, ExperimentLatLong, ExperimentLatLongDMS, ExperimentPopulation, ExperimentPopulationOutcome, Intervention, Outcome, Publication, PublicationCountry, PublicationDate, PublicationLatLong, PublicationLatLongDMS, PublicationPopulation, PublicationPopulationOutcome, Subject, User
+from .decorators import group_required
 from mptt.forms import TreeNodeChoiceField
 from haystack.generic_views import SearchView
 from haystack.forms import SearchForm
@@ -683,6 +684,7 @@ def publication_population(request, subject, publication_pk, publication_populat
 
 
 @login_required
+@group_required('can_edit_publications')
 def edit_publication(request, subject, publication_pk):
     """
     On this page, the user edits the title, abstract, etc. for this publication.
