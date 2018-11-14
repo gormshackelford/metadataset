@@ -348,7 +348,7 @@ def publication(request, subject, publication_pk):
     except:
         next_pk = assessment_order[0]
 
-    ExperimentFormSet = modelformset_factory(Experiment, form=ExperimentForm, extra=2, can_delete=True)
+    ExperimentFormSet = modelformset_factory(Experiment, form=ExperimentForm, extra=4, can_delete=True)
     # This publication
     publication = Publication.objects.get(pk=publication_pk)
     # Form for this assessment
@@ -552,7 +552,7 @@ def metadata(request, subject, publication_pk):
     PublicationDateFormSet = modelformset_factory(PublicationDate, form=PublicationDateForm, extra=2, max_num=2, can_delete=True)
     PublicationLatLongFormSet = modelformset_factory(PublicationLatLong, form=PublicationLatLongForm, extra=1, can_delete=True)
     PublicationLatLongDMSFormSet = modelformset_factory(PublicationLatLongDMS, form=PublicationLatLongDMSForm, extra=1, can_delete=True)
-    PublicationPopulationFormSet = modelformset_factory(PublicationPopulation, form=PublicationPopulationForm, extra=2, can_delete=True)
+    PublicationPopulationFormSet = modelformset_factory(PublicationPopulation, form=PublicationPopulationForm, extra=4, can_delete=True)
     # This publication
     publication = Publication.objects.get(pk=publication_pk)
     # Formsets for this publication
@@ -649,7 +649,7 @@ def publication_population(request, subject, publication_pk, publication_populat
     user = request.user
     data = request.POST or None
     subject = Subject.objects.get(slug=subject)
-    PublicationPopulationOutcomeFormSet = modelformset_factory(PublicationPopulationOutcome, form=PublicationPopulationOutcomeForm, extra=2, can_delete=True)
+    PublicationPopulationOutcomeFormSet = modelformset_factory(PublicationPopulationOutcome, form=PublicationPopulationOutcomeForm, extra=4, can_delete=True)
     # This publication
     publication = Publication.objects.get(pk=publication_pk)
     # This publication_population
@@ -728,7 +728,7 @@ def experiment(request, subject, publication_pk, experiment_index):
     ExperimentDesignFormSet = modelformset_factory(ExperimentDesign, form=ExperimentDesignForm, extra=5, max_num=5, can_delete=True)
     ExperimentLatLongFormSet = modelformset_factory(ExperimentLatLong, form=ExperimentLatLongForm, extra=1, can_delete=True)
     ExperimentLatLongDMSFormSet = modelformset_factory(ExperimentLatLongDMS, form=ExperimentLatLongDMSForm, extra=1, can_delete=True)
-    ExperimentPopulationFormSet = modelformset_factory(ExperimentPopulation, form=ExperimentPopulationForm, extra=2, can_delete=True)
+    ExperimentPopulationFormSet = modelformset_factory(ExperimentPopulation, form=ExperimentPopulationForm, extra=4, can_delete=True)
     # This publication
     publication = Publication.objects.get(pk=publication_pk)
     # This experiment
@@ -842,7 +842,7 @@ def population(request, subject, publication_pk, experiment_index, population_in
     """
     data = request.POST or None
     subject = Subject.objects.get(slug=subject)
-    ExperimentPopulationOutcomeFormSet = modelformset_factory(ExperimentPopulationOutcome, form=ExperimentPopulationOutcomeForm, extra=2, can_delete=True)
+    ExperimentPopulationOutcomeFormSet = modelformset_factory(ExperimentPopulationOutcome, form=ExperimentPopulationOutcomeForm, extra=4, can_delete=True)
     # This publication
     publication = Publication.objects.get(pk=publication_pk)
     experiments = Experiment.objects.filter(publication=publication).order_by('pk')
@@ -1133,6 +1133,8 @@ def full_text_navigation(request, subject, state, publication_pk='default'):
         publication = Publication.objects.get(pk=int(publication_pk))
     # Get all the publications.
     publications = Publication.objects.filter(subject=subject)
+    # Exclude this publication.
+    publications = publications.exclude(pk=publication.pk)
     if (state == 'next-incomplete' or state == 'previous-incomplete'):
         # If there are publications for this subject that this user has assessed as relevant and has not yet marked as completed
         if publications.filter(assessment__in=Assessment.objects.filter(
@@ -1151,14 +1153,14 @@ def full_text_navigation(request, subject, state, publication_pk='default'):
         if (state == 'next-incomplete'):
             try:
                 publication_pk = publications.filter(
-                    title__gt=publication.title  # Titles later in the alphabet
+                    title__gte=publication.title  # Titles later in the alphabet
                 ).order_by('title').values_list('pk', flat=True)[0]
             except:
                 publication_pk = publications.order_by('title').values_list('pk', flat=True)[0]
         elif (state == 'previous-incomplete'):
             try:
                 publication_pk = publications.filter(
-                    title__lt=publication.title  # Titles earlier in the alphabet
+                    title__lte=publication.title  # Titles earlier in the alphabet
                 ).order_by('-title').values_list('pk', flat=True)[0]
             except:
                 publication_pk = publications.order_by('-title').values_list('pk', flat=True)[0]
@@ -1172,14 +1174,14 @@ def full_text_navigation(request, subject, state, publication_pk='default'):
             if (state == 'next'):
                 try:
                     publication_pk = publications.filter(
-                        title__gt=publication.title  # Titles later in the alphabet
+                        title__gte=publication.title  # Titles later in the alphabet
                     ).order_by('title').values_list('pk', flat=True)[0]
                 except:
                     publication_pk = publications.order_by('title').values_list('pk', flat=True)[0]
             elif (state == 'previous'):
                 try:
                     publication_pk = publications.filter(
-                        title__lt=publication.title  # Titles earlier in the alphabet
+                        title__lte=publication.title  # Titles earlier in the alphabet
                     ).order_by('-title').values_list('pk', flat=True)[0]
                 except:
                     publication_pk = publications.order_by('-title').values_list('pk', flat=True)[0]
