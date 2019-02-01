@@ -52,6 +52,8 @@ INSTALLED_APPS = [
     'haystack',
     'mptt',
     'reversion',
+    'rest_framework',
+    'django_filters',
     'publications',
 ]
 
@@ -175,6 +177,12 @@ HAYSTACK_CONNECTIONS = {
         'ENGINE': 'haystack.backends.whoosh_backend.WhooshEngine',
         'PATH': os.path.join(os.path.dirname(__file__), 'whoosh_index'),
     },
+}
+
+REST_FRAMEWORK = {
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'PAGE_SIZE': 25,
+    'DEFAULT_FILTER_BACKENDS': ('django_filters.rest_framework.DjangoFilterBackend', ),
 }
 
 # Internationalization

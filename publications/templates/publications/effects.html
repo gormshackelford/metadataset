@@ -1,0 +1,57 @@
+{% extends 'publications/base.html' %}
+
+{% block title %}
+  Effects | Metadataset | www.metadataset.com
+{% endblock %}
+
+{% block css %}
+  {% load staticfiles %}
+  <link href="{% static 'css/sidebar.css' %}" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+
+  <h1>Effects</h1>
+  {% for outcome in outcomes %}
+    <p>{{ outcome }}</p>
+    {% if user.is_authenticated %}
+      <p><a href="{% url 'publication' subject=subject.slug publication_pk=outcome.experiment_population.experiment.publication.pk %}">Edit this publication</a></p>
+    {% endif %}
+  {% endfor %}
+
+  {% if outcomes.has_other_pages %}
+    <p>
+      {% if outcomes.has_previous %}
+        <a class="button" href="?page={{ outcomes.previous_page_number }}">Previous page</a>
+      {% else %}
+        <a class="button" href="?page={{ outcomes.paginator.num_pages }}">Previous page</a>
+      {% endif %}
+      {% if outcomes.has_next %}
+        <a class="button" href="?page={{ outcomes.next_page_number }}">Next page</a>
+      {% else %}
+        <a class="button" href="?page=1">Next page</a>
+      {% endif %}
+    </p>
+    <p>
+      Page number:
+      {% for i in outcomes.paginator.page_range %}
+        {% if i == outcomes.number %}
+          {% if i == outcomes.paginator.num_pages %}
+            <span class="red">{{ i }}</span>
+          {% else %}
+            <span class="red">{{ i }}</span>,
+          {% endif %}
+        {% elif i == outcomes.paginator.num_pages %}
+          <a href="?page={{ i }}">{{ i }}</a>
+        {% else %}
+          <a href="?page={{ i }}">{{ i }}</a>,
+        {% endif %}
+      {% endfor %}
+    </p>
+  {% endif %}
+
+{% endblock %}
+
+{% block sidebar %}
+  {% include 'publications/subject_sidebar.html' %}
+{% endblock %}

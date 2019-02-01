@@ -1,10 +1,20 @@
+{% load metadataset_tags %}
+
 <h1>{{ subject|capfirst }}</h1>
 <p>
-  <a href="{% url 'browse_publications_by_intervention' subject=subject.slug %}">Publications by intervention</a>
+  <a href="{% url 'browse_by_intervention' subject=subject.slug state='publications' %}">Publications by intervention</a>
   <br />
   <a href="{% url 'browse_publications_by_outcome' subject=subject.slug %}">Publications by outcome</a>
 </p>
+
 {% if user.is_authenticated %}
+
+  {% if request.user|is_in_group:"can_edit_publications" %}
+    <p>
+      <a href="{% url 'browse_by_intervention' subject=subject.slug state='effects' %}">Data by intervention</a>
+    </p>
+  {% endif %}
+
   <h1>Titles/Abstracts</h1>
   <a href="{% url 'publication' subject=subject.slug publication_pk=next_assessment %}">Your next title/abstract</a> <span class="red">(start or restart here)</span>
   <br />

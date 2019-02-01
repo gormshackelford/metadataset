@@ -15,15 +15,130 @@ from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from ast import literal_eval
 from random import shuffle
 from .tokens import account_activation_token
-from .forms import AssessmentForm, EffectForm, ExperimentForm, ExperimentCountryForm, ExperimentCropForm, ExperimentDateForm, ExperimentDesignForm, ExperimentLatLongForm, ExperimentLatLongDMSForm, ExperimentPopulationForm, ExperimentPopulationOutcomeForm, FullTextAssessmentForm, ProfileForm, PublicationForm, PublicationCountryForm, PublicationDateForm, PublicationLatLongForm, PublicationLatLongDMSForm, PublicationPopulationForm, PublicationPopulationOutcomeForm, SignUpForm, UserForm
-from .models import Assessment, AssessmentStatus, Crop, Experiment, ExperimentCountry, ExperimentCrop, ExperimentDate, ExperimentDesign, ExperimentLatLong, ExperimentLatLongDMS, ExperimentPopulation, ExperimentPopulationOutcome, Intervention, Outcome, Publication, PublicationCountry, PublicationDate, PublicationLatLong, PublicationLatLongDMS, PublicationPopulation, PublicationPopulationOutcome, Subject, User
+from .forms import AssessmentForm, EffectForm, ExperimentForm, ExperimentCountryForm, ExperimentDateForm, ExperimentDesignForm, ExperimentLatLongForm, ExperimentLatLongDMSForm, ExperimentPopulationForm, ExperimentPopulationOutcomeForm, FullTextAssessmentForm, InterventionForm, ProfileForm, PublicationForm, PublicationCountryForm, PublicationDateForm, PublicationLatLongForm, PublicationLatLongDMSForm, PublicationPopulationForm, PublicationPopulationOutcomeForm, SignUpForm, UserForm
+from .models import Assessment, AssessmentStatus, Country, Crop, Design, Experiment, ExperimentCountry, ExperimentCrop, ExperimentDate, ExperimentDesign, ExperimentLatLong, ExperimentLatLongDMS, ExperimentPopulation, ExperimentPopulationOutcome, Intervention, Outcome, Publication, PublicationCountry, PublicationDate, PublicationLatLong, PublicationLatLongDMS, PublicationPopulation, PublicationPopulationOutcome, Subject, User
+from .serializers import CountrySerializer, DesignSerializer, ExperimentSerializer, ExperimentCountrySerializer, ExperimentDesignSerializer, ExperimentPopulationSerializer, ExperimentPopulationOutcomeSerializer, InterventionSerializer, OutcomeSerializer, PublicationSerializer, SubjectSerializer
 from .decorators import group_required
 from mptt.forms import TreeNodeChoiceField
 from haystack.generic_views import SearchView
 from haystack.forms import SearchForm
 from haystack.query import SearchQuerySet
+from rest_framework import viewsets
+from django_filters import rest_framework as filters
 import reversion
 import csv
+
+
+class CountryViewSet(viewsets.ReadOnlyModelViewSet):
+    """
+    API endpoint for "countries"
+    """
+    queryset = Country.objects.all()
+    serializer_class = CountrySerializer
+
+
+class DesignViewSet(viewsets.ReadOnlyModelViewSet):
+    """
+    API endpoint for "designs"
+    """
+    queryset = Design.objects.all()
+    serializer_class = DesignSerializer
+
+
+class ExperimentViewSet(viewsets.ReadOnlyModelViewSet):
+    """
+    API endpoint for "experiments" (i.e. one "intervention" in one "publication")
+    """
+    queryset = Experiment.objects.all()
+    serializer_class = ExperimentSerializer
+
+
+class ExperimentCountryViewSet(viewsets.ReadOnlyModelViewSet):
+    """
+    API endpoint for "experiment countries" (i.e. one "country" in one "experiment")
+    """
+    queryset = ExperimentCountry.objects.distinct()
+    serializer_class = ExperimentCountrySerializer
+
+
+class ExperimentDesignViewSet(viewsets.ReadOnlyModelViewSet):
+    """
+    API endpoint for "experiment designs" (i.e. one "design" element in one "experiment")
+    """
+    queryset = ExperimentDesign.objects.distinct()
+    serializer_class = ExperimentDesignSerializer
+
+
+class ExperimentPopulationViewSet(viewsets.ReadOnlyModelViewSet):
+    """
+    API endpoint for "experiment populations" (i.e. one "population" in one "experiment")
+    """
+    queryset = ExperimentPopulation.objects.all()
+    serializer_class = ExperimentPopulationSerializer
+
+
+class ExperimentPopulationOutcomeViewSetFilter(filters.FilterSet):
+    class Meta:
+        model = ExperimentPopulationOutcome
+        fields = ['outcome', 'experiment_population__experiment__intervention']
+
+
+class ExperimentPopulationOutcomeViewSet(viewsets.ReadOnlyModelViewSet):
+    """
+    API endpoint for "effects" = "experiment populations outcomes" (i.e. one "outcome" for one "population" in one "experiment")
+    """
+    queryset = ExperimentPopulationOutcome.objects.all()
+    serializer_class = ExperimentPopulationOutcomeSerializer
+    filterset_class = ExperimentPopulationOutcomeViewSetFilter
+
+    def get_queryset(self):
+        queryset = ExperimentPopulationOutcome.objects.all()
+        intervention_pk = self.kwargs.get('intervention_pk', None)
+        if intervention_pk is not None:
+            interventions = Intervention.objects.all().filter(pk=intervention_pk).get_descendants(include_self=True)
+            queryset = queryset.filter(
+                experiment_population__experiment__intervention__in=interventions
+            )
+        outcome_pk = self.kwargs.get('outcome_pk', None)
+        if outcome_pk is not None:
+            outcomes = Outcome.objects.all().filter(pk=outcome_pk).get_descendants(include_self=True)
+            queryset = queryset.filter(
+                outcome__in=outcomes
+            )
+        return queryset
+
+
+class InterventionViewSet(viewsets.ReadOnlyModelViewSet):
+    """
+    API endpoint for "interventions"
+    """
+    queryset = Intervention.objects.all()
+    serializer_class = InterventionSerializer
+
+
+class OutcomeViewSet(viewsets.ReadOnlyModelViewSet):
+    """
+    API endpoint for "outcomes"
+    """
+    queryset = Outcome.objects.all()
+    serializer_class = OutcomeSerializer
+
+
+class PublicationViewSet(viewsets.ReadOnlyModelViewSet):
+    """
+    API endpoint for "publications"
+    """
+    queryset = Publication.objects.all()
+    serializer_class = PublicationSerializer
+
+
+class SubjectViewSet(viewsets.ReadOnlyModelViewSet):
+    """
+    API endpoint for "subjects"
+    """
+    queryset = Subject.objects.all()
+    serializer_class = SubjectSerializer
+
 
 class MySearchView(SearchView):
     template_name = 'search/search.html'
@@ -927,17 +1042,25 @@ def outcome(request, subject, publication_pk, experiment_index, population_index
     return render(request, 'publications/outcome.html', context)
 
 
-def browse_publications_by_intervention(request, subject):
+def browse_by_intervention(request, subject, state='default'):  #TODO: delete default and test
     user = request.user
     subject = Subject.objects.get(slug=subject)
+    form = InterventionForm()
+    if (state == 'publications'):
+        interventions = Intervention.objects.all()
+    if (state == 'effects'):
+        interventions = Intervention.objects.all()
+        form.fields['intervention'] = TreeNodeChoiceField(queryset=Intervention.objects.all().get_descendants(include_self=True).filter(level__lte=1), level_indicator = "---")
     context = {
         'subject': subject,  # Browse within this subject
-        'interventions': Intervention.objects.all(),
+        'state': state,  # Browse by publication or by effect
+        'interventions': interventions,
+        'form': form
     }
     if user.is_authenticated:
         status = get_status(user, subject)
         context.update(status)
-    return render(request, 'publications/browse_publications_by_intervention.html', context)
+    return render(request, 'publications/browse_by_intervention.html', context)
 
 
 def browse_publications_by_outcome(request, subject):
@@ -975,6 +1098,35 @@ def publications_by_intervention(request, subject, path, instance):
         status = get_status(user, subject)
         context.update(status)
     return render(request, 'publications/publications.html', context)
+
+
+def effects(request, subject, path, instance):
+    user = request.user
+    subject = Subject.objects.get(slug=subject)
+    if request.method == 'POST':
+        intervention = request.POST['intervention']
+        interventions = Intervention.objects.all().filter(pk=intervention).get_descendants(include_self=True)
+    else:
+        interventions = Intervention.objects.all()
+    experiments = Experiment.objects.distinct().filter(intervention__in=interventions)
+    populations = ExperimentPopulation.objects.distinct().filter(experiment__in=experiments)
+    outcomes = ExperimentPopulationOutcome.objects.distinct().filter(experiment_population__in=populations)
+    page = request.GET.get('page', 1)
+    paginator = Paginator(outcomes, 10)
+    try:
+        outcomes = paginator.page(page)
+    except PageNotAnInteger:
+        outcomes = paginator.page(1)
+    except EmptyPage:
+        outcomes = paginator.page(paginator.num_pages)
+    context = {
+        'subject': subject,
+        'outcomes': outcomes
+    }
+    if user.is_authenticated:
+        status = get_status(user, subject)
+        context.update(status)
+    return render(request, 'publications/effects.html', context)
 
 
 def publications_by_outcome(request, subject, path, instance):

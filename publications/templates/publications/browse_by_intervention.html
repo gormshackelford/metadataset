@@ -1,0 +1,53 @@
+{% extends 'publications/base.html' %}
+
+{% block title %}
+  Browse | Metadataset | www.metadataset.com
+{% endblock %}
+
+{% block css %}
+  {% load staticfiles %}
+  <link href="{% static 'css/sidebar.css' %}" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+
+  {% load mptt_tags %}
+
+  <h1>Interventions</h1>
+  {% if state == 'publications' %}
+  {% recursetree interventions %}
+    <ul class="tree">
+        <li class="level_{{ node.level }}"><a href="{% url 'publications_by_intervention' subject=subject.slug path=node.get_path %}">{{ node.intervention }}</a></li>
+        {% if not node.is_leaf_node %}
+          {{ children }}
+        {% endif %}
+    </ul>
+  {% endrecursetree %}
+  {% endif %}
+
+  {% if state == 'effects' %}
+
+  <!--
+  <select>
+  {% recursetree interventions %}
+    <option class="level_{{ node.level }}" value="{{ node.intervention }}">{{ node.intervention }}</option>
+    {% if not node.is_leaf_node %}
+      {{ children }}
+    {% endif %}
+  {% endrecursetree %}
+  </select>
+  -->
+
+  <form method="post" name="intervention" action="{% url 'effects' subject=subject.slug path=node.get_path %}" method="post">{% csrf_token %}
+    {{ form.intervention }}
+    <input type="submit" value="Go" />
+  </form>
+
+  {% endif %}
+
+
+{% endblock %}
+
+{% block sidebar %}
+  {% include 'publications/subject_sidebar.html' %}
+{% endblock %}
