@@ -79,68 +79,6 @@ def update_user_profile(sender, instance, created, **kwargs):
     instance.profile.save()
 
 
-# Subjects for systematic reviews (as "subject-wide evidence syntheses")
-class Subject(models.Model):
-    subject = models.CharField(max_length=255, unique=True)
-    slug = models.SlugField(max_length=255, blank=True)
-    text = models.TextField(blank=True)
-    created = models.DateTimeField(auto_now_add=True)
-    updated = models.DateTimeField(auto_now=True)
-
-    def save(self, *args, **kwargs):
-        self.subject = self.subject.lower()
-        max_length = 255  # For MySQL, unique/indexed fields must be < 256.
-        self.slug = slugify(self.subject)[:max_length]
-        # Check if this slug exists. If it exists, add a hyphen and a number and repeat until the slug is unique.
-        for counter in itertools.count(1):
-            if not Subject.objects.filter(slug=self.slug).exists():
-                break
-            # Add a hyphen and a number (minus the length of the hyphen and the counter, to maintain max_length).
-            self.slug = "{slug}-{counter}".format(slug=self.slug[:max_length - len(str(counter)) - 1], counter=counter)
-
-        super(Subject, self).save(*args, **kwargs)
-
-    def __str__(self):
-        return self.subject
-
-
-class Publication(models.Model):
-    title = models.CharField(max_length=510)
-    abstract = models.TextField(blank=True)
-    authors = models.TextField(blank=True)
-    year = models.CharField(max_length=30, blank=True)
-    journal = models.CharField(max_length=510, blank=True)
-    volume = models.CharField(max_length=30, blank=True)
-    issue = models.CharField(max_length=30, blank=True)
-    pages = models.CharField(max_length=30, blank=True)
-    doi = models.CharField(max_length=510, blank=True)
-    url = models.CharField(max_length=510, blank=True)
-    publisher = models.CharField(max_length=510, blank=True)
-    place = models.CharField(max_length=510, blank=True)
-    note = models.TextField(blank=True)
-    subject = models.ForeignKey(Subject, on_delete=models.CASCADE, null=True)
-    created = models.DateTimeField(auto_now_add=True)
-    updated = models.DateTimeField(auto_now=True)
-
-    def __str__(self):
-        return self.title
-
-    @property
-    def google_string(self):
-        string = quote_plus(self.title)
-        return string
-
-    @property
-    def author_list(self):
-        try:
-            list = literal_eval(self.authors)
-            return list
-        # If the author field is not a Python list (e.g., ['Surname, A.B.', 'Surname, C.D.']) or cannot be displayed as a string, return None.
-        except:
-            list = None
-            return list
-
-
 # "Population" is the "P" in "PICO" (also referred to as "Patient" or "Problem"). The purpose of this database is to record the effect of an Intervention ("I") on a Population ("P"), measured in terms of an Outcome ("O"), with respect to a Control ("C"). Population is not a model in itself, but is the first level in the Outcome model.
 
 
@@ -223,14 +161,6 @@ class Crop(MPTTModel):
         order_insertion_by = ['crop']
 
 
-# Experimental design (e.g., "replicated", "randomized", "controlled")
-class Design(models.Model):
-    design = models.CharField(max_length=60, unique=True)
-
-    def __str__(self):
-        return self.design
-
-
 class Country(models.Model):
     country = models.CharField(max_length=255)
     un_m49 = models.IntegerField(blank=True, null=True)
@@ -241,6 +171,82 @@ class Country(models.Model):
 
     class Meta:
         verbose_name_plural = "countries"
+
+
+# Experimental design (e.g., "replicated", "randomized", "controlled")
+class Design(models.Model):
+    design = models.CharField(max_length=60, unique=True)
+
+    def __str__(self):
+        return self.design
+
+
+# Subjects for systematic reviews (as "subject-wide evidence syntheses")
+class Subject(MPTTModel):
+    subject = models.CharField(max_length=255, unique=True)
+    parent = TreeForeignKey('self', null=True, blank=True, related_name='children', db_index=True, on_delete=models.CASCADE)
+    intervention = models.ForeignKey(Intervention, blank=True, null=True, on_delete=models.CASCADE)  # The root node for this subject in the tree of interventions
+    outcome = models.ForeignKey(Outcome, blank=True, null=True, on_delete=models.CASCADE)  # The root node for this subject in the tree of outcomes
+    slug = models.SlugField(max_length=255, blank=True)
+    text = models.TextField(blank=True)
+    created = models.DateTimeField(auto_now_add=True)
+    updated = models.DateTimeField(auto_now=True)
+
+    def save(self, *args, **kwargs):
+        self.subject = self.subject.lower()
+        max_length = 255  # For MySQL, unique/indexed fields must be < 256.
+        self.slug = slugify(self.subject)[:max_length]
+        # Check if this slug exists. If it exists, add a hyphen and a number and repeat until the slug is unique.
+        for counter in itertools.count(1):
+            if not Subject.objects.filter(slug=self.slug).exists():
+                break
+            # Add a hyphen and a number (minus the length of the hyphen and the counter, to maintain max_length).
+            self.slug = "{slug}-{counter}".format(slug=self.slug[:max_length - len(str(counter)) - 1], counter=counter)
+
+        super(Subject, self).save(*args, **kwargs)
+
+    def __str__(self):
+        return self.subject
+
+    class MPTTMeta:
+        order_insertion_by = ['subject']
+
+
+class Publication(models.Model):
+    title = models.CharField(max_length=510)
+    abstract = models.TextField(blank=True)
+    authors = models.TextField(blank=True)
+    year = models.CharField(max_length=30, blank=True)
+    journal = models.CharField(max_length=510, blank=True)
+    volume = models.CharField(max_length=30, blank=True)
+    issue = models.CharField(max_length=30, blank=True)
+    pages = models.CharField(max_length=30, blank=True)
+    doi = models.CharField(max_length=510, blank=True)
+    url = models.CharField(max_length=510, blank=True)
+    publisher = models.CharField(max_length=510, blank=True)
+    place = models.CharField(max_length=510, blank=True)
+    note = models.TextField(blank=True)
+    subject = models.ForeignKey(Subject, on_delete=models.CASCADE, null=True)
+    created = models.DateTimeField(auto_now_add=True)
+    updated = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.title
+
+    @property
+    def google_string(self):
+        string = quote_plus(self.title)
+        return string
+
+    @property
+    def author_list(self):
+        try:
+            list = literal_eval(self.authors)
+            return list
+        # If the author field is not a Python list (e.g., ['Surname, A.B.', 'Surname, C.D.']) or cannot be displayed as a string, return None.
+        except:
+            list = None
+            return list
 
 
 # Intersection tables

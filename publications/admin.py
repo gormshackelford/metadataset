@@ -110,10 +110,6 @@ class PublicationPopulationAdmin(admin.ModelAdmin):
     readonly_fields = ('created', 'updated')
 admin.site.register(PublicationPopulation, PublicationPopulationAdmin)
 
-class SubjectAdmin(admin.ModelAdmin):
-    readonly_fields = ('created', 'updated')
-admin.site.register(Subject, SubjectAdmin)
-
 
 # Admin for hierarchical models (django-mptt)
 admin.site.register(
@@ -127,8 +123,21 @@ admin.site.register(
         'indented_title',
     ),
 )
+
 admin.site.register(
     Outcome,
+    DraggableMPTTAdmin,
+    list_display=(
+        'tree_actions',
+        'indented_title',
+    ),
+    list_display_links=(
+        'indented_title',
+    ),
+)
+
+admin.site.register(
+    Subject,
     DraggableMPTTAdmin,
     list_display=(
         'tree_actions',

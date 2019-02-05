@@ -141,27 +141,31 @@ li {
 }
 
 li.level_0 {
-  font-weight: bold;
+  font-size: 2em;
 }
 
 li.level_1 {
-  text-decoration: underline;
+  font-weight: bold;
 }
 
 li.level_2 {
+  text-decoration: underline;
+}
+
+li.level_3 {
   font-weight: bold;
   font-style: italic;
 }
 
-li.level_3 {
+li.level_4 {
 }
 
-li.level_4 {
+li.level_5 {
   list-style-type: disc;
   font-style: italic;
 }
 
-li.level_5 {
+li.level_6 {
   list-style-type: circle;
   font-style: italic;
 }
@@ -236,6 +240,10 @@ span.active {
 span.heading {
   font-family: "Noto Serif", serif;
   font-weight: bold;
+}
+
+span.indented {
+  margin-left: 1em;
 }
 
 span.blue {

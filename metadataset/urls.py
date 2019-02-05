@@ -31,7 +31,10 @@ router.register(r'effects', views.ExperimentPopulationOutcomeViewSet)
 router.register(r'interventions', views.InterventionViewSet)
 router.register(r'outcomes', views.OutcomeViewSet)
 router.register(r'publications', views.PublicationViewSet)
+router.register(r'publication_populations', views.PublicationPopulationViewSet)
+router.register(r'publication_population_outcomes', views.PublicationPopulationOutcomeViewSet)
 router.register(r'subjects', views.SubjectViewSet)
+router.register(r'users', views.UserViewSet)
 
 urlpatterns = [
     path('admin/', admin.site.urls),

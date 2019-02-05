@@ -17,7 +17,7 @@ from random import shuffle
 from .tokens import account_activation_token
 from .forms import AssessmentForm, EffectForm, ExperimentForm, ExperimentCountryForm, ExperimentDateForm, ExperimentDesignForm, ExperimentLatLongForm, ExperimentLatLongDMSForm, ExperimentPopulationForm, ExperimentPopulationOutcomeForm, FullTextAssessmentForm, InterventionForm, ProfileForm, PublicationForm, PublicationCountryForm, PublicationDateForm, PublicationLatLongForm, PublicationLatLongDMSForm, PublicationPopulationForm, PublicationPopulationOutcomeForm, SignUpForm, UserForm
 from .models import Assessment, AssessmentStatus, Country, Crop, Design, Experiment, ExperimentCountry, ExperimentCrop, ExperimentDate, ExperimentDesign, ExperimentLatLong, ExperimentLatLongDMS, ExperimentPopulation, ExperimentPopulationOutcome, Intervention, Outcome, Publication, PublicationCountry, PublicationDate, PublicationLatLong, PublicationLatLongDMS, PublicationPopulation, PublicationPopulationOutcome, Subject, User
-from .serializers import CountrySerializer, DesignSerializer, ExperimentSerializer, ExperimentCountrySerializer, ExperimentDesignSerializer, ExperimentPopulationSerializer, ExperimentPopulationOutcomeSerializer, InterventionSerializer, OutcomeSerializer, PublicationSerializer, SubjectSerializer
+from .serializers import CountrySerializer, DesignSerializer, ExperimentSerializer, ExperimentCountrySerializer, ExperimentDesignSerializer, ExperimentPopulationSerializer, ExperimentPopulationOutcomeSerializer, InterventionSerializer, OutcomeSerializer, PublicationSerializer, PublicationPopulationSerializer, PublicationPopulationOutcomeSerializer, SubjectSerializer, UserSerializer
 from .decorators import group_required
 from mptt.forms import TreeNodeChoiceField
 from haystack.generic_views import SearchView
@@ -132,12 +132,36 @@ class PublicationViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = PublicationSerializer
 
 
+class PublicationPopulationViewSet(viewsets.ReadOnlyModelViewSet):
+    """
+    API endpoint for "publication populations" (i.e. one "population" in one "publication")
+    """
+    queryset = PublicationPopulation.objects.all()
+    serializer_class = PublicationPopulationSerializer
+
+
+class PublicationPopulationOutcomeViewSet(viewsets.ReadOnlyModelViewSet):
+    """
+    API endpoint for "publication populations outcomes" (i.e. one "outcome" for one "population" in one "publication")
+    """
+    queryset = PublicationPopulationOutcome.objects.all()
+    serializer_class = PublicationPopulationOutcomeSerializer
+
+
 class SubjectViewSet(viewsets.ReadOnlyModelViewSet):
     """
     API endpoint for "subjects"
     """
     queryset = Subject.objects.all()
     serializer_class = SubjectSerializer
+
+
+class UserViewSet(viewsets.ReadOnlyModelViewSet):
+    """
+    API endpoint for "users"
+    """
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
 
 
 class MySearchView(SearchView):
@@ -163,8 +187,9 @@ def subject(request, subject):
     }
     # Get data for the sidebar.
     if user.is_authenticated:
-        status = get_status(user, subject)
-        context.update(status)
+        if Publication.objects.filter(subject=subject).exists():
+            status = get_status(user, subject)
+            context.update(status)
     return render(request, 'publications/subject.html', context)
 
 
@@ -572,7 +597,8 @@ def publication(request, subject, publication_pk):
         if 'save' in request.POST or 'delete' in request.POST:
             with transaction.atomic():
                 # Before the formset is validated, the choices need to be redefined, or the validation will fail. This is because only a subset of all choices (high level choices in the MPTT tree) were initially shown in the dropdown (for better UI).
-                interventions = TreeNodeChoiceField(queryset=Intervention.objects.all().get_descendants(include_self=True), level_indicator = "---")
+                intervention = subject.intervention
+                interventions = TreeNodeChoiceField(queryset=Intervention.objects.filter(intervention=intervention).get_descendants(include_self=True), level_indicator = "---")
                 for form in formset:
                     form.fields['intervention'] = interventions
                 if formset.is_valid():
@@ -635,7 +661,8 @@ def publication(request, subject, publication_pk):
                 return redirect('publication', subject=subject, publication_pk=publication_pk)
     else:
         # Intervention choices for the formset (high-level choices only)
-        interventions = TreeNodeChoiceField(required=False, queryset=Intervention.objects.all().get_descendants(include_self=True).filter(level__lte=1), level_indicator = "---")
+        intervention = subject.intervention
+        interventions = TreeNodeChoiceField(required=False, queryset=Intervention.objects.filter(intervention=intervention).get_descendants(include_self=True).filter(level__lte=2).filter(level__gt=0), level_indicator = "---")
         for form in formset:
             form.fields['intervention'] = interventions
     context = {
@@ -851,7 +878,8 @@ def experiment(request, subject, publication_pk, experiment_index):
     experiment = experiments[experiment_index]
     # Form for this experiment
     experiment_form = ExperimentForm(data=data, instance=experiment, prefix="experiment_form")
-    experiment_form.fields['intervention'] = TreeNodeChoiceField(queryset=Intervention.objects.all().get_descendants(include_self=True), level_indicator = "---")
+    intervention = subject.intervention
+    experiment_form.fields['intervention'] = TreeNodeChoiceField(queryset=Intervention.objects.filter(intervention=intervention).get_descendants(include_self=True), level_indicator = "---")
     # Formsets for this experiment
     experiment_population_formset = ExperimentPopulationFormSet(data=data, queryset=ExperimentPopulation.objects.filter(experiment=experiment), prefix="experiment_population_formset")
     experiment_country_formset = ExperimentCountryFormSet(data=data, queryset=ExperimentCountry.objects.filter(experiment=experiment), prefix="experiment_country_formset")
@@ -1045,21 +1073,21 @@ def outcome(request, subject, publication_pk, experiment_index, population_index
 def browse_by_intervention(request, subject, state='default'):  #TODO: delete default and test
     user = request.user
     subject = Subject.objects.get(slug=subject)
+    intervention = subject.intervention
+    interventions = Intervention.objects.filter(intervention=intervention).get_descendants(include_self=True)
     form = InterventionForm()
-    if (state == 'publications'):
-        interventions = Intervention.objects.all()
     if (state == 'effects'):
-        interventions = Intervention.objects.all()
-        form.fields['intervention'] = TreeNodeChoiceField(queryset=Intervention.objects.all().get_descendants(include_self=True).filter(level__lte=1), level_indicator = "---")
+        form.fields['intervention'] = TreeNodeChoiceField(queryset=intervention.get_descendants(include_self=True).filter(level__lte=1), level_indicator = "---")
     context = {
         'subject': subject,  # Browse within this subject
         'state': state,  # Browse by publication or by effect
         'interventions': interventions,
-        'form': form
+        'form': form,
     }
     if user.is_authenticated:
-        status = get_status(user, subject)
-        context.update(status)
+        if Publication.objects.filter(subject=subject).exists():
+            status = get_status(user, subject)
+            context.update(status)
     return render(request, 'publications/browse_by_intervention.html', context)
 
 
@@ -1071,8 +1099,9 @@ def browse_publications_by_outcome(request, subject):
         'outcomes': Outcome.objects.all(),
     }
     if user.is_authenticated:
-        status = get_status(user, subject)
-        context.update(status)
+        if Publication.objects.filter(subject=subject).exists():
+            status = get_status(user, subject)
+            context.update(status)
     return render(request, 'publications/browse_publications_by_outcome.html', context)
 
 
@@ -1095,8 +1124,9 @@ def publications_by_intervention(request, subject, path, instance):
         'publications': publications
     }
     if user.is_authenticated:
-        status = get_status(user, subject)
-        context.update(status)
+        if Publication.objects.filter(subject=subject).exists():
+            status = get_status(user, subject)
+            context.update(status)
     return render(request, 'publications/publications.html', context)
 
 
@@ -1105,9 +1135,10 @@ def effects(request, subject, path, instance):
     subject = Subject.objects.get(slug=subject)
     if request.method == 'POST':
         intervention = request.POST['intervention']
-        interventions = Intervention.objects.all().filter(pk=intervention).get_descendants(include_self=True)
+        interventions = Intervention.objects.filter(pk=intervention).get_descendants(include_self=True)
     else:
-        interventions = Intervention.objects.all()
+        intervention = subject.intervention
+        interventions = Intervention.objects.filter(intervention=intervention).get_descendants(include_self=True)
     experiments = Experiment.objects.distinct().filter(intervention__in=interventions)
     populations = ExperimentPopulation.objects.distinct().filter(experiment__in=experiments)
     outcomes = ExperimentPopulationOutcome.objects.distinct().filter(experiment_population__in=populations)
@@ -1124,8 +1155,9 @@ def effects(request, subject, path, instance):
         'outcomes': outcomes
     }
     if user.is_authenticated:
-        status = get_status(user, subject)
-        context.update(status)
+        if Publication.objects.filter(subject=subject).exists():
+            status = get_status(user, subject)
+            context.update(status)
     return render(request, 'publications/effects.html', context)
 
 
@@ -1158,8 +1190,9 @@ def publications_by_outcome(request, subject, path, instance):
         'publications': publications
     }
     if user.is_authenticated:
-        status = get_status(user, subject)
-        context.update(status)
+        if Publication.objects.filter(subject=subject).exists():
+            status = get_status(user, subject)
+            context.update(status)
     return render(request, 'publications/publications.html', context)
 
 
@@ -1188,7 +1221,6 @@ def get_status(user, subject):
 
         #TODO: If old publications have been deleted from the database (this should not happen in production), then delete their pks from assessment_order.
 
-    #TODO: This crashes if there is a subject for which no publications have yet been added to the database.
     # If an assessment_order has not been created for this user and subject, create it and save it in the database.
     else:
         pks = Publication.objects.filter(subject=subject).values_list('pk', flat=True)
