@@ -171,20 +171,19 @@ li.level_6 {
 }
 
 li.outcomes_level_0 {
-  font-weight: bold;
+  font-size: 2em;
 }
 
 li.outcomes_level_1 {
-  text-decoration: underline;
+  font-weight: bold;
 }
 
 li.outcomes_level_2 {
-  list-style-type: disc;
-  font-style: italic;
+  text-decoration: underline;
 }
 
 li.outcomes_level_3 {
-  list-style-type: circle;
+  list-style-type: disc;
   font-style: italic;
 }
 
@@ -194,6 +193,11 @@ li.outcomes_level_4 {
 }
 
 li.outcomes_level_5 {
+  list-style-type: circle;
+  font-style: italic;
+}
+
+li.outcomes_level_6 {
 }
 
 p {
@@ -218,7 +222,7 @@ select[multiple] {
 }
 
 select.select_intervention {
-  width: 100%;
+  width: 90%;
 }
 
 span.button {

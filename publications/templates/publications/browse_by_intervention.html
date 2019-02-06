@@ -1,5 +1,7 @@
 {% extends 'publications/base.html' %}
 
+{% load metadataset_tags %}
+
 {% block title %}
   Browse | Metadataset | www.metadataset.com
 {% endblock %}
@@ -15,36 +17,22 @@
 
   <h1>Interventions</h1>
   {% if state == 'publications' %}
-  {% recursetree interventions %}
-    <ul class="tree">
-      <li class="level_{{ node.level }}"><a href="{% url 'publications_by_intervention' subject=subject.slug path=node.get_path %}">{{ node.intervention }}</a></li>
-      {% if not node.is_leaf_node %}
-        {{ children }}
-      {% endif %}
-    </ul>
-  {% endrecursetree %}
+    {% recursetree interventions %}
+      <ul class="tree">
+        <li class="level_{{ node.level }}"><a href="{% url 'publications_by_intervention' subject=subject.slug path=node.get_path %}">{{ node.intervention }}</a></li>
+        {% if not node.is_leaf_node %}
+          {{ children }}
+        {% endif %}
+      </ul>
+    {% endrecursetree %}
   {% endif %}
 
   {% if state == 'effects' %}
-
-  <!--
-  <select>
-  {% recursetree interventions %}
-    <option class="level_{{ node.level }}" value="{{ node.intervention }}">{{ node.intervention }}</option>
-    {% if not node.is_leaf_node %}
-      {{ children }}
-    {% endif %}
-  {% endrecursetree %}
-  </select>
-  -->
-
-  <form method="post" name="intervention" action="{% url 'effects' subject=subject.slug path=node.get_path %}" method="post">{% csrf_token %}
-    {{ form.intervention }}
-    <input type="submit" value="Go" />
-  </form>
-
+    <form method="post" name="intervention" action="{% url 'effects' subject=subject.slug path=node.get_path %}" method="post">{% csrf_token %}
+      {{ form.intervention|add_class:"select_intervention" }}
+      <input type="submit" value="Go" />
+    </form>
   {% endif %}
-
 
 {% endblock %}
 

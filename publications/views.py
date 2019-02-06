@@ -1078,7 +1078,7 @@ def browse_by_intervention(request, subject, state='default'):  #TODO: delete de
     interventions = Intervention.objects.filter(intervention=intervention).get_descendants(include_self=True)
     form = InterventionForm()
     if (state == 'effects'):
-        form.fields['intervention'] = TreeNodeChoiceField(queryset=intervention.get_descendants(include_self=True).filter(level__lte=1), level_indicator = "---")
+        form.fields['intervention'] = TreeNodeChoiceField(queryset=intervention.get_descendants(include_self=True).filter(level__lte=2).filter(level__gt=0), level_indicator = "---")
     context = {
         'subject': subject,  # Browse within this subject
         'state': state,  # Browse by publication or by effect

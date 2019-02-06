@@ -196,12 +196,6 @@ class Subject(MPTTModel):
         self.subject = self.subject.lower()
         max_length = 255  # For MySQL, unique/indexed fields must be < 256.
         self.slug = slugify(self.subject)[:max_length]
-        # Check if this slug exists. If it exists, add a hyphen and a number and repeat until the slug is unique.
-        for counter in itertools.count(1):
-            if not Subject.objects.filter(slug=self.slug).exists():
-                break
-            # Add a hyphen and a number (minus the length of the hyphen and the counter, to maintain max_length).
-            self.slug = "{slug}-{counter}".format(slug=self.slug[:max_length - len(str(counter)) - 1], counter=counter)
 
         super(Subject, self).save(*args, **kwargs)
 
