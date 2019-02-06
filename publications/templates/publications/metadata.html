@@ -13,7 +13,7 @@
 {% block content %}
 
 <h1>Other Metadata</h1>
-<p><a href="{% url 'publication' subject=subject publication_pk=publication.pk %}">Back to all metadata for this publication</a></p>
+<p><a href="{% url 'publication' subject=subject.slug publication_pk=publication.pk %}">Back to all metadata for this publication</a></p>
 
 <form method="post" action="">{% csrf_token %}
   <table>

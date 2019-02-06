@@ -219,7 +219,7 @@ def publications(request, subject, state='all', download='none'):
         ).order_by('title')
     # Publications that this user has not yet assessed based on title/abstract
     elif (state == 'not_assessed'):
-        publications = Publication.objects.distinct().exclude(
+        publications = Publication.objects.distinct().filter(subject=subject).exclude(
             assessment__in=Assessment.objects.filter(
                 subject=subject,
                 user=user
@@ -544,7 +544,7 @@ def publication(request, subject, publication_pk):
                     next_assessment = get_next_assessment(publication_pk, next_pk, assessment_order, completed_assessments)
                     item.next_assessment = next_assessment
                     item.save()
-                    return redirect('publication', subject=subject, publication_pk=next_assessment)
+                    return redirect('publication', subject=subject.slug, publication_pk=next_assessment)
         if 'is_not_relevant' in request.POST:
             with transaction.atomic():
                 if assessment_form.is_valid():
@@ -573,7 +573,7 @@ def publication(request, subject, publication_pk):
                     next_assessment = get_next_assessment(publication_pk, next_pk, assessment_order, completed_assessments)
                     item.next_assessment = next_assessment
                     item.save()
-                    return redirect('publication', subject=subject, publication_pk=next_assessment)
+                    return redirect('publication', subject=subject.slug, publication_pk=next_assessment)
         if 'full_text_is_not_relevant' in request.POST:
             with transaction.atomic():
                 if full_text_assessment_form.is_valid():
@@ -593,7 +593,7 @@ def publication(request, subject, publication_pk):
                     next_assessment = get_next_assessment(publication_pk, next_pk, assessment_order, completed_assessments)
                     item.next_assessment = next_assessment
                     item.save()
-                return redirect('publication', subject=subject, publication_pk=publication_pk)
+                return redirect('publication', subject=subject.slug, publication_pk=publication_pk)
         if 'save' in request.POST or 'delete' in request.POST:
             with transaction.atomic():
                 # Before the formset is validated, the choices need to be redefined, or the validation will fail. This is because only a subset of all choices (high level choices in the MPTT tree) were initially shown in the dropdown (for better UI).
@@ -658,7 +658,7 @@ def publication(request, subject, publication_pk):
                             item.save()
                             if Assessment.objects.filter(publication=publication, user=user).exists():
                                 Assessment.objects.filter(publication=publication, user=user).delete()
-                return redirect('publication', subject=subject, publication_pk=publication_pk)
+                return redirect('publication', subject=subject.slug, publication_pk=publication_pk)
     else:
         # Intervention choices for the formset (high-level choices only)
         intervention = subject.intervention
@@ -765,7 +765,7 @@ def metadata(request, subject, publication_pk):
                             instance.publication = publication
                             instance.user = user
                             instance.save()
-                return redirect('metadata', subject=subject, publication_pk=publication_pk)
+                return redirect('metadata', subject=subject.slug, publication_pk=publication_pk)
     else:
         # Population choices for the formset (populations are the first level in the classification of outcomes)
         populations = TreeNodeChoiceField(required=False, queryset=Outcome.objects.all().get_descendants(include_self=True).filter(level__lte=0), level_indicator = "---")
@@ -842,7 +842,7 @@ def edit_publication(request, subject, publication_pk):
             with reversion.create_revision():  # Version control (django-revision)
                 publication_form.save()
                 reversion.set_user(request.user)
-        return redirect('publication', subject=subject, publication_pk=publication_pk)
+        return redirect('publication', subject=subject.slug, publication_pk=publication_pk)
     else:
         publication_form = PublicationForm(instance=publication)
     context = {
@@ -864,6 +864,7 @@ def experiment(request, subject, publication_pk, experiment_index):
     user = request.user
     data = request.POST or None
     subject = Subject.objects.get(slug=subject)
+    outcome = subject.outcome
     ExperimentFormSet = modelformset_factory(Experiment, form=ExperimentForm, extra=0, can_delete=False)
     ExperimentCountryFormSet = modelformset_factory(ExperimentCountry, form=ExperimentCountryForm, extra=2, can_delete=True)
     ExperimentDateFormSet = modelformset_factory(ExperimentDate, form=ExperimentDateForm, extra=2, max_num=2, can_delete=True)
@@ -894,7 +895,7 @@ def experiment(request, subject, publication_pk, experiment_index):
                 form.save()
             formset = experiment_population_formset
             # Before the formset is validated, the choices need to be redefined, or the validation will fail. This is because only a subset of all choices (high level choices in the MPTT tree) were initially shown in the dropdown (for better UI).
-            populations = TreeNodeChoiceField(queryset=Outcome.objects.all().get_descendants(include_self=True), level_indicator = "---")
+            populations = TreeNodeChoiceField(queryset=Outcome.objects.filter(outcome=outcome).get_descendants(include_self=True), level_indicator = "---")
             for form in formset:
                 form.fields['population'] = populations
             if formset.is_valid():
@@ -956,10 +957,10 @@ def experiment(request, subject, publication_pk, experiment_index):
                     for instance in instances:
                         instance.experiment = experiment
                         instance.save()
-            return redirect('experiment', subject=subject, publication_pk=publication_pk, experiment_index=experiment_index)
+            return redirect('experiment', subject=subject.slug, publication_pk=publication_pk, experiment_index=experiment_index)
     else:
-        # Population choices for the formset (populations are the first level in the classification of outcomes)
-        populations = TreeNodeChoiceField(required=False, queryset=Outcome.objects.all().get_descendants(include_self=True).filter(level__lte=0), level_indicator = "---")
+        # Population choices for the formset (populations are the level 1 in the classification of outcomes)
+        populations = TreeNodeChoiceField(required=False, queryset=Outcome.objects.filter(outcome=outcome).get_descendants(include_self=True).filter(level=1), level_indicator = "---")
         for form in experiment_population_formset:
             form.fields['population'] = populations
     context = {
@@ -998,7 +999,7 @@ def population(request, subject, publication_pk, experiment_index, population_in
     formset = ExperimentPopulationOutcomeFormSet(data=data, queryset=ExperimentPopulationOutcome.objects.filter(experiment_population=experiment_population), prefix="experiment_population_outcome_formset")
     # Outcome choices for the formset
     for form in formset:
-        form.fields['outcome'] = TreeNodeChoiceField(queryset=Outcome.objects.get(outcome=experiment_population.population).get_descendants(include_self=True), level_indicator = "---")
+        form.fields['outcome'] = TreeNodeChoiceField(queryset=Outcome.objects.get(pk=experiment_population.population.pk).get_descendants(include_self=True), level_indicator = "---")
     if request.method == 'POST':
         with transaction.atomic():
             if formset.is_valid():
@@ -1010,7 +1011,7 @@ def population(request, subject, publication_pk, experiment_index, population_in
                     for instance in instances:
                         instance.experiment_population = experiment_population
                         instance.save()
-            return redirect('population', subject=subject, publication_pk=publication_pk, experiment_index=experiment_index, population_index=population_index)
+            return redirect('population', subject=subject.slug, publication_pk=publication_pk, experiment_index=experiment_index, population_index=population_index)
     context = {
         'subject': subject,
         'publication': publication,
@@ -1055,7 +1056,7 @@ def outcome(request, subject, publication_pk, experiment_index, population_index
                     for instance in instances:
                         instance.experiment_population = experiment_population
                         instance.save()
-            return redirect('outcome', subject=subject, publication_pk=publication_pk, experiment_index=experiment_index, population_index=population_index, outcome_index=outcome_index)
+            return redirect('outcome', subject=subject.slug, publication_pk=publication_pk, experiment_index=experiment_index, population_index=population_index, outcome_index=outcome_index)
     context = {
         'subject': subject,
         'publication': publication,
@@ -1094,9 +1095,11 @@ def browse_by_intervention(request, subject, state='default'):  #TODO: delete de
 def browse_publications_by_outcome(request, subject):
     user = request.user
     subject = Subject.objects.get(slug=subject)
+    outcome = subject.outcome
+    outcomes = Outcome.objects.filter(outcome=outcome).get_descendants(include_self=True)
     context = {
         'subject': subject,  # Browse within this subject
-        'outcomes': Outcome.objects.all(),
+        'outcomes': outcomes,
     }
     if user.is_authenticated:
         if Publication.objects.filter(subject=subject).exists():
@@ -1380,4 +1383,4 @@ def full_text_navigation(request, subject, state, publication_pk='default'):
     assessment_status = AssessmentStatus.objects.get(subject=subject, user=user)
     assessment_status.previous_full_text_assessment = publication_pk
     assessment_status.save()
-    return redirect('publication', subject=subject, publication_pk=publication_pk)
+    return redirect('publication', subject=subject.slug, publication_pk=publication_pk)
