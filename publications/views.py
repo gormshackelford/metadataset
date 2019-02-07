@@ -470,6 +470,7 @@ def publication(request, subject, publication_pk):
     user = request.user
     data = request.POST or None
     subject = Subject.objects.get(slug=subject)
+    intervention = subject.intervention  # The root intervention for this subject (each subject can have its own classification of interventions)
     publication_pk = int(publication_pk)
 
     # Get data for the sidebar.
@@ -597,8 +598,7 @@ def publication(request, subject, publication_pk):
         if 'save' in request.POST or 'delete' in request.POST:
             with transaction.atomic():
                 # Before the formset is validated, the choices need to be redefined, or the validation will fail. This is because only a subset of all choices (high level choices in the MPTT tree) were initially shown in the dropdown (for better UI).
-                intervention = subject.intervention
-                interventions = TreeNodeChoiceField(queryset=Intervention.objects.filter(intervention=intervention).get_descendants(include_self=True), level_indicator = "---")
+                interventions = TreeNodeChoiceField(queryset=Intervention.objects.filter(pk=intervention.pk).get_descendants(include_self=True), level_indicator = "---")
                 for form in formset:
                     form.fields['intervention'] = interventions
                 if formset.is_valid():
@@ -661,8 +661,7 @@ def publication(request, subject, publication_pk):
                 return redirect('publication', subject=subject.slug, publication_pk=publication_pk)
     else:
         # Intervention choices for the formset (high-level choices only)
-        intervention = subject.intervention
-        interventions = TreeNodeChoiceField(required=False, queryset=Intervention.objects.filter(intervention=intervention).get_descendants(include_self=True).filter(level__lte=2).filter(level__gt=0), level_indicator = "---")
+        interventions = TreeNodeChoiceField(required=False, queryset=Intervention.objects.filter(pk=intervention.pk).get_descendants(include_self=True).filter(level__lte=2).filter(level__gt=0), level_indicator = "---")
         for form in formset:
             form.fields['intervention'] = interventions
     context = {
@@ -689,6 +688,7 @@ def metadata(request, subject, publication_pk):
     user = request.user
     data = request.POST or None
     subject = Subject.objects.get(slug=subject)
+    outcome = subject.outcome  # The root outcome for this subject (each subject can have its own classification of outcomes)
     publication_pk = int(publication_pk)
     PublicationCountryFormSet = modelformset_factory(PublicationCountry, form=PublicationCountryForm, extra=2, can_delete=True)
     PublicationDateFormSet = modelformset_factory(PublicationDate, form=PublicationDateForm, extra=2, max_num=2, can_delete=True)
@@ -752,7 +752,7 @@ def metadata(request, subject, publication_pk):
                             instance.save()
                 formset = publication_population_formset
                 # Before the formset is validated, the choices need to be redefined, or the validation will fail. This is because only a subset of all choices (high level choices in the MPTT tree) were initially shown in the dropdown (for better UI).
-                populations = TreeNodeChoiceField(queryset=Outcome.objects.all().get_descendants(include_self=True), level_indicator = "---")
+                populations = TreeNodeChoiceField(queryset=Outcome.objects.filter(pk=outcome.pk).get_descendants(include_self=True), level_indicator = "---")
                 for form in formset:
                     form.fields['population'] = populations
                 if formset.is_valid():
@@ -767,8 +767,8 @@ def metadata(request, subject, publication_pk):
                             instance.save()
                 return redirect('metadata', subject=subject.slug, publication_pk=publication_pk)
     else:
-        # Population choices for the formset (populations are the first level in the classification of outcomes)
-        populations = TreeNodeChoiceField(required=False, queryset=Outcome.objects.all().get_descendants(include_self=True).filter(level__lte=0), level_indicator = "---")
+        # Population choices for the formset (populations are the level 1 in the classification of outcomes; level 0 is for different subjects, and here we only show the populations/outcomes for this subject, at level=1)
+        populations = TreeNodeChoiceField(required=False, queryset=Outcome.objects.filter(pk=outcome.pk).get_descendants(include_self=True).filter(level=1), level_indicator = "---")
         for form in publication_population_formset:
             form.fields['population'] = populations
     context = {
@@ -791,6 +791,7 @@ def publication_population(request, subject, publication_pk, publication_populat
     user = request.user
     data = request.POST or None
     subject = Subject.objects.get(slug=subject)
+    outcome = subject.outcome  # The root outcome for this subject (each subject can have its own classification of outcomes)
     PublicationPopulationOutcomeFormSet = modelformset_factory(PublicationPopulationOutcome, form=PublicationPopulationOutcomeForm, extra=4, can_delete=True)
     # This publication
     publication = Publication.objects.get(pk=publication_pk)
@@ -801,7 +802,7 @@ def publication_population(request, subject, publication_pk, publication_populat
     formset = PublicationPopulationOutcomeFormSet(data=data, queryset=PublicationPopulationOutcome.objects.filter(publication_population=publication_population), prefix="publication_population_outcome_formset")
     # Outcome choices for the formset
     for form in formset:
-        form.fields['outcome'] = TreeNodeChoiceField(queryset=Outcome.objects.get(outcome=publication_population.population).get_descendants(include_self=True), level_indicator = "---")
+        form.fields['outcome'] = TreeNodeChoiceField(queryset=Outcome.objects.get(pk=publication_population.population.pk).get_descendants(include_self=True), level_indicator = "---")
     if request.method == 'POST':
         with transaction.atomic():
             if formset.is_valid():
@@ -864,7 +865,9 @@ def experiment(request, subject, publication_pk, experiment_index):
     user = request.user
     data = request.POST or None
     subject = Subject.objects.get(slug=subject)
-    outcome = subject.outcome
+    design = subject.design  # The root design for this subject (each subject can have its own classification of designs)
+    intervention = subject.intervention  # The root intervention for this subject (each subject can have its own classification of interventions)
+    outcome = subject.outcome  # The root outcome for this subject (each subject can have its own classification of outcomes)
     ExperimentFormSet = modelformset_factory(Experiment, form=ExperimentForm, extra=0, can_delete=False)
     ExperimentCountryFormSet = modelformset_factory(ExperimentCountry, form=ExperimentCountryForm, extra=2, can_delete=True)
     ExperimentDateFormSet = modelformset_factory(ExperimentDate, form=ExperimentDateForm, extra=2, max_num=2, can_delete=True)
@@ -879,8 +882,8 @@ def experiment(request, subject, publication_pk, experiment_index):
     experiment = experiments[experiment_index]
     # Form for this experiment
     experiment_form = ExperimentForm(data=data, instance=experiment, prefix="experiment_form")
-    intervention = subject.intervention
-    experiment_form.fields['intervention'] = TreeNodeChoiceField(queryset=Intervention.objects.filter(intervention=intervention).get_descendants(include_self=True), level_indicator = "---")
+    # Show interventions for only this subject (level 0 in the classification of interventions is for different subjects, and here we show interventions for only this subject)
+    experiment_form.fields['intervention'] = TreeNodeChoiceField(queryset=Intervention.objects.filter(pk=intervention.pk).get_descendants(include_self=True), level_indicator = "---")
     # Formsets for this experiment
     experiment_population_formset = ExperimentPopulationFormSet(data=data, queryset=ExperimentPopulation.objects.filter(experiment=experiment), prefix="experiment_population_formset")
     experiment_country_formset = ExperimentCountryFormSet(data=data, queryset=ExperimentCountry.objects.filter(experiment=experiment), prefix="experiment_country_formset")
@@ -895,7 +898,7 @@ def experiment(request, subject, publication_pk, experiment_index):
                 form.save()
             formset = experiment_population_formset
             # Before the formset is validated, the choices need to be redefined, or the validation will fail. This is because only a subset of all choices (high level choices in the MPTT tree) were initially shown in the dropdown (for better UI).
-            populations = TreeNodeChoiceField(queryset=Outcome.objects.filter(outcome=outcome).get_descendants(include_self=True), level_indicator = "---")
+            populations = TreeNodeChoiceField(queryset=Outcome.objects.filter(pk=outcome.pk).get_descendants(include_self=True), level_indicator = "---")
             for form in formset:
                 form.fields['population'] = populations
             if formset.is_valid():
@@ -928,6 +931,10 @@ def experiment(request, subject, publication_pk, experiment_index):
                         instance.experiment = experiment
                         instance.save()
             formset = experiment_design_formset
+            # Before the formset is validated, the choices need to be redefined, or the validation will fail. This is because only a subset of all choices (high level choices in the MPTT tree) were initially shown in the dropdown (for better UI).
+            designs = TreeNodeChoiceField(queryset=Design.objects.filter(pk=design.pk).get_descendants(include_self=True), level_indicator = "---")
+            for form in formset:
+                form.fields['design'] = designs
             if formset.is_valid():
                 instances = formset.save(commit=False)
                 if 'delete' in request.POST:
@@ -959,10 +966,14 @@ def experiment(request, subject, publication_pk, experiment_index):
                         instance.save()
             return redirect('experiment', subject=subject.slug, publication_pk=publication_pk, experiment_index=experiment_index)
     else:
-        # Population choices for the formset (populations are the level 1 in the classification of outcomes)
-        populations = TreeNodeChoiceField(required=False, queryset=Outcome.objects.filter(outcome=outcome).get_descendants(include_self=True).filter(level=1), level_indicator = "---")
+        # Population choices for the formset (populations are the level 1 in the classification of outcomes; level 0 is for different subjects, and here we only show the populations/outcomes for this subject, at level=1)
+        populations = TreeNodeChoiceField(required=False, queryset=Outcome.objects.filter(pk=outcome.pk).get_descendants(include_self=True).filter(level=1), level_indicator = "---")
         for form in experiment_population_formset:
             form.fields['population'] = populations
+        # Design choices for the formset (level 0 in the classification of designs is for different subjects, and here we only show the classification for this subject, at level__gte=1)
+        designs = TreeNodeChoiceField(required=False, queryset=Design.objects.filter(pk=design.pk).get_descendants(include_self=True).filter(level__gte=1), level_indicator = "---")
+        for form in experiment_design_formset:
+            form.fields['design'] = designs
     context = {
         'subject': subject,
         'publication': publication,
@@ -1074,7 +1085,7 @@ def outcome(request, subject, publication_pk, experiment_index, population_index
 def browse_by_intervention(request, subject, state='default'):  #TODO: delete default and test
     user = request.user
     subject = Subject.objects.get(slug=subject)
-    intervention = subject.intervention
+    intervention = subject.intervention    # The root intervention for this subject (each subject can have its own classification of interventions)
     interventions = Intervention.objects.filter(intervention=intervention).get_descendants(include_self=True)
     form = InterventionForm()
     if (state == 'effects'):
@@ -1167,7 +1178,7 @@ def effects(request, subject, path, instance):
 def publications_by_outcome(request, subject, path, instance):
     user = request.user
     subject = Subject.objects.get(slug=subject)
-    outcomes = instance.get_descendants(include_self=True)
+    outcomes = instance.get_descendants(include_self=True)    # The root outcome for this subject (each subject can have its own classification of outcomes)
     # Outcomes related to interventions within publications
     experiment_population_outcomes = ExperimentPopulationOutcome.objects.filter(outcome__in=outcomes)
     experiment_populations = ExperimentPopulation.objects.filter(experimentpopulationoutcome__in=experiment_population_outcomes)

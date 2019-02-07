@@ -31,7 +31,6 @@ class UserAdmin(DjangoUserAdmin):
 
 admin.site.register(Country)
 admin.site.register(Crop)
-admin.site.register(Design)
 admin.site.register(Profile)
 
 
@@ -112,6 +111,18 @@ admin.site.register(PublicationPopulation, PublicationPopulationAdmin)
 
 
 # Admin for hierarchical models (django-mptt)
+admin.site.register(
+    Design,
+    DraggableMPTTAdmin,
+    list_display=(
+        'tree_actions',
+        'indented_title',
+    ),
+    list_display_links=(
+        'indented_title',
+    ),
+)
+
 admin.site.register(
     Intervention,
     DraggableMPTTAdmin,

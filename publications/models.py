@@ -174,20 +174,37 @@ class Country(models.Model):
 
 
 # Experimental design (e.g., "replicated", "randomized", "controlled")
-class Design(models.Model):
-    design = models.CharField(max_length=60, unique=True)
+class Design(MPTTModel):
+    design = models.CharField(max_length=60)
+    parent = TreeForeignKey('self', null=True, blank=True, related_name='children', db_index=True, on_delete=models.CASCADE)
+    slug = models.SlugField(max_length=255)
+
+    def save(self, *args, **kwargs):
+        max_length = 255  # For MySQL, unique/indexed fields must be < 256.
+        self.slug = slugify(self.design)[:max_length]
+        # Check if this slug exists. If it exists, add a hyphen and a number and repeat until the slug is unique.
+        for counter in itertools.count(1):
+            if not Design.objects.filter(slug=self.slug).exists():
+                break
+            # Add a hyphen and a number (minus the length of the hyphen and the counter, to maintain max_length).
+            self.slug = "{slug}-{counter}".format(slug=self.slug[:max_length - len(str(counter)) - 1], counter=counter)
+        super(Design, self).save(*args, **kwargs)
 
     def __str__(self):
         return self.design
+
+    class MPTTMeta:
+        order_insertion_by = ['design']
 
 
 # Subjects for systematic reviews (as "subject-wide evidence syntheses")
 class Subject(MPTTModel):
     subject = models.CharField(max_length=255, unique=True)
     parent = TreeForeignKey('self', null=True, blank=True, related_name='children', db_index=True, on_delete=models.CASCADE)
-    intervention = models.ForeignKey(Intervention, blank=True, null=True, on_delete=models.CASCADE)  # The root node for this subject in the tree of interventions
-    outcome = models.ForeignKey(Outcome, blank=True, null=True, on_delete=models.CASCADE)  # The root node for this subject in the tree of outcomes
-    slug = models.SlugField(max_length=255, blank=True)
+    intervention = models.ForeignKey(Intervention, blank=True, null=True, on_delete=models.CASCADE)  # The root node for this subject in the tree of interventions (each subject can have its own classification of interventions)
+    outcome = models.ForeignKey(Outcome, blank=True, null=True, on_delete=models.CASCADE)  # The root node for this subject in the tree of outcomes (each subject can have its own classification of outcomes)
+    design = models.ForeignKey(Design, blank=True, null=True, on_delete=models.CASCADE)  # The root node for this subject in the tree of designs (each subject can have its own classification of designs)
+    slug = models.SlugField(max_length=255)
     text = models.TextField(blank=True)
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
