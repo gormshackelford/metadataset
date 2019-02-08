@@ -203,6 +203,18 @@ span.yellow {
   color: #ffff80;
 }
 
+span.intervention_level_5 {
+  font-weight: bold;
+}
+
+span.outcome_level_3 {
+  font-weight: bold;
+}
+
+span.monospace {
+  font-family: monospace;
+}
+
 span.underline {
   text-decoration: underline;
 }

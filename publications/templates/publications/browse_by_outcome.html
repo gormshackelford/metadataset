@@ -16,22 +16,24 @@
   {% load mptt_tags %}
 
   <h1>Outcomes</h1>
-  <p>Click <span class="red">+++</span> to expand, or <span class="red">---</span> to collapse, each level in this classification. Classes with "n.e.c." are "not elsewhere classified".</p>
+  <p>Click <span class="red monospace">+++</span> to expand or <span class="red monospace">---</span> to collapse each level in this classification. Classes with "n.e.c." are "not elsewhere classified".</p>
   <a class="show_all">Expand all</a> | <a class="hide_all">Collapse all</a>
   <ul class="root">
     {% recursetree outcomes %}
       <li>
         {% if not node.is_leaf_node %}  <!-- Insert toggle only if this node has children -->
-          <span class="toggle red">+++</span>
+          <span class="toggle red monospace">+++</span>
+        {% else %}
+          <span class="monospace">---</span>
         {% endif %}
         {% if state == 'publications' %}
           {% if node.code %}
-            {{ node.code }}
+            <span class="outcome_level_{{ node.level }}">{{ node.code }}</span>
           {% endif %}
           <a href="{% url 'publications_by_outcome' subject=subject.slug path=node.get_path %}">{{ node.outcome }}</a>
         {% else %}
           {% if node.code %}
-            {{ node.code }}
+            <span class="outcome_level_{{ node.level }}">{{ node.code }}</span>
           {% endif %}
           <a href="{% url 'effects_by_outcome' subject=subject.slug path=node.get_path %}">{{ node.outcome }}</a>
         {% endif %}
