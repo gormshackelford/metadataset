@@ -138,66 +138,7 @@ input.coordinates {
 li {
   margin-top: 1.5em;
   line-height: 1.5em;
-}
-
-li.level_0 {
-  font-size: 2em;
-}
-
-li.level_1 {
-  font-weight: bold;
-}
-
-li.level_2 {
-  text-decoration: underline;
-}
-
-li.level_3 {
-  font-weight: bold;
-  font-style: italic;
-}
-
-li.level_4 {
-}
-
-li.level_5 {
-  list-style-type: disc;
-  font-style: italic;
-}
-
-li.level_6 {
-  list-style-type: circle;
-  font-style: italic;
-}
-
-li.outcomes_level_0 {
-  font-size: 2em;
-}
-
-li.outcomes_level_1 {
-  font-weight: bold;
-}
-
-li.outcomes_level_2 {
-  text-decoration: underline;
-}
-
-li.outcomes_level_3 {
-  list-style-type: disc;
-  font-style: italic;
-}
-
-li.outcomes_level_4 {
-  list-style-type: circle;
-  font-style: italic;
-}
-
-li.outcomes_level_5 {
-  list-style-type: circle;
-  font-style: italic;
-}
-
-li.outcomes_level_6 {
+  list-style: none;
 }
 
 p {
@@ -370,13 +311,11 @@ tr {
 }
 
 ul {
-  margin-top: 1.5em;
   padding-left: 2em;
 }
 
-ul.tree {
-  list-style: none;
-  padding-left: 2em;
+ul.children {
+  display: none;
 }
 
 #page {

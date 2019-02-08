@@ -2,7 +2,7 @@ from django import forms
 from django.db import models
 from django.contrib.auth.forms import UserCreationForm
 from mptt.forms import TreeNodeChoiceField
-from .models import Assessment, Experiment, ExperimentCountry, ExperimentDate, ExperimentDesign, ExperimentLatLong, ExperimentLatLongDMS, ExperimentPopulation, ExperimentPopulationOutcome, Intervention, Profile, Publication, PublicationCountry, PublicationDate, PublicationLatLong, PublicationLatLongDMS, PublicationPopulation, PublicationPopulationOutcome, User
+from .models import Assessment, Experiment, ExperimentCountry, ExperimentDate, ExperimentDesign, ExperimentLatLong, ExperimentLatLongDMS, ExperimentPopulation, ExperimentPopulationOutcome, Intervention, Outcome, Profile, Publication, PublicationCountry, PublicationDate, PublicationLatLong, PublicationLatLongDMS, PublicationPopulation, PublicationPopulationOutcome, User
 
 
 class SignUpForm(UserCreationForm):
@@ -115,6 +115,14 @@ class InterventionForm(forms.ModelForm):
     class Meta:
         model = Intervention
         fields = ['intervention']
+
+
+class OutcomeForm(forms.ModelForm):
+    outcome = TreeNodeChoiceField(required=False, queryset=Outcome.objects.all().get_descendants(include_self=True), level_indicator = "---")
+
+    class Meta:
+        model = Outcome
+        fields = ['outcome']
 
 
 class ExperimentForm(forms.ModelForm):

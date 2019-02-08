@@ -6,7 +6,7 @@
   <p>
     <a href="{% url 'browse_by_intervention' subject=subject.slug state='publications' %}">Publications by intervention</a>
     <br />
-    <a href="{% url 'browse_publications_by_outcome' subject=subject.slug %}">Publications by outcome</a>
+    <a href="{% url 'browse_by_outcome' subject=subject.slug state='publications' %}">Publications by outcome</a>
   </p>
 {% if publications_count is not None %}  <!-- Load the sidebar only if publications exist for this subject. -->
 
@@ -14,7 +14,8 @@
 
     {% if request.user|is_in_group:"can_edit_publications" %}
       <p>
-        <a href="{% url 'browse_by_intervention' subject=subject.slug state='effects' %}">Data by intervention</a>
+        <a href="{% url 'browse_by_intervention' subject=subject.slug state='effects' %}">Data by intervention</a><br />
+        <a href="{% url 'browse_by_outcome' subject=subject.slug state='effects' %}">Data by outcome</a>
       </p>
     {% endif %}
 

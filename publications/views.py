@@ -15,7 +15,7 @@ from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from ast import literal_eval
 from random import shuffle
 from .tokens import account_activation_token
-from .forms import AssessmentForm, EffectForm, ExperimentForm, ExperimentCountryForm, ExperimentDateForm, ExperimentDesignForm, ExperimentLatLongForm, ExperimentLatLongDMSForm, ExperimentPopulationForm, ExperimentPopulationOutcomeForm, FullTextAssessmentForm, InterventionForm, ProfileForm, PublicationForm, PublicationCountryForm, PublicationDateForm, PublicationLatLongForm, PublicationLatLongDMSForm, PublicationPopulationForm, PublicationPopulationOutcomeForm, SignUpForm, UserForm
+from .forms import AssessmentForm, EffectForm, ExperimentForm, ExperimentCountryForm, ExperimentDateForm, ExperimentDesignForm, ExperimentLatLongForm, ExperimentLatLongDMSForm, ExperimentPopulationForm, ExperimentPopulationOutcomeForm, FullTextAssessmentForm, InterventionForm, OutcomeForm, ProfileForm, PublicationForm, PublicationCountryForm, PublicationDateForm, PublicationLatLongForm, PublicationLatLongDMSForm, PublicationPopulationForm, PublicationPopulationOutcomeForm, SignUpForm, UserForm
 from .models import Assessment, AssessmentStatus, Country, Crop, Design, Experiment, ExperimentCountry, ExperimentCrop, ExperimentDate, ExperimentDesign, ExperimentLatLong, ExperimentLatLongDMS, ExperimentPopulation, ExperimentPopulationOutcome, Intervention, Outcome, Publication, PublicationCountry, PublicationDate, PublicationLatLong, PublicationLatLongDMS, PublicationPopulation, PublicationPopulationOutcome, Subject, User
 from .serializers import CountrySerializer, DesignSerializer, ExperimentSerializer, ExperimentCountrySerializer, ExperimentDesignSerializer, ExperimentPopulationSerializer, ExperimentPopulationOutcomeSerializer, InterventionSerializer, OutcomeSerializer, PublicationSerializer, PublicationPopulationSerializer, PublicationPopulationOutcomeSerializer, SubjectSerializer, UserSerializer
 from .decorators import group_required
@@ -1086,15 +1086,11 @@ def browse_by_intervention(request, subject, state='default'):  #TODO: delete de
     user = request.user
     subject = Subject.objects.get(slug=subject)
     intervention = subject.intervention    # The root intervention for this subject (each subject can have its own classification of interventions)
-    interventions = Intervention.objects.filter(intervention=intervention).get_descendants(include_self=True)
-    form = InterventionForm()
-    if (state == 'effects'):
-        form.fields['intervention'] = TreeNodeChoiceField(queryset=intervention.get_descendants(include_self=True).filter(level__lte=2).filter(level__gt=0), level_indicator = "---")
+    interventions = Intervention.objects.filter(pk=intervention.pk).get_descendants(include_self=True)
     context = {
         'subject': subject,  # Browse within this subject
-        'state': state,  # Browse by publication or by effect
+        'state': state,  # Browse either publications or effects
         'interventions': interventions,
-        'form': form,
     }
     if user.is_authenticated:
         if Publication.objects.filter(subject=subject).exists():
@@ -1103,20 +1099,21 @@ def browse_by_intervention(request, subject, state='default'):  #TODO: delete de
     return render(request, 'publications/browse_by_intervention.html', context)
 
 
-def browse_publications_by_outcome(request, subject):
+def browse_by_outcome(request, subject, state='default'):  #TODO: delete default and test
     user = request.user
     subject = Subject.objects.get(slug=subject)
     outcome = subject.outcome
-    outcomes = Outcome.objects.filter(outcome=outcome).get_descendants(include_self=True)
+    outcomes = Outcome.objects.filter(pk=outcome.pk).get_descendants(include_self=True)
     context = {
         'subject': subject,  # Browse within this subject
-        'outcomes': outcomes,
+        'state': state,  # Browse either publications or effects
+        'outcomes': outcomes
     }
     if user.is_authenticated:
         if Publication.objects.filter(subject=subject).exists():
             status = get_status(user, subject)
             context.update(status)
-    return render(request, 'publications/browse_publications_by_outcome.html', context)
+    return render(request, 'publications/browse_by_outcome.html', context)
 
 
 def publications_by_intervention(request, subject, path, instance):
@@ -1144,41 +1141,10 @@ def publications_by_intervention(request, subject, path, instance):
     return render(request, 'publications/publications.html', context)
 
 
-def effects(request, subject, path, instance):
-    user = request.user
-    subject = Subject.objects.get(slug=subject)
-    if request.method == 'POST':
-        intervention = request.POST['intervention']
-        interventions = Intervention.objects.filter(pk=intervention).get_descendants(include_self=True)
-    else:
-        intervention = subject.intervention
-        interventions = Intervention.objects.filter(intervention=intervention).get_descendants(include_self=True)
-    experiments = Experiment.objects.distinct().filter(intervention__in=interventions)
-    populations = ExperimentPopulation.objects.distinct().filter(experiment__in=experiments)
-    outcomes = ExperimentPopulationOutcome.objects.distinct().filter(experiment_population__in=populations)
-    page = request.GET.get('page', 1)
-    paginator = Paginator(outcomes, 10)
-    try:
-        outcomes = paginator.page(page)
-    except PageNotAnInteger:
-        outcomes = paginator.page(1)
-    except EmptyPage:
-        outcomes = paginator.page(paginator.num_pages)
-    context = {
-        'subject': subject,
-        'outcomes': outcomes
-    }
-    if user.is_authenticated:
-        if Publication.objects.filter(subject=subject).exists():
-            status = get_status(user, subject)
-            context.update(status)
-    return render(request, 'publications/effects.html', context)
-
-
 def publications_by_outcome(request, subject, path, instance):
     user = request.user
     subject = Subject.objects.get(slug=subject)
-    outcomes = instance.get_descendants(include_self=True)    # The root outcome for this subject (each subject can have its own classification of outcomes)
+    outcomes = instance.get_descendants(include_self=True)
     # Outcomes related to interventions within publications
     experiment_population_outcomes = ExperimentPopulationOutcome.objects.filter(outcome__in=outcomes)
     experiment_populations = ExperimentPopulation.objects.filter(experimentpopulationoutcome__in=experiment_population_outcomes)
@@ -1208,6 +1174,56 @@ def publications_by_outcome(request, subject, path, instance):
             status = get_status(user, subject)
             context.update(status)
     return render(request, 'publications/publications.html', context)
+
+
+def effects_by_intervention(request, subject, path, instance):
+    user = request.user
+    subject = Subject.objects.get(slug=subject)
+    interventions = instance.get_descendants(include_self=True)
+    experiments = Experiment.objects.distinct().filter(intervention__in=interventions)
+    populations = ExperimentPopulation.objects.distinct().filter(experiment__in=experiments)
+    outcomes = ExperimentPopulationOutcome.objects.distinct().filter(experiment_population__in=populations)
+    page = request.GET.get('page', 1)
+    paginator = Paginator(outcomes, 10)
+    try:
+        outcomes = paginator.page(page)
+    except PageNotAnInteger:
+        outcomes = paginator.page(1)
+    except EmptyPage:
+        outcomes = paginator.page(paginator.num_pages)
+    context = {
+        'subject': subject,
+        'outcomes': outcomes
+    }
+    if user.is_authenticated:
+        if Publication.objects.filter(subject=subject).exists():
+            status = get_status(user, subject)
+            context.update(status)
+    return render(request, 'publications/effects.html', context)
+
+
+def effects_by_outcome(request, subject, path, instance):
+    user = request.user
+    subject = Subject.objects.get(slug=subject)
+    outcomes = instance.get_descendants(include_self=True)
+    outcomes = ExperimentPopulationOutcome.objects.distinct().filter(outcome__in=outcomes)
+    page = request.GET.get('page', 1)
+    paginator = Paginator(outcomes, 10)
+    try:
+        outcomes = paginator.page(page)
+    except PageNotAnInteger:
+        outcomes = paginator.page(1)
+    except EmptyPage:
+        outcomes = paginator.page(paginator.num_pages)
+    context = {
+        'subject': subject,
+        'outcomes': outcomes
+    }
+    if user.is_authenticated:
+        if Publication.objects.filter(subject=subject).exists():
+            status = get_status(user, subject)
+            context.update(status)
+    return render(request, 'publications/effects.html', context)
 
 
 def get_status(user, subject):
