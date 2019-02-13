@@ -64,12 +64,11 @@ class ExperimentDesignSerializer(serializers.HyperlinkedModelSerializer):
 class ExperimentSerializer(serializers.HyperlinkedModelSerializer):
     intervention = InterventionSerializer(read_only=True)
     publication = PublicationSerializer(read_only=True)
-    experiment_countries = ExperimentCountrySerializer(many=True, read_only=True)
-    experiment_designs = ExperimentDesignSerializer(many=True, read_only=True)
-
+    experimentcountry_set = ExperimentCountrySerializer(many=True, read_only=True)  # Reverse foreign-key relationship (the default is the name of the model that has a foreign key to this model + "_set", unless a "related_name" is specified in that model, but that breaks other queries)
+    experimentdesign_set = ExperimentDesignSerializer(many=True, read_only=True)  # Reverse foreign-key relationship (the default is the name of the model that has a foreign key to this model + "_set", unless a "related_name" is specified in that model, but that breaks other queries)
     class Meta:
         model = Experiment
-        fields = ('intervention', 'publication', 'experiment_countries', 'experiment_designs', 'url')
+        fields = ('intervention', 'publication', 'experimentcountry_set', 'experimentdesign_set', 'url')
 
 
 class ExperimentPopulationSerializer(serializers.HyperlinkedModelSerializer):

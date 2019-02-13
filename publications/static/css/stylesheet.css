@@ -358,6 +358,11 @@ ul.children {
   width: 75%;
 }
 
+#mapid {
+  height: 270px;
+  background-color: white;
+}
+
 .navigation_text, .navigation_text:visited {
   font-family: "Noto Serif", serif;
   line-height: 6em;

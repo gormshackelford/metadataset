@@ -1,9 +1,7 @@
 {% extends 'publications/base.html' %}
 
-{% load metadataset_tags %}
-
 {% block title %}
-  Browse | Metadataset | www.metadataset.com
+  Outcome | Metadataset | www.metadataset.com
 {% endblock %}
 
 {% block css %}
@@ -15,33 +13,47 @@
 
   {% load mptt_tags %}
 
-  <h1>Interventions</h1>
-  <p>Click <span class="red monospace">+++</span> to expand or <span class="red monospace">---</span> to collapse each level in this classification. Classes with "n.e.c." are "not elsewhere classified".</p>
-  <a class="show_all">Expand all</a> | <a class="hide_all">Collapse all</a>
-  <ul class="root">
-    {% recursetree interventions %}
-      <li>
-        {% if not node.is_leaf_node %}  <!-- Insert the toggle only if this node has children. -->
-          <span class="toggle red monospace">+++</span>
-        {% else %}  <!-- If not, insert a placeholder for the toggle, so all classes are aligned. -->
-          <span class="monospace">---</span>
+  <h1>Outcome</h1>
+  <p>
+    {% if this_outcome.level == 0 %}
+      All outcomes
+    {% else %}
+      {{ this_outcome.outcome }}
+    {% endif %}
+  </p>
+  <h1>Map of publications for this outcome</h1>
+  <p>[placeholder for map]</p>
+  <h1>Filter by interventions for this outcome</h1>
+  {% if interventions %}
+    <p>Click <span class="red monospace">+++</span> to expand or <span class="red monospace">---</span> to collapse each level in this classification. Classes with "n.e.c." are "not elsewhere classified".</p>
+    <a class="show_all">Expand all</a> | <a class="hide_all">Collapse all</a>
+    <ul class="root">
+      {% recursetree interventions %}
+        <li>
+          {% if not node.is_leaf_node %}  <!-- Insert toggle only if this node has children -->
+            <span class="toggle red monospace">+++</span>
+          {% else %}
+            <span class="monospace">---</span>
+          {% endif %}
+          {% if node.code %}
+            <span class="intervention_level_{{ node.level }}">{{ node.code }}</span>
+          {% endif %}
+          {% if node.level == 0 %}
+            <a href="{% url 'publications_x' subject=subject.slug intervention_pk=node.pk outcome_pk=this_outcome.pk %}">All interventions for this outcome</a>
+          {% else %}
+            <a href="{% url 'publications_x' subject=subject.slug intervention_pk=node.pk outcome_pk=this_outcome.pk %}">{{ node.intervention }}</a>
+          {% endif %}
+        </li>
+        {% if not node.is_leaf_node %}
+          <ul class="children">
+            {{ children }}
+          </ul>
         {% endif %}
-        {% if node.code %}  <!-- If this intervention has a code, show it here. -->
-          <span class="intervention_level_{{ node.level }}">{{ node.code }}</span>
-        {% endif %}
-        {% if node.level == 0 %}
-          <a href="{% url 'this_intervention' subject=subject.slug intervention_pk=node.pk %}">All interventions</a>          
-        {% else %}
-          <a href="{% url 'this_intervention' subject=subject.slug intervention_pk=node.pk %}">{{ node.intervention }}</a>
-        {% endif %}
-      </li>
-      {% if not node.is_leaf_node %}
-        <ul class="children">
-          {{ children }}
-        </ul>
-      {% endif %}
-    {% endrecursetree %}
-  </ul>
+      {% endrecursetree %}
+    </ul>
+  {% else %}
+    <p>No interventions for this outcome</p>
+  {% endif %}
 
 {% endblock %}
 

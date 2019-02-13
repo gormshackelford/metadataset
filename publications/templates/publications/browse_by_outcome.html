@@ -21,21 +21,18 @@
   <ul class="root">
     {% recursetree outcomes %}
       <li>
-        {% if not node.is_leaf_node %}  <!-- Insert toggle only if this node has children -->
+        {% if not node.is_leaf_node %}  <!-- Insert the toggle only if this node has children. -->
           <span class="toggle red monospace">+++</span>
-        {% else %}
+        {% else %}  <!-- If not, insert a placeholder for the toggle, so all classes are aligned. -->
           <span class="monospace">---</span>
         {% endif %}
-        {% if state == 'publications' %}
-          {% if node.code %}
-            <span class="outcome_level_{{ node.level }}">{{ node.code }}</span>
-          {% endif %}
-          <a href="{% url 'publications_by_outcome' subject=subject.slug path=node.get_path %}">{{ node.outcome }}</a>
+        {% if node.code %}
+          <span class="outcome_level_{{ node.level }}">{{ node.code }}</span>
+        {% endif %}
+        {% if node.level == 0 %}
+          <a href="{% url 'this_outcome' subject=subject.slug outcome_pk=node.pk %}">All outcomes</a>
         {% else %}
-          {% if node.code %}
-            <span class="outcome_level_{{ node.level }}">{{ node.code }}</span>
-          {% endif %}
-          <a href="{% url 'effects_by_outcome' subject=subject.slug path=node.get_path %}">{{ node.outcome }}</a>
+          <a href="{% url 'this_outcome' subject=subject.slug outcome_pk=node.pk %}">{{ node.outcome }}</a>
         {% endif %}
       </li>
       {% if not node.is_leaf_node %}

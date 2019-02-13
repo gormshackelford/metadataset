@@ -1,23 +1,15 @@
 {% load metadataset_tags %}
 
 <h1>{{ subject|capfirst }}</h1>
+<p>
+  <a href="{% url 'browse_by_intervention' subject=subject.slug %}">Browse by intervention</a>
+  <br />
+  <a href="{% url 'browse_by_outcome' subject=subject.slug %}">Browse by outcome</a>
+</p>
 
-
-  <p>
-    <a href="{% url 'browse_by_intervention' subject=subject.slug state='publications' %}">Publications by intervention</a>
-    <br />
-    <a href="{% url 'browse_by_outcome' subject=subject.slug state='publications' %}">Publications by outcome</a>
-  </p>
 {% if publications_count is not None %}  <!-- Load the sidebar only if publications exist for this subject. -->
 
   {% if user.is_authenticated %}
-
-    {% if request.user|is_in_group:"can_edit_publications" %}
-      <p>
-        <a href="{% url 'browse_by_intervention' subject=subject.slug state='effects' %}">Data by intervention</a><br />
-        <a href="{% url 'browse_by_outcome' subject=subject.slug state='effects' %}">Data by outcome</a>
-      </p>
-    {% endif %}
 
     <h1>Titles/Abstracts</h1>
     <a href="{% url 'publication' subject=subject.slug publication_pk=next_assessment %}">Your next title/abstract</a> <span class="red">(start or restart here)</span>
@@ -59,6 +51,7 @@
     <a href="{% url 'publications' subject=subject.slug state='completed' %}">Completed</a>
     <br />
     <a href="{% url 'publications' subject=subject.slug state='not_assessed_full_texts' %}">Not completed</a>
+
   {% endif %}
 
   <form action="/search/{{ subject.slug }}/" method="get">

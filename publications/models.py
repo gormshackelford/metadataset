@@ -382,7 +382,7 @@ class Experiment(models.Model):
 
 # This and other intersection tables that begin with "Experiment" apply to only one experiment in a publication, whereas those that begin with "Publication" (e.g., "PublicationCountry") apply to all experiments within a publication.
 class ExperimentCountry(models.Model):
-    experiment = models.ForeignKey(Experiment, related_name='experiment_countries', on_delete=models.CASCADE)
+    experiment = models.ForeignKey(Experiment, on_delete=models.CASCADE)
     country = models.ForeignKey(Country, on_delete=models.CASCADE)
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
@@ -405,7 +405,7 @@ class ExperimentCrop(models.Model):
 
 
 class ExperimentDesign(models.Model):
-    experiment = models.ForeignKey(Experiment, related_name='experiment_designs', on_delete=models.CASCADE)
+    experiment = models.ForeignKey(Experiment, on_delete=models.CASCADE)
     design = models.ForeignKey(Design, on_delete=models.CASCADE)
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
@@ -415,7 +415,7 @@ class ExperimentDesign(models.Model):
 
 
 class ExperimentLatLong(models.Model):
-    experiment = models.ForeignKey(Experiment, related_name='experiment_latlongs', on_delete=models.CASCADE)
+    experiment = models.ForeignKey(Experiment, on_delete=models.CASCADE)
     latitude = models.FloatField(null=True, blank=True, default=None, validators=[MinValueValidator(-90.0), MaxValueValidator(90.0)])
     longitude = models.FloatField(null=True, blank=True, default=None, validators=[MinValueValidator(-180.0), MaxValueValidator(180.0)])
     created = models.DateTimeField(auto_now_add=True)
@@ -452,7 +452,7 @@ class ExperimentLatLongDMS(models.Model):
 
 
 class ExperimentDate(models.Model):
-    experiment = models.ForeignKey(Experiment, related_name='experiment_dates', on_delete=models.CASCADE)
+    experiment = models.ForeignKey(Experiment, on_delete=models.CASCADE)
     year = models.IntegerField(blank=True, null=True)
     MONTH_CHOICES = (
         (1, "January"),

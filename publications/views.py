@@ -13,6 +13,8 @@ from django.urls import reverse
 from django.utils.encoding import force_bytes, force_text
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from ast import literal_eval
+from collections import Counter
+from itertools import chain
 from random import shuffle
 from .tokens import account_activation_token
 from .forms import AssessmentForm, EffectForm, ExperimentForm, ExperimentCountryForm, ExperimentDateForm, ExperimentDesignForm, ExperimentLatLongForm, ExperimentLatLongDMSForm, ExperimentPopulationForm, ExperimentPopulationOutcomeForm, FullTextAssessmentForm, InterventionForm, OutcomeForm, ProfileForm, PublicationForm, PublicationCountryForm, PublicationDateForm, PublicationLatLongForm, PublicationLatLongDMSForm, PublicationPopulationForm, PublicationPopulationOutcomeForm, SignUpForm, UserForm
@@ -27,6 +29,7 @@ from rest_framework import viewsets
 from django_filters import rest_framework as filters
 import reversion
 import csv
+import json
 
 
 class CountryViewSet(viewsets.ReadOnlyModelViewSet):
@@ -488,6 +491,13 @@ def publication(request, subject, publication_pk):
         next_pk = assessment_order[assessment_order.index(publication_pk) + 1]
     except:
         next_pk = assessment_order[0]
+
+    # "next_assessment" is the next pk in assessment_order that has not yet been assessed (whereas "next_pk" may or may not have been assessed).
+    next_assessment = item.next_assessment
+    if next_assessment == publication_pk:  # Users can pass from this "next_assessment" to the next "next_assessment".
+        next_assessment = get_next_assessment(publication_pk, next_pk, assessment_order, completed_assessments)
+        item.next_assessment = next_assessment
+        item.save()
 
     ExperimentFormSet = modelformset_factory(Experiment, form=ExperimentForm, extra=4, can_delete=True)
     # This publication
@@ -1082,14 +1092,13 @@ def outcome(request, subject, publication_pk, experiment_index, population_index
     return render(request, 'publications/outcome.html', context)
 
 
-def browse_by_intervention(request, subject, state='default'):  #TODO: delete default and test
+def browse_by_intervention(request, subject):
     user = request.user
     subject = Subject.objects.get(slug=subject)
     intervention = subject.intervention    # The root intervention for this subject (each subject can have its own classification of interventions)
     interventions = Intervention.objects.filter(pk=intervention.pk).get_descendants(include_self=True)
     context = {
         'subject': subject,  # Browse within this subject
-        'state': state,  # Browse either publications or effects
         'interventions': interventions,
     }
     if user.is_authenticated:
@@ -1099,14 +1108,13 @@ def browse_by_intervention(request, subject, state='default'):  #TODO: delete de
     return render(request, 'publications/browse_by_intervention.html', context)
 
 
-def browse_by_outcome(request, subject, state='default'):  #TODO: delete default and test
+def browse_by_outcome(request, subject):
     user = request.user
     subject = Subject.objects.get(slug=subject)
-    outcome = subject.outcome
+    outcome = subject.outcome  # The root outcome for this subject (each subject can have its own classification of outcomes)
     outcomes = Outcome.objects.filter(pk=outcome.pk).get_descendants(include_self=True)
     context = {
         'subject': subject,  # Browse within this subject
-        'state': state,  # Browse either publications or effects
         'outcomes': outcomes
     }
     if user.is_authenticated:
@@ -1116,47 +1124,129 @@ def browse_by_outcome(request, subject, state='default'):  #TODO: delete default
     return render(request, 'publications/browse_by_outcome.html', context)
 
 
-def publications_by_intervention(request, subject, path, instance):
+def this_intervention(request, subject, intervention_pk):
     user = request.user
     subject = Subject.objects.get(slug=subject)
-    interventions = instance.get_descendants(include_self=True)
+    this_intervention = Intervention.objects.get(pk=intervention_pk)
+    interventions = Intervention.objects.filter(pk=intervention_pk).get_descendants(include_self=True)
+    # Experiments for this intervention
     experiments = Experiment.objects.filter(intervention__in=interventions)
+    # Publications for these experiments (i.e. publications for this intervention)
     publications = Publication.objects.distinct().filter(subject=subject, experiment__in=experiments).order_by('title')
-    page = request.GET.get('page', 1)
-    paginator = Paginator(publications, 10)
-    try:
-        publications = paginator.page(page)
-    except PageNotAnInteger:
-        publications = paginator.page(1)
-    except EmptyPage:
-        publications = paginator.page(paginator.num_pages)
+
+    # Outcomes for this intervention (i.e. outcomes in publications for this intervention)
+    # Outcomes for these publications (outcomes can be entered by publication or by experiment)
+    publication_population_outcomes = PublicationPopulationOutcome.objects.filter(publication_population__publication__in=publications)
+    # Experiments for these publications (and this intervention)
+    experiments = experiments.filter(publication__in=publications)
+    # Outcomes for these experiments (outcomes can be entered by publication or by experiment)
+    experiment_population_outcomes = ExperimentPopulationOutcome.objects.filter(experiment_population__experiment__in=experiments)
+    # All outcomes
+    outcomes = Outcome.objects.distinct().filter(
+            Q(experimentpopulationoutcome__in=experiment_population_outcomes) |
+            Q(publicationpopulationoutcome__in=publication_population_outcomes)
+        ).get_ancestors(include_self=True)
+
+    # Countries for this intervention
+    # Countries for these publications (like outcomes, countries can also be entered by publication or by experiment)
+    publication_countries = PublicationCountry.objects.filter(publication__in=publications)
+    # Countries for these experiments (like outcomes, countries can also be entered by publication or by experiment)
+    experiment_countries = ExperimentCountry.objects.filter(experiment__in=experiments)
+    # All countries
+    countries = Country.objects.distinct().filter(
+            Q(publicationcountry__in=publication_countries) |
+            Q(experimentcountry__in=experiment_countries)
+        )
+
+    # The number of publications by country
+    """
+    count_by_country = []
+    for country in countries:
+        publications_for_this_country = publications.filter(
+                Q(publicationcountry__country=country) |
+                Q(experiment__experimentcountry__country=country)
+            ).values('pk').count()
+        count = publications_for_this_country
+        count_by_country.append('"{country}": "{count}"'.format(country=country, count=count))
+    """
+    # The number of publications by country
+    # This gets the same results, but is much faster than one query for each country.
+    q1 = publication_countries.values_list('country__iso_alpha_3', 'publication').distinct()
+    q2 = experiment_countries.values_list('country__iso_alpha_3', 'experiment__publication').distinct()
+    publication_countries = list(chain(q1, q2))  # A list of tuples in the form [(country, publication)]. Chain is imported from itertools.
+    publication_countries = set(publication_countries)  # Delete duplicate records, where a publication has the same country in both publication_country and experiment_country: set = unique tuples (and the list is now a dict)
+    count_by_country = Counter(item[0] for item in publication_countries)  # item[0] is country in (country, publication) and this counts the number of tuples for each country. Counter is imported from collections.
+    count_by_country = json.dumps(count_by_country)  # Convert to JSON for use by JavaScript in the template
+
     context = {
         'subject': subject,
-        'publications': publications
+        'this_intervention': this_intervention,
+        'outcomes': outcomes,
+        'count_by_country': count_by_country,
     }
     if user.is_authenticated:
         if Publication.objects.filter(subject=subject).exists():
             status = get_status(user, subject)
             context.update(status)
-    return render(request, 'publications/publications.html', context)
+    return render(request, 'publications/this_intervention.html', context)
 
 
-def publications_by_outcome(request, subject, path, instance):
+def this_outcome(request, subject, outcome_pk):
     user = request.user
     subject = Subject.objects.get(slug=subject)
-    outcomes = instance.get_descendants(include_self=True)
-    # Outcomes related to interventions within publications
+    this_outcome = Outcome.objects.get(pk=outcome_pk)
+    outcomes = Outcome.objects.filter(pk=outcome_pk).get_descendants(include_self=True)
+    # Records for these outcomes
+    publication_population_outcomes = PublicationPopulationOutcome.objects.filter(outcome__in=outcomes)
     experiment_population_outcomes = ExperimentPopulationOutcome.objects.filter(outcome__in=outcomes)
+    # Publications for these records
+    publication_populations = PublicationPopulation.objects.filter(publicationpopulationoutcome__in=publication_population_outcomes)
     experiment_populations = ExperimentPopulation.objects.filter(experimentpopulationoutcome__in=experiment_population_outcomes)
     experiments = Experiment.objects.filter(experimentpopulation__in=experiment_populations)
-    # Outcomes related to publications
-    publication_population_outcomes = PublicationPopulationOutcome.objects.filter(outcome__in=outcomes)
-    publication_populations = PublicationPopulation.objects.filter(publicationpopulationoutcome__in=publication_population_outcomes)
-    # Publications based on both of the above sources of outcomes
-    publications = Publication.objects.distinct().filter(subject=subject).filter(
+    publications = Publication.objects.distinct().filter(subject=subject)
+    publications = publications.distinct().filter(
             Q(experiment__in=experiments) |
             Q(publicationpopulation__in=publication_populations)
-        ).order_by('title')
+        )
+    # Interventions for these publcations
+    experiments = Experiment.objects.filter(publication__in=publications)
+    these_interventions = Intervention.objects.distinct().filter(
+            experiment__in=experiments
+        ).get_ancestors(include_self=True)
+    context = {
+        'subject': subject,
+        'this_outcome': this_outcome,
+        'interventions': these_interventions,
+    }
+    if user.is_authenticated:
+        if Publication.objects.filter(subject=subject).exists():
+            status = get_status(user, subject)
+            context.update(status)
+    return render(request, 'publications/this_outcome.html', context)
+
+
+def publications_x(request, subject, intervention_pk='default', outcome_pk='default'):
+    user = request.user
+    subject = Subject.objects.get(slug=subject)
+    publications = Publication.objects.distinct().filter(subject=subject).order_by('title')
+    if outcome_pk != 'default':
+        outcomes = Outcome.objects.filter(pk=outcome_pk).get_descendants(include_self=True)
+        # Experiment-level metadata (get experiments for these outcomes)
+        experiment_population_outcomes = ExperimentPopulationOutcome.objects.filter(outcome__in=outcomes)
+        experiment_populations = ExperimentPopulation.objects.filter(experimentpopulationoutcome__in=experiment_population_outcomes)
+        experiments = Experiment.objects.filter(experimentpopulation__in=experiment_populations)
+        # Publication-level metadata (get publications for these outcomes)
+        publication_population_outcomes = PublicationPopulationOutcome.objects.filter(outcome__in=outcomes)
+        publication_populations = PublicationPopulation.objects.filter(publicationpopulationoutcome__in=publication_population_outcomes)
+        # Get publications from experiment-level or publication-level metadata
+        publications = publications.filter(
+                Q(experiment__in=experiments) |
+                Q(publicationpopulation__in=publication_populations)
+            ).order_by('title')
+    if intervention_pk != 'default':
+        interventions = Intervention.objects.filter(pk=intervention_pk).get_descendants(include_self=True)
+        experiments = Experiment.objects.filter(intervention__in=interventions)
+        publications = publications.filter(experiment__in=experiments).order_by('title')
     page = request.GET.get('page', 1)
     paginator = Paginator(publications, 10)
     try:
@@ -1174,56 +1264,6 @@ def publications_by_outcome(request, subject, path, instance):
             status = get_status(user, subject)
             context.update(status)
     return render(request, 'publications/publications.html', context)
-
-
-def effects_by_intervention(request, subject, path, instance):
-    user = request.user
-    subject = Subject.objects.get(slug=subject)
-    interventions = instance.get_descendants(include_self=True)
-    experiments = Experiment.objects.distinct().filter(intervention__in=interventions)
-    populations = ExperimentPopulation.objects.distinct().filter(experiment__in=experiments)
-    outcomes = ExperimentPopulationOutcome.objects.distinct().filter(experiment_population__in=populations)
-    page = request.GET.get('page', 1)
-    paginator = Paginator(outcomes, 10)
-    try:
-        outcomes = paginator.page(page)
-    except PageNotAnInteger:
-        outcomes = paginator.page(1)
-    except EmptyPage:
-        outcomes = paginator.page(paginator.num_pages)
-    context = {
-        'subject': subject,
-        'outcomes': outcomes
-    }
-    if user.is_authenticated:
-        if Publication.objects.filter(subject=subject).exists():
-            status = get_status(user, subject)
-            context.update(status)
-    return render(request, 'publications/effects.html', context)
-
-
-def effects_by_outcome(request, subject, path, instance):
-    user = request.user
-    subject = Subject.objects.get(slug=subject)
-    outcomes = instance.get_descendants(include_self=True)
-    outcomes = ExperimentPopulationOutcome.objects.distinct().filter(outcome__in=outcomes)
-    page = request.GET.get('page', 1)
-    paginator = Paginator(outcomes, 10)
-    try:
-        outcomes = paginator.page(page)
-    except PageNotAnInteger:
-        outcomes = paginator.page(1)
-    except EmptyPage:
-        outcomes = paginator.page(paginator.num_pages)
-    context = {
-        'subject': subject,
-        'outcomes': outcomes
-    }
-    if user.is_authenticated:
-        if Publication.objects.filter(subject=subject).exists():
-            status = get_status(user, subject)
-            context.update(status)
-    return render(request, 'publications/effects.html', context)
 
 
 def get_status(user, subject):
@@ -1313,17 +1353,18 @@ def get_status(user, subject):
 # use querysets for navigation, as we do for full_text_navigation.
 def get_next_assessment(publication_pk, next_pk, assessment_order, completed_assessments):
     next_assessment = next_pk
-    if (len(completed_assessments) != len(assessment_order)):  # If all assessments have not yet been completed
-        for i in assessment_order:
-            if next_assessment not in completed_assessments:
-                if next_assessment != publication_pk:
-                    break
-            else:
+    uncompleted_assessments = list(set(assessment_order) - set(completed_assessments))
+    if next_assessment in uncompleted_assessments:
+        return(next_assessment)
+    else:
+        if uncompleted_assessments:
+            next_assessment = uncompleted_assessments[0]
+            if next_assessment == publication_pk:  # Allow users to skip this publication.
                 try:
-                    next_assessment = assessment_order[assessment_order.index(next_assessment) + 1]
+                    next_assessment = uncompleted_assessments[uncompleted_assessments.index(next_assessment) + 1]
                 except:
-                    next_assessment = assessment_order[0]
-    return(next_assessment)
+                    next_assessment = uncompleted_assessments[0]
+        return(next_assessment)
 
 
 @login_required

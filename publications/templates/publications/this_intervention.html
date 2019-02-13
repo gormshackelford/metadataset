@@ -1,0 +1,182 @@
+{% extends 'publications/base.html' %}
+
+{% block title %}
+  Intervention | Metadataset | www.metadataset.com
+{% endblock %}
+
+{% block css %}
+  {% load staticfiles %}
+  <link href="{% static 'css/sidebar.css' %}" rel="stylesheet">
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.4.0/dist/leaflet.css"
+    integrity="sha512-puBpdR0798OZvTTbP4A8Ix/l+A4dHDD0DGqYW6RQ+9jxkRFclaxxQb/SJAWZfWAkuyeQUytO7+7N4QKrDh+drA=="
+    crossorigin="">
+  <!-- Leaflet JS: Make sure you put this AFTER Leaflet CSS -->
+  <script type="text/javascript" src="https://unpkg.com/leaflet@1.4.0/dist/leaflet.js"
+    integrity="sha512-QVftwZFqvtRNi0ZyCtsznlKSWOStnDORoefr1enyq5mVL4tmKB3S/EnC3rRJcxCPavG10IcrVGSmPh6Qw5lwrg=="
+    crossorigin=""></script>
+  <!-- Natural Earth map of countries -->
+  <script type="text/javascript" src="{% static 'gis/ne_110m_admin_0_countries.geojson' %}"></script>
+{% endblock %}
+
+{% block content %}
+
+  {% load mptt_tags %}
+
+  <h1>Intervention</h1>
+  <p>
+    {% if this_intervention.level == 0 %}
+      All interventions
+    {% else %}
+      {{ this_intervention.intervention }}
+    {% endif %}
+  </p>
+
+  <h1>Map of publications for this intervention</h1>
+  <div id="mapid"></div>
+
+  <h1>Filter by outcomes for this intervention</h1>
+  {% if outcomes %}
+    <p>Click <span class="red monospace">+++</span> to expand or <span class="red monospace">---</span> to collapse each level in this classification. Classes with "n.e.c." are "not elsewhere classified".</p>
+    <a class="show_all">Expand all</a> | <a class="hide_all">Collapse all</a>
+    <ul class="root">
+      {% recursetree outcomes %}
+        <li>
+          {% if not node.is_leaf_node %}  <!-- Insert toggle only if this node has children -->
+            <span class="toggle red monospace">+++</span>
+          {% else %}
+            <span class="monospace">---</span>
+          {% endif %}
+          {% if node.code %}
+            <span class="outcome_level_{{ node.level }}">{{ node.code }}</span>
+          {% endif %}
+          {% if node.level == 0 %}
+            <a href="{% url 'publications_x' subject=subject.slug intervention_pk=this_intervention.pk outcome_pk=node.pk %}">All outcomes for this intervention</a>
+          {% else %}
+            <a href="{% url 'publications_x' subject=subject.slug intervention_pk=this_intervention.pk outcome_pk=node.pk %}">{{ node.outcome }}</a>
+          {% endif %}
+        </li>
+        {% if not node.is_leaf_node %}
+          <ul class="children">
+            {{ children }}
+          </ul>
+        {% endif %}
+      {% endrecursetree %}
+    </ul>
+  {% else %}
+    <p>No outcomes for this intervention</p>
+  {% endif %}
+
+{% endblock %}
+
+{% block sidebar %}
+  {% include 'publications/subject_sidebar.html' %}
+{% endblock %}
+
+{% block javascript %}
+
+  <!-- Leaflet -->
+  <script type="text/javascript">
+
+    function getPublications(geoJSON) {
+      var countByCountry = {{ count_by_country|safe }};
+      for (var i = 0; i < geoJSON.features.length; i++) {
+        var country_i = geoJSON.features[i].properties.ISO_A3;
+        if (country_i in countByCountry) {
+          geoJSON.features[i].properties.PUBLICATIONS = countByCountry[country_i];
+        } else {
+          geoJSON.features[i].properties.PUBLICATIONS = 0;
+        }
+      }
+    }
+
+    getPublications(admin_0);
+
+    console.log(admin_0.features.length);
+    for (var i = 0; i < admin_0.features.length; i++) {
+      console.log(admin_0.features[i].properties.ISO_A3);
+      console.log(admin_0.features[i].properties.PUBLICATIONS);
+    }
+
+    function getColor(n) {
+        return n > 50  ? '#a63603' :
+               n > 40  ? '#e6550d' :
+               n > 30  ? '#fd8d3c' :
+               n > 20  ? '#fdae6b' :
+               n > 10  ? '#fdd0a2' :
+               n > 0   ? '#feedde' :
+                         '#E0E0E0' ;
+    }
+
+    function style(feature) {
+        return {
+            fillColor: getColor(feature.properties.PUBLICATIONS),
+            weight: 1,
+            opacity: 1,
+            color: 'white',
+            dashArray: '3',
+            fillOpacity: 1
+        };
+    }
+
+    var map = L.map('mapid').setView([20, 0], 1);
+
+    var gj = L.geoJSON(admin_0, {style: style})
+
+    var gjLayers = gj.getLayers();
+    for (var x of gjLayers) { console.log() };
+
+    gj.getAttribution = function() { return 'Natural Earth'; };
+    gj.addTo(map);
+
+  </script>
+
+
+  <!-- jQuery -->
+  <script type="text/javascript">
+
+    $(document).ready(function(){
+
+      <!-- Collapsible classification tree (Django MPTT recursetree) -->
+
+      <!-- Show level 1 of the classification on page load -->
+      $("ul.root").children().show(500);
+      $("ul.root").children("li").children("span").text("---");
+
+      <!-- Toggle the next level in the classification tree -->
+      $(".toggle").click(function(){
+        $(this).parent().next().toggle(500);
+        <!-- Change from "+++" to "---" when toggling -->
+        if ($(this).text() == "+++") {
+          $(this).text("---");
+        } else {
+          $(this).text("+++");
+        }
+      });
+      $(".toggle").hover(function(){
+        $(this).css("cursor", "pointer");
+      });
+
+      <!-- Show all levels in the classification tree -->
+      $(".show_all").click(function(){
+        $("ul.children").show(250);
+        $(".toggle").text("---");
+      });
+      $(".show_all").hover(function(){
+        $(this).css("cursor", "pointer");
+      });
+
+      <!-- Hide all levels in the classification tree -->
+      $(".hide_all").click(function(){
+        $("ul.children").hide(250);
+        $(".toggle").text("+++");
+      });
+      $(".hide_all").hover(function(){
+        $(this).css("cursor", "pointer");
+      });
+
+    });
+
+  </script>
+
+{% endblock %}
