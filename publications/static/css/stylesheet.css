@@ -358,9 +358,24 @@ ul.children {
   width: 75%;
 }
 
-#mapid {
-  height: 270px;
+#map {
+  font-family: "Noto Serif", serif;
+  height: 21em;
   background-color: white;
+  border: solid 1px #E0E0E0;
+}
+
+.map_info {
+    padding: 1em;
+    background: white;
+    box-shadow: 0 0 1em rgba(0,0,0,0.2);
+    border-radius: 0.5em;
+}
+.map_legend i {
+    width: 1.5em;
+    height: 1.5em;
+    float: left;
+    margin-right: 0.5em;
 }
 
 .navigation_text, .navigation_text:visited {

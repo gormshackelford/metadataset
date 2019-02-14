@@ -1141,18 +1141,18 @@ def this_intervention(request, subject, intervention_pk):
     experiments = experiments.filter(publication__in=publications)
     # Outcomes for these experiments (outcomes can be entered by publication or by experiment)
     experiment_population_outcomes = ExperimentPopulationOutcome.objects.filter(experiment_population__experiment__in=experiments)
-    # All outcomes
+    # All outcomes for these publications (outcomes by publication OR outcomes by experiment)
     outcomes = Outcome.objects.distinct().filter(
             Q(experimentpopulationoutcome__in=experiment_population_outcomes) |
             Q(publicationpopulationoutcome__in=publication_population_outcomes)
         ).get_ancestors(include_self=True)
 
-    # Countries for this intervention
-    # Countries for these publications (like outcomes, countries can also be entered by publication or by experiment)
+    # Countries for publications with this intervention
+    # Countries by publication (countries can be entered by publication or by experiment)
     publication_countries = PublicationCountry.objects.filter(publication__in=publications)
-    # Countries for these experiments (like outcomes, countries can also be entered by publication or by experiment)
+    # Countries by experiment (countries can be entered by publication or by experiment)
     experiment_countries = ExperimentCountry.objects.filter(experiment__in=experiments)
-    # All countries
+    # All countries (countries by publication OR by experiment)
     countries = Country.objects.distinct().filter(
             Q(publicationcountry__in=publication_countries) |
             Q(experimentcountry__in=experiment_countries)
@@ -1178,11 +1178,14 @@ def this_intervention(request, subject, intervention_pk):
     count_by_country = Counter(item[0] for item in publication_countries)  # item[0] is country in (country, publication) and this counts the number of tuples for each country. Counter is imported from collections.
     count_by_country = json.dumps(count_by_country)  # Convert to JSON for use by JavaScript in the template
 
+    path = reverse('publications_x', args=(), kwargs={'subject': subject.slug, 'intervention_pk': this_intervention.pk})
+
     context = {
         'subject': subject,
         'this_intervention': this_intervention,
         'outcomes': outcomes,
         'count_by_country': count_by_country,
+        'path': path
     }
     if user.is_authenticated:
         if Publication.objects.filter(subject=subject).exists():
@@ -1208,15 +1211,38 @@ def this_outcome(request, subject, outcome_pk):
             Q(experiment__in=experiments) |
             Q(publicationpopulation__in=publication_populations)
         )
-    # Interventions for these publcations
+    # Interventions for these publications
     experiments = Experiment.objects.filter(publication__in=publications)
     these_interventions = Intervention.objects.distinct().filter(
             experiment__in=experiments
         ).get_ancestors(include_self=True)
+
+    # Countries for publications with this outcome
+    # Countries by publication (countries can be entered by publication or by experiment)
+    publication_countries = PublicationCountry.objects.filter(publication__in=publications)
+    # Countries by experiment (countries can be entered by publication or by experiment)
+    experiment_countries = ExperimentCountry.objects.filter(experiment__in=experiments)
+    # All countries (countries by publication OR by experiment)
+    countries = Country.objects.distinct().filter(
+            Q(publicationcountry__in=publication_countries) |
+            Q(experimentcountry__in=experiment_countries)
+        )
+    # The number of publications by country
+    q1 = publication_countries.values_list('country__iso_alpha_3', 'publication').distinct()
+    q2 = experiment_countries.values_list('country__iso_alpha_3', 'experiment__publication').distinct()
+    publication_countries = list(chain(q1, q2))  # A list of tuples in the form [(country, publication)]. Chain is imported from itertools.
+    publication_countries = set(publication_countries)  # Delete duplicate records, where a publication has the same country in both publication_country and experiment_country: set = unique tuples (and the list is now a dict)
+    count_by_country = Counter(item[0] for item in publication_countries)  # item[0] is country in (country, publication) and this counts the number of tuples for each country. Counter is imported from collections.
+    count_by_country = json.dumps(count_by_country)  # Convert to JSON for use by JavaScript in the template
+
+    path = reverse('publications_x', args=(), kwargs={'subject': subject.slug, 'outcome_pk': this_outcome.pk})
+
     context = {
         'subject': subject,
         'this_outcome': this_outcome,
         'interventions': these_interventions,
+        'count_by_country': count_by_country,
+        'path': path
     }
     if user.is_authenticated:
         if Publication.objects.filter(subject=subject).exists():
@@ -1225,10 +1251,17 @@ def this_outcome(request, subject, outcome_pk):
     return render(request, 'publications/this_outcome.html', context)
 
 
-def publications_x(request, subject, intervention_pk='default', outcome_pk='default'):
+def publications_x(request, subject, intervention_pk='default', outcome_pk='default', iso_a3='default'):
     user = request.user
     subject = Subject.objects.get(slug=subject)
-    publications = Publication.objects.distinct().filter(subject=subject).order_by('title')
+    publications = Publication.objects.distinct().filter(subject=subject)
+    if iso_a3 != 'default':
+        if iso_a3 != '-99':  # Disputed territories that are not our Countries model: Kosovo, Northern Cyprus, and Somaliland
+            country = Country.objects.get(iso_alpha_3=iso_a3)
+            publications = publications.filter(
+                    Q(publicationcountry__country=country) |
+                    Q(experiment__experimentcountry__country=country)
+                )
     if outcome_pk != 'default':
         outcomes = Outcome.objects.filter(pk=outcome_pk).get_descendants(include_self=True)
         # Experiment-level metadata (get experiments for these outcomes)
@@ -1242,11 +1275,14 @@ def publications_x(request, subject, intervention_pk='default', outcome_pk='defa
         publications = publications.filter(
                 Q(experiment__in=experiments) |
                 Q(publicationpopulation__in=publication_populations)
-            ).order_by('title')
+            )
     if intervention_pk != 'default':
         interventions = Intervention.objects.filter(pk=intervention_pk).get_descendants(include_self=True)
         experiments = Experiment.objects.filter(intervention__in=interventions)
-        publications = publications.filter(experiment__in=experiments).order_by('title')
+        publications = publications.filter(experiment__in=experiments)
+    if iso_a3 == '-99':  # Disputed territories that are not our Countries model: Kosovo, Northern Cyprus, and Somaliland
+        publications = Publication.objects.none()
+    publications = publications.order_by('title')
     page = request.GET.get('page', 1)
     paginator = Paginator(publications, 10)
     try:

@@ -7,6 +7,8 @@
 {% block css %}
   {% load staticfiles %}
   <link href="{% static 'css/sidebar.css' %}" rel="stylesheet">
+  <!-- Leaflet CSS -->
+  <link href="{% static 'javascript/leaflet/leaflet.css' %}" rel="stylesheet">
 {% endblock %}
 
 {% block content %}
@@ -22,8 +24,9 @@
     {% endif %}
   </p>
   <h1>Map of publications for this outcome</h1>
-  <p>[placeholder for map]</p>
-  <h1>Filter by interventions for this outcome</h1>
+  <div id="map"></div>
+
+  <h1>Filter these publications by intervention</h1>
   {% if interventions %}
     <p>Click <span class="red monospace">+++</span> to expand or <span class="red monospace">---</span> to collapse each level in this classification. Classes with "n.e.c." are "not elsewhere classified".</p>
     <a class="show_all">Expand all</a> | <a class="hide_all">Collapse all</a>
@@ -39,7 +42,7 @@
             <span class="intervention_level_{{ node.level }}">{{ node.code }}</span>
           {% endif %}
           {% if node.level == 0 %}
-            <a href="{% url 'publications_x' subject=subject.slug intervention_pk=node.pk outcome_pk=this_outcome.pk %}">All interventions for this outcome</a>
+            <a href="{% url 'publications_x' subject=subject.slug intervention_pk=node.pk outcome_pk=this_outcome.pk %}">All interventions for these publications</a>
           {% else %}
             <a href="{% url 'publications_x' subject=subject.slug intervention_pk=node.pk outcome_pk=this_outcome.pk %}">{{ node.intervention }}</a>
           {% endif %}
@@ -62,50 +65,21 @@
 {% endblock %}
 
 {% block javascript %}
+
+  <!-- Leaflet JS: Make sure you put this AFTER Leaflet CSS -->
+  <script type="text/javascript" src="{% static 'javascript/leaflet/leaflet.js' %}"></script>
+
+  <!-- Natural Earth map of countries -->
+  <script type="text/javascript" src="{% static 'gis/ne_110m_admin_0_countries.geojson' %}"></script>
+
+  <!-- Evidence atlas, using Leaflet and Natural Earth -->
   <script type="text/javascript">
-
-    <!-- jQuery -->
-    $(document).ready(function(){
-
-      <!-- Collapsible classification tree (Django MPTT recursetree) -->
-
-      <!-- Show level 1 of the classification on page load -->
-      $("ul.root").children().show(500);
-      $("ul.root").children("li").children("span").text("---");
-
-      <!-- Toggle the next level in the classification tree -->
-      $(".toggle").click(function(){
-        $(this).parent().next().toggle(500);
-        <!-- Change from "+++" to "---" when toggling -->
-        if ($(this).text() == "+++") {
-          $(this).text("---");
-        } else {
-          $(this).text("+++");
-        }
-      });
-      $(".toggle").hover(function(){
-        $(this).css("cursor", "pointer");
-      });
-
-      <!-- Show all levels in the classification tree -->
-      $(".show_all").click(function(){
-        $("ul.children").show(250);
-        $(".toggle").text("---");
-      });
-      $(".show_all").hover(function(){
-        $(this).css("cursor", "pointer");
-      });
-
-      <!-- Hide all levels in the classification tree -->
-      $(".hide_all").click(function(){
-        $("ul.children").hide(250);
-        $(".toggle").text("+++");
-      });
-      $(".hide_all").hover(function(){
-        $(this).css("cursor", "pointer");
-      });
-
-    });
-
+    var path = '{{ path }}';
+    var countByCountry = {{ count_by_country|safe }};  // This needs to be marked as "safe" or the quotation marks in the JSON file will not be preserved. Django template filters (e.g., "|safe") do not work in external JavaScript files, so this variable needs to be created here.
   </script>
+  <script type="text/javascript" src="{% static 'javascript/evidence-atlas.js' %}"></script>
+
+  <!-- Expandable/collapsible classification tree (Django MPTT tree), using jQuery -->
+  <script type="text/javascript" src="{% static 'javascript/classification-tree.js' %}"></script>
+
 {% endblock %}
