@@ -22,7 +22,7 @@
         {{ count }} publication{% if count != 1 %}s{% endif %}
       </a>
     {% else %}
-      <a href="{% url 'publications_x' subject=subject.slug intervention_pk=this_outcome.pk %}">
+      <a href="{% url 'publications_x' subject=subject.slug outcome_pk=this_outcome.pk %}">
         {{ count }} publication{% if count != 1 %}s{% endif %}
       </a>
     {% endif %}
