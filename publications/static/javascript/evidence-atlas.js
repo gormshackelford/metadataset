@@ -71,11 +71,11 @@ map_info.addTo(map);
 // Geojson
 // Color gradient for choropleth
 function getColor(n) {
-    return n > 50  ? '#b30000' :
-           n > 40  ? '#e34a33' :
-           n > 30  ? '#fc8d59' :
-           n > 20  ? '#fdbb84' :
-           n > 10  ? '#fdd49e' :
+    return n > 25  ? '#b30000' :
+           n > 20  ? '#e34a33' :
+           n > 15  ? '#fc8d59' :
+           n > 10  ? '#fdbb84' :
+           n > 5   ? '#fdd49e' :
            n > 0   ? '#fef0d9' :
                      '#E0E0E0' ;
 }
@@ -103,8 +103,9 @@ geojson.addTo(map);
 var legend = L.control({position: 'bottomright'});
 legend.onAdd = function (map) {
     var div = L.DomUtil.create('div', 'map_info map_legend'),
-        grades = [0, 10, 20, 30, 40, 50],  // Breaks in the color gradient from getColor()
+        grades = [0, 5, 10, 15, 20, 25],  // Breaks in the color gradient from getColor()
         labels = [];
+    //div.innerHTML = 'Publications <br />'
     for (var i = 0; i < grades.length; i++) {
         div.innerHTML +=
             '<i style="background:' + getColor(grades[i] + 1) + '"></i> ' +  // Get the color for each grade in the gradient

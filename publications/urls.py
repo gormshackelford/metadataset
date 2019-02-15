@@ -24,13 +24,30 @@ urlpatterns = [
     path('<subject>/publications', views.publications, name='publications'),
     path('<subject>/publications/<state>', views.publications, name='publications'),
     path('<subject>/publications/<state>/<download>', views.publications, name='publications'),
-    path('<subject>/publications/intervention/<int:intervention_pk>/outcome/<int:outcome_pk>/', views.publications_x, name='publications_x'),
+
+    # Filter publications
+    # Filter by intervention
     path('<subject>/publications/intervention/<int:intervention_pk>/', views.publications_x, name='publications_x'),
+    # Filter by intervention and outcome
+    path('<subject>/publications/intervention/<int:intervention_pk>/outcome/<int:outcome_pk>/', views.publications_x, name='publications_x'),
+    # Filter by intervention and outcome and country
+    path('<subject>/publications/intervention/<int:intervention_pk>/outcome/<int:outcome_pk>/<iso_a3>/', views.publications_x, name='publications_x'),
+    # Filter by intervention and country (iso_a3)
     path('<subject>/publications/intervention/<int:intervention_pk>/<iso_a3>/', views.publications_x, name='publications_x'),
+    # Filter by outcome
     path('<subject>/publications/outcome/<int:outcome_pk>/', views.publications_x, name='publications_x'),
+    # Filter by outcome and country (iso_a3)
     path('<subject>/publications/outcome/<int:outcome_pk>/<iso_a3>/', views.publications_x, name='publications_x'),
+
+    # Filter by intervention
     path('<subject>/intervention/<int:intervention_pk>/', views.this_intervention, name='this_intervention'),
+    # Filter by intervention and outcome
+    path('<subject>/intervention/<int:intervention_pk>/outcome/<int:outcome_pk>/', views.this_intervention, name='this_intervention'),
+    # Filter by outcome
     path('<subject>/outcome/<int:outcome_pk>/', views.this_outcome, name='this_outcome'),
+    # Filter by outcome and intervention
+    path('<subject>/outcome/<int:outcome_pk>/intervention/<int:intervention_pk>/', views.this_outcome, name='this_outcome'),
+
     path('<subject>/browse-by-intervention/', views.browse_by_intervention, name='browse_by_intervention'),
     path('<subject>/browse-by-outcome/', views.browse_by_outcome, name='browse_by_outcome'),
     path('<subject>/edit-publication/<int:publication_pk>/', views.edit_publication, name='edit_publication'),

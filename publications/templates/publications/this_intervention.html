@@ -1,7 +1,7 @@
 {% extends 'publications/base.html' %}
 
 {% block title %}
-  Intervention | Metadataset | www.metadataset.com
+  Publications by intervention | Metadataset | www.metadataset.com
 {% endblock %}
 
 {% block css %}
@@ -15,19 +15,51 @@
 
   {% load mptt_tags %}
 
-  <h1>Intervention</h1>
+  <h1>Publications</h1>
   <p>
-    {% if this_intervention.level == 0 %}
-      All interventions
+    {% if this_outcome %}
+      <a href="{% url 'publications_x' subject=subject.slug intervention_pk=this_intervention.pk outcome_pk=this_outcome.pk %}">
+        {{ count }} publication{% if count != 1 %}s{% endif %}
+      </a>
     {% else %}
-      {{ this_intervention.intervention }}
+      <a href="{% url 'publications_x' subject=subject.slug intervention_pk=this_intervention.pk %}">
+        {{ count }} publication{% if count != 1 %}s{% endif %}
+      </a>
     {% endif %}
   </p>
+  <p>
+    Selected intervention:
+    <span class="italic">
+      {% if this_intervention %}
+        {% if this_intervention.level == 0 %}
+          All interventions
+        {% else %}
+          {{ this_intervention.intervention }}
+        {% endif %}
+      {% else %}
+        None
+      {% endif %}
+    </span>
+  </p>
+  <p>
+    Selected outcome:
+    <span class="italic">
+      {% if this_outcome %}
+        {% if this_outcome.level == 0 %}
+          All outcomes
+        {% else %}
+          {{ this_outcome.outcome }}
+        {% endif %}
+      {% else %}
+        None
+      {% endif %}
+    </span>
+  </p>
 
-  <h1>Map of publications for this intervention</h1>
+  <h1>Map of publications</h1>
   <div id="map"></div>
 
-  <h1>Filter these publications by outcome</h1>
+  <h1>Filter by outcome</h1>
   {% if outcomes %}
     <p>Click <span class="red monospace">+++</span> to expand or <span class="red monospace">---</span> to collapse each level in this classification. Classes with "n.e.c." are "not elsewhere classified".</p>
     <a class="show_all">Expand all</a> | <a class="hide_all">Collapse all</a>
@@ -43,9 +75,9 @@
             <span class="outcome_level_{{ node.level }}">{{ node.code }}</span>
           {% endif %}
           {% if node.level == 0 %}
-            <a href="{% url 'publications_x' subject=subject.slug intervention_pk=this_intervention.pk outcome_pk=node.pk %}">All outcomes for these publications</a>
+            <a href="{% url 'this_intervention' subject=subject.slug intervention_pk=this_intervention.pk outcome_pk=node.pk %}">All outcomes for these publications</a>
           {% else %}
-            <a href="{% url 'publications_x' subject=subject.slug intervention_pk=this_intervention.pk outcome_pk=node.pk %}">{{ node.outcome }}</a>
+            <a href="{% url 'this_intervention' subject=subject.slug intervention_pk=this_intervention.pk outcome_pk=node.pk %}">{{ node.outcome }}</a>
           {% endif %}
         </li>
         {% if not node.is_leaf_node %}

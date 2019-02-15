@@ -6,7 +6,7 @@ from django.db import transaction
 from django.db.models import Q
 from django.forms import modelformset_factory
 from django.http import HttpResponse
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.template import loader
 from django.template.loader import render_to_string
 from django.urls import reverse
@@ -475,7 +475,8 @@ def publication(request, subject, publication_pk):
     subject = Subject.objects.get(slug=subject)
     intervention = subject.intervention  # The root intervention for this subject (each subject can have its own classification of interventions)
     publication_pk = int(publication_pk)
-
+    # This publication
+    publication = get_object_or_404(Publication, pk=publication_pk, subject=subject)
     # Get data for the sidebar.
     status = get_status(user, subject)
     item = status.get('item')  # item = AssessmentStatus instance for this user and subject
@@ -500,8 +501,6 @@ def publication(request, subject, publication_pk):
         item.save()
 
     ExperimentFormSet = modelformset_factory(Experiment, form=ExperimentForm, extra=4, can_delete=True)
-    # This publication
-    publication = Publication.objects.get(pk=publication_pk)
     # Form for this assessment
     if Assessment.objects.filter(publication=publication, user=user, subject=subject).exists():
         assessment = Assessment.objects.get(publication=publication, user=user, subject=subject)
@@ -699,14 +698,13 @@ def metadata(request, subject, publication_pk):
     data = request.POST or None
     subject = Subject.objects.get(slug=subject)
     outcome = subject.outcome  # The root outcome for this subject (each subject can have its own classification of outcomes)
-    publication_pk = int(publication_pk)
+    # This publication
+    publication = get_object_or_404(Publication, pk=publication_pk, subject=subject)
     PublicationCountryFormSet = modelformset_factory(PublicationCountry, form=PublicationCountryForm, extra=2, can_delete=True)
     PublicationDateFormSet = modelformset_factory(PublicationDate, form=PublicationDateForm, extra=2, max_num=2, can_delete=True)
     PublicationLatLongFormSet = modelformset_factory(PublicationLatLong, form=PublicationLatLongForm, extra=1, can_delete=True)
     PublicationLatLongDMSFormSet = modelformset_factory(PublicationLatLongDMS, form=PublicationLatLongDMSForm, extra=1, can_delete=True)
     PublicationPopulationFormSet = modelformset_factory(PublicationPopulation, form=PublicationPopulationForm, extra=4, can_delete=True)
-    # This publication
-    publication = Publication.objects.get(pk=publication_pk)
     # Formsets for this publication
     publication_country_formset = PublicationCountryFormSet(data=data, queryset=PublicationCountry.objects.filter(publication=publication), prefix="publication_country_formset")
     publication_date_formset = PublicationDateFormSet(data=data, queryset=PublicationDate.objects.filter(publication=publication), prefix="publication_date_formset")
@@ -804,7 +802,7 @@ def publication_population(request, subject, publication_pk, publication_populat
     outcome = subject.outcome  # The root outcome for this subject (each subject can have its own classification of outcomes)
     PublicationPopulationOutcomeFormSet = modelformset_factory(PublicationPopulationOutcome, form=PublicationPopulationOutcomeForm, extra=4, can_delete=True)
     # This publication
-    publication = Publication.objects.get(pk=publication_pk)
+    publication = get_object_or_404(Publication, pk=publication_pk, subject=subject)
     # This publication_population
     publication_populations = PublicationPopulation.objects.filter(publication=publication).order_by('pk')
     publication_population = publication_populations[publication_population_index]
@@ -846,7 +844,8 @@ def edit_publication(request, subject, publication_pk):
     data = request.POST or None
     subject = Subject.objects.get(slug=subject)
     publication_pk = int(publication_pk)
-    publication = Publication.objects.get(pk=publication_pk)
+    # This publication
+    publication = get_object_or_404(Publication, pk=publication_pk, subject=subject)
     if request.method == 'POST':
         publication_form = PublicationForm(request.POST, instance=publication)
         if publication_form.is_valid():
@@ -878,6 +877,8 @@ def experiment(request, subject, publication_pk, experiment_index):
     design = subject.design  # The root design for this subject (each subject can have its own classification of designs)
     intervention = subject.intervention  # The root intervention for this subject (each subject can have its own classification of interventions)
     outcome = subject.outcome  # The root outcome for this subject (each subject can have its own classification of outcomes)
+    # This publication
+    publication = get_object_or_404(Publication, pk=publication_pk, subject=subject)
     ExperimentFormSet = modelformset_factory(Experiment, form=ExperimentForm, extra=0, can_delete=False)
     ExperimentCountryFormSet = modelformset_factory(ExperimentCountry, form=ExperimentCountryForm, extra=2, can_delete=True)
     ExperimentDateFormSet = modelformset_factory(ExperimentDate, form=ExperimentDateForm, extra=2, max_num=2, can_delete=True)
@@ -885,8 +886,6 @@ def experiment(request, subject, publication_pk, experiment_index):
     ExperimentLatLongFormSet = modelformset_factory(ExperimentLatLong, form=ExperimentLatLongForm, extra=1, can_delete=True)
     ExperimentLatLongDMSFormSet = modelformset_factory(ExperimentLatLongDMS, form=ExperimentLatLongDMSForm, extra=1, can_delete=True)
     ExperimentPopulationFormSet = modelformset_factory(ExperimentPopulation, form=ExperimentPopulationForm, extra=4, can_delete=True)
-    # This publication
-    publication = Publication.objects.get(pk=publication_pk)
     # This experiment
     experiments = Experiment.objects.filter(publication=publication).order_by('pk')
     experiment = experiments[experiment_index]
@@ -1009,7 +1008,7 @@ def population(request, subject, publication_pk, experiment_index, population_in
     subject = Subject.objects.get(slug=subject)
     ExperimentPopulationOutcomeFormSet = modelformset_factory(ExperimentPopulationOutcome, form=ExperimentPopulationOutcomeForm, extra=4, can_delete=True)
     # This publication
-    publication = Publication.objects.get(pk=publication_pk)
+    publication = get_object_or_404(Publication, pk=publication_pk, subject=subject)
     experiments = Experiment.objects.filter(publication=publication).order_by('pk')
     # This experiment
     experiment = experiments[experiment_index]
@@ -1054,7 +1053,7 @@ def outcome(request, subject, publication_pk, experiment_index, population_index
     subject = Subject.objects.get(slug=subject)
     EffectFormSet = modelformset_factory(ExperimentPopulationOutcome, form=EffectForm, extra=0, can_delete=True)
     # This publication
-    publication = Publication.objects.get(pk=publication_pk)
+    publication = get_object_or_404(Publication, pk=publication_pk, subject=subject)
     # This experiment
     experiments = Experiment.objects.filter(publication=publication).order_by('pk')
     experiment = experiments[experiment_index]
@@ -1124,42 +1123,56 @@ def browse_by_outcome(request, subject):
     return render(request, 'publications/browse_by_outcome.html', context)
 
 
-def this_intervention(request, subject, intervention_pk):
+def this_intervention(request, subject, intervention_pk, outcome_pk='default'):
     user = request.user
     subject = Subject.objects.get(slug=subject)
+    publications = Publication.objects.filter(subject=subject)
     this_intervention = Intervention.objects.get(pk=intervention_pk)
     interventions = Intervention.objects.filter(pk=intervention_pk).get_descendants(include_self=True)
-    # Experiments for this intervention
-    experiments = Experiment.objects.filter(intervention__in=interventions)
-    # Publications for these experiments (i.e. publications for this intervention)
-    publications = Publication.objects.distinct().filter(subject=subject, experiment__in=experiments).order_by('title')
+    # Publications for this intervention (and its descendants)
+    publications = publications.distinct().filter(experiment__intervention__in=interventions)
+    # Filter these publications by outcome
+    if outcome_pk != 'default':
+        this_outcome = Outcome.objects.get(pk=outcome_pk)
+        outcomes = Outcome.objects.filter(pk=outcome_pk).get_descendants(include_self=True)
+        # Publications for these outcomes
+        publications = publications.distinct().filter(
+                Q(experiment__experimentpopulation__experimentpopulationoutcome__outcome__in=outcomes) |
+                Q(publicationpopulation__publicationpopulationoutcome__outcome__in=outcomes)
+            )
+        # Pass this path to the template for evidence-atlas.js to generate dynamic links by intervention and outcome.
+        path = reverse('publications_x', args=(), kwargs={'subject': subject.slug, 'intervention_pk': this_intervention.pk, 'outcome_pk': this_outcome.pk})
+    else:
+        this_outcome = None
+        # Pass this path to the template for evidence-atlas.js to generate dynamic links by intervention (not outcome).
+        path = reverse('publications_x', args=(), kwargs={'subject': subject.slug, 'intervention_pk': this_intervention.pk})
 
-    # Outcomes for this intervention (i.e. outcomes in publications for this intervention)
-    # Outcomes for these publications (outcomes can be entered by publication or by experiment)
-    publication_population_outcomes = PublicationPopulationOutcome.objects.filter(publication_population__publication__in=publications)
-    # Experiments for these publications (and this intervention)
-    experiments = experiments.filter(publication__in=publications)
-    # Outcomes for these experiments (outcomes can be entered by publication or by experiment)
-    experiment_population_outcomes = ExperimentPopulationOutcome.objects.filter(experiment_population__experiment__in=experiments)
+    # Outcomes for these publications
+    # By publication (outcomes can be entered by publication or by experiment)
+    publication_population_outcomes = PublicationPopulationOutcome.objects.filter(
+        publication_population__publication__in=publications)
+    # By experiment (outcomes can be entered by publication or by experiment)
+    experiment_population_outcomes = ExperimentPopulationOutcome.objects.filter(
+        experiment_population__experiment__publication__in=publications)
     # All outcomes for these publications (outcomes by publication OR outcomes by experiment)
     outcomes = Outcome.objects.distinct().filter(
             Q(experimentpopulationoutcome__in=experiment_population_outcomes) |
             Q(publicationpopulationoutcome__in=publication_population_outcomes)
         ).get_ancestors(include_self=True)
 
-    # Countries for publications with this intervention
+    # Countries for these publications
     # Countries by publication (countries can be entered by publication or by experiment)
     publication_countries = PublicationCountry.objects.filter(publication__in=publications)
     # Countries by experiment (countries can be entered by publication or by experiment)
+    experiments = Experiment.objects.filter(publication__in=publications)
     experiment_countries = ExperimentCountry.objects.filter(experiment__in=experiments)
+    """
+    # The number of publications by country
     # All countries (countries by publication OR by experiment)
     countries = Country.objects.distinct().filter(
             Q(publicationcountry__in=publication_countries) |
             Q(experimentcountry__in=experiment_countries)
         )
-
-    # The number of publications by country
-    """
     count_by_country = []
     for country in countries:
         publications_for_this_country = publications.filter(
@@ -1178,14 +1191,16 @@ def this_intervention(request, subject, intervention_pk):
     count_by_country = Counter(item[0] for item in publication_countries)  # item[0] is country in (country, publication) and this counts the number of tuples for each country. Counter is imported from collections.
     count_by_country = json.dumps(count_by_country)  # Convert to JSON for use by JavaScript in the template
 
-    path = reverse('publications_x', args=(), kwargs={'subject': subject.slug, 'intervention_pk': this_intervention.pk})
+    count = publications.count()
 
     context = {
         'subject': subject,
         'this_intervention': this_intervention,
+        'this_outcome': this_outcome,
         'outcomes': outcomes,
+        'count': count,
         'count_by_country': count_by_country,
-        'path': path
+        'path': path,
     }
     if user.is_authenticated:
         if Publication.objects.filter(subject=subject).exists():
@@ -1194,39 +1209,44 @@ def this_intervention(request, subject, intervention_pk):
     return render(request, 'publications/this_intervention.html', context)
 
 
-def this_outcome(request, subject, outcome_pk):
+def this_outcome(request, subject, outcome_pk, intervention_pk='default'):
     user = request.user
     subject = Subject.objects.get(slug=subject)
+    publications = Publication.objects.distinct().filter(subject=subject)
     this_outcome = Outcome.objects.get(pk=outcome_pk)
     outcomes = Outcome.objects.filter(pk=outcome_pk).get_descendants(include_self=True)
     # Records for these outcomes
     publication_population_outcomes = PublicationPopulationOutcome.objects.filter(outcome__in=outcomes)
     experiment_population_outcomes = ExperimentPopulationOutcome.objects.filter(outcome__in=outcomes)
     # Publications for these records
-    publication_populations = PublicationPopulation.objects.filter(publicationpopulationoutcome__in=publication_population_outcomes)
-    experiment_populations = ExperimentPopulation.objects.filter(experimentpopulationoutcome__in=experiment_population_outcomes)
-    experiments = Experiment.objects.filter(experimentpopulation__in=experiment_populations)
-    publications = Publication.objects.distinct().filter(subject=subject)
     publications = publications.distinct().filter(
-            Q(experiment__in=experiments) |
-            Q(publicationpopulation__in=publication_populations)
+            Q(experiment__experimentpopulation__experimentpopulationoutcome__in=experiment_population_outcomes) |
+            Q(publicationpopulation__publicationpopulationoutcome__in=publication_population_outcomes)
         )
+    # Filter these publications by intervention
+    if intervention_pk != 'default':
+        this_intervention = Intervention.objects.get(pk=intervention_pk)
+        interventions = Intervention.objects.filter(pk=intervention_pk).get_descendants(include_self=True)
+        # Publications for these interventions
+        publications = publications.distinct().filter(experiment__intervention__in=interventions)
+        # Pass this path to the template for evidence-atlas.js to generate dynamic links by intervention and outcome.
+        path = reverse('publications_x', args=(), kwargs={'subject': subject.slug, 'intervention_pk': this_intervention.pk, 'outcome_pk': this_outcome.pk})
+    else:
+        this_intervention = None
+        # Pass this path to the template for evidence-atlas.js to generate dynamic links by intervention (not outcome).
+        path = reverse('publications_x', args=(), kwargs={'subject': subject.slug, 'outcome_pk': this_outcome.pk})
+
     # Interventions for these publications
-    experiments = Experiment.objects.filter(publication__in=publications)
-    these_interventions = Intervention.objects.distinct().filter(
-            experiment__in=experiments
+    interventions = Intervention.objects.distinct().filter(
+            experiment__publication__in=publications
         ).get_ancestors(include_self=True)
 
-    # Countries for publications with this outcome
+    # Countries for these publications
     # Countries by publication (countries can be entered by publication or by experiment)
     publication_countries = PublicationCountry.objects.filter(publication__in=publications)
     # Countries by experiment (countries can be entered by publication or by experiment)
+    experiments = Experiment.objects.filter(publication__in=publications)
     experiment_countries = ExperimentCountry.objects.filter(experiment__in=experiments)
-    # All countries (countries by publication OR by experiment)
-    countries = Country.objects.distinct().filter(
-            Q(publicationcountry__in=publication_countries) |
-            Q(experimentcountry__in=experiment_countries)
-        )
     # The number of publications by country
     q1 = publication_countries.values_list('country__iso_alpha_3', 'publication').distinct()
     q2 = experiment_countries.values_list('country__iso_alpha_3', 'experiment__publication').distinct()
@@ -1235,14 +1255,16 @@ def this_outcome(request, subject, outcome_pk):
     count_by_country = Counter(item[0] for item in publication_countries)  # item[0] is country in (country, publication) and this counts the number of tuples for each country. Counter is imported from collections.
     count_by_country = json.dumps(count_by_country)  # Convert to JSON for use by JavaScript in the template
 
-    path = reverse('publications_x', args=(), kwargs={'subject': subject.slug, 'outcome_pk': this_outcome.pk})
+    count = publications.count()
 
     context = {
         'subject': subject,
+        'this_intervention': this_intervention,
         'this_outcome': this_outcome,
-        'interventions': these_interventions,
+        'interventions': interventions,
+        'count': count,
         'count_by_country': count_by_country,
-        'path': path
+        'path': path,
     }
     if user.is_authenticated:
         if Publication.objects.filter(subject=subject).exists():
@@ -1254,35 +1276,35 @@ def this_outcome(request, subject, outcome_pk):
 def publications_x(request, subject, intervention_pk='default', outcome_pk='default', iso_a3='default'):
     user = request.user
     subject = Subject.objects.get(slug=subject)
-    publications = Publication.objects.distinct().filter(subject=subject)
+    publications = Publication.objects.filter(subject=subject)
+
+    # Publications that have been marked as "completed"
+#    publications = publications.distinct().filter(assessment__is_completed=True)
+
     if iso_a3 != 'default':
         if iso_a3 != '-99':  # Disputed territories that are not our Countries model: Kosovo, Northern Cyprus, and Somaliland
             country = Country.objects.get(iso_alpha_3=iso_a3)
-            publications = publications.filter(
+            publications = publications.distinct().filter(
                     Q(publicationcountry__country=country) |
                     Q(experiment__experimentcountry__country=country)
                 )
     if outcome_pk != 'default':
         outcomes = Outcome.objects.filter(pk=outcome_pk).get_descendants(include_self=True)
-        # Experiment-level metadata (get experiments for these outcomes)
+        # Outcomes by experiment (outcomes can be entered by experiment or by publication)
         experiment_population_outcomes = ExperimentPopulationOutcome.objects.filter(outcome__in=outcomes)
-        experiment_populations = ExperimentPopulation.objects.filter(experimentpopulationoutcome__in=experiment_population_outcomes)
-        experiments = Experiment.objects.filter(experimentpopulation__in=experiment_populations)
-        # Publication-level metadata (get publications for these outcomes)
+        # Outcomes by publication (outcomes can be entered by experiment or by publication)
         publication_population_outcomes = PublicationPopulationOutcome.objects.filter(outcome__in=outcomes)
-        publication_populations = PublicationPopulation.objects.filter(publicationpopulationoutcome__in=publication_population_outcomes)
-        # Get publications from experiment-level or publication-level metadata
-        publications = publications.filter(
-                Q(experiment__in=experiments) |
-                Q(publicationpopulation__in=publication_populations)
+        # Publications for these outcomes
+        publications = publications.distinct().filter(
+                Q(experiment__experimentpopulation__experimentpopulationoutcome__in=experiment_population_outcomes) |
+                Q(publicationpopulation__publicationpopulationoutcome__in=publication_population_outcomes)
             )
     if intervention_pk != 'default':
         interventions = Intervention.objects.filter(pk=intervention_pk).get_descendants(include_self=True)
-        experiments = Experiment.objects.filter(intervention__in=interventions)
-        publications = publications.filter(experiment__in=experiments)
+        publications = publications.distinct().filter(experiment__intervention__in=interventions)
+    publications = publications.order_by('title')
     if iso_a3 == '-99':  # Disputed territories that are not our Countries model: Kosovo, Northern Cyprus, and Somaliland
         publications = Publication.objects.none()
-    publications = publications.order_by('title')
     page = request.GET.get('page', 1)
     paginator = Paginator(publications, 10)
     try:
