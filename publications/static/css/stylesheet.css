@@ -203,7 +203,7 @@ span.yellow {
   color: #ffff80;
 }
 
-span.intervention_level_5 {
+span.intervention_level_4 {
   font-weight: bold;
 }
 
@@ -399,4 +399,8 @@ ul.children {
 
 .italic {
   font-style: italic;
+}
+
+.the_small_print {
+  font-size: 1em;
 }

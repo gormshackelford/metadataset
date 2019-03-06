@@ -18,13 +18,16 @@ import pandas as pd
 from publications.models import Intervention
 
 # Load a csv file with the list to be added to the database.
-csv = "publications/data/interventions 3.0.csv"
+csv = "publications/data/invasive_species/interventions_2.0.csv"
 df = pd.read_csv(csv, encoding="utf-8")
+
+root_node = "invasive species"
+root_node = Intervention.objects.get(intervention=root_node)
 
 for row in df.itertuples():
     code = str(row.Code1) + '.'
     level1 = row.Level1
-    level1, created = Intervention.objects.get_or_create(intervention=level1, code=code)
+    level1, created = Intervention.objects.get_or_create(intervention=level1, code=code, parent=root_node)
     code = code + str(row.Code2) + '.'
     level2 = row.Level2
     if not pd.isnull(level2):
@@ -37,7 +40,7 @@ for row in df.itertuples():
     level4 = row.Level4
     if not pd.isnull(level4):
         level4, created = Intervention.objects.get_or_create(intervention=level4, code=code, parent=level3)
-    code = code + str(row.Code5) + '.'
+    code = code + str(row.Code5).replace('.0', '') + '.'
     level5 = row.Level5
     if not pd.isnull(level5):
         level5, created = Intervention.objects.get_or_create(intervention=level5, code=code, parent=level4)

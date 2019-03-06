@@ -30,7 +30,7 @@
           <span class="intervention_level_{{ node.level }}">{{ node.code }}</span>
         {% endif %}
         {% if node.level == 0 %}
-          <a href="{% url 'this_intervention' subject=subject.slug intervention_pk=node.pk %}">All interventions</a>          
+          <a href="{% url 'this_intervention' subject=subject.slug intervention_pk=node.pk %}">All interventions</a>
         {% else %}
           <a href="{% url 'this_intervention' subject=subject.slug intervention_pk=node.pk %}">{{ node.intervention }}</a>
         {% endif %}

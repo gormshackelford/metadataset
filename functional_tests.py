@@ -12,8 +12,8 @@ class NewVisitorTest(unittest.TestCase):
 
     # The user loads the home page and finds the site name in the title.
     def test_can_load_home(self):
-        self.browser.get('http://localhost:8000')
-        self.assertIn('MetaDataSet', self.browser.title)
+        self.browser.get('http://127.0.0.1:8000/')
+        self.assertIn('www.metadataset.com', self.browser.title)
 
     # She signs in.
 
@@ -47,12 +47,13 @@ class NewVisitorTest(unittest.TestCase):
 
     # Other users can aggregate data from multiple reviews, based on their metadata, using the hierarchical classification trees.
 
-
+    """
     def test_can_enter_data_for_a_publication(self):
         self.browser.get('http://localhost:8000')
         # The user finds a table in which to enter data.
         data_entry_table = self.browser.find_element_by_tag_name('table')
         data_entry_table = self.browser.find_element_by_id('publication')
+    """
 
 if __name__ == '__main__':
     unittest.main()
