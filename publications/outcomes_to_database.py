@@ -18,13 +18,16 @@ import pandas as pd
 from publications.models import Outcome
 
 # Load a csv file with the list to be added to the database.
-csv = "publications/data/outcomes.csv"
+csv = "publications/data/invasive_species/outcomes_1.0.csv"
 df = pd.read_csv(csv, encoding="utf-8")
+
+root_node = "invasive species"
+root_node = Outcome.objects.get(outcome=root_node)
 
 for row in df.itertuples():
     code = str(row.Code1) + '.'
     level1 = row.Level1
-    level1, created = Outcome.objects.get_or_create(outcome=level1, code=code)
+    level1, created = Outcome.objects.get_or_create(outcome=level1, code=code, parent=root_node)
     code = code + str(row.Code2) + '.'
     level2 = row.Level2
     if not pd.isnull(level2):
