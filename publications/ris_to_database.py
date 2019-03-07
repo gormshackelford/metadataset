@@ -22,7 +22,7 @@ subject = 'himalayan balsam'
 subject = Subject.objects.get(subject=subject)
 
 # Load a csv file with the bibliography (exported from Zotero).
-with open('publications/data/publications/invasive_species/publications.txt', 'r') as f:
+with open('publications/data/invasive_species/publications.txt', 'r') as f:
     results = list(readris(f, mapping=TAG_KEY_MAPPING))
 
 for result in results:
