@@ -30,7 +30,7 @@
         | <a target="_blank" href="http://dx.doi.org/{{ publication.doi }}">DOI</a>
       {% endif %}
     </p>
-    {% if user.is_authenticated %}
+    {% if user_subject %}
       <p><a href="{% url 'publication' subject=subject.slug publication_pk=publication.pk %}">Work on this publication</a></p>
     {% endif %}
     <br />

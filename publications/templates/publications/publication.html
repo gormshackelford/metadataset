@@ -41,10 +41,8 @@
   <h1>Abstract</h1>
   <p>{{ publication.abstract|default:'[abstract not available]' }}</p>
 
-  {% if request.user|is_in_group:"can_edit_publications" %}
-    <br />
-    <p><a href="{% url 'edit_publication' subject=subject.slug publication_pk=publication.pk %}">Edit this title/abstract</a></p>
-  {% endif %}
+  <br />
+  <p><a href="{% url 'edit_publication' subject=subject.slug publication_pk=publication.pk %}">Edit this title/abstract</a></p>
 
   <h1 id="stage_2">
     Stage 2: Full Text

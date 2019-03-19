@@ -262,6 +262,15 @@ class Publication(models.Model):
 
 # Intersection tables
 
+# The subjects that a user has permission to work on
+class UserSubject(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    subject = models.ForeignKey(Subject, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return self.user.email
+
+
 # The country in which the experiments were done (not necessarily the country of the publication authors)
 class PublicationCountry(models.Model):
     publication = models.ForeignKey(Publication, on_delete=models.CASCADE)

@@ -11,46 +11,50 @@
 
   {% if user.is_authenticated %}
 
-    <h1>Titles/Abstracts</h1>
-    <a href="{% url 'publication' subject=subject.slug publication_pk=next_assessment %}">Your next title/abstract</a> <span class="red">(start or restart here)</span>
-    <br />
-    {{ publications_assessed_count }} of {{ publications_count }} completed ({{ publications_assessed_percent }}%)
-    <br />
-    <a href="{% url 'publications' subject=subject.slug state='all' %}">Your titles/abstracts</a>
-    <br />
-    <a href="{% url 'publications' subject=subject.slug state='relevant' %}">Included</a>
-    <a href="{% url 'publications' subject=subject.slug state='relevant' download='CSV' %}">(CSV)</a>
-    <br />
-    <a href="{% url 'publications' subject=subject.slug state='not_relevant' %}">Excluded</a>
-    <a href="{% url 'publications' subject=subject.slug state='not_relevant' download='CSV' %}">(CSV)</a>
-    <br />
-    <a href="{% url 'publications' subject=subject.slug state='not_assessed' %}">Not completed</a>
-    <h1>Full Texts</h1>
-    <a href="{% url 'full_text_navigation' subject=subject.slug state='next-incomplete' %}">Your next full text</a> <span class="red">(start or restart here)</span>
-    <br />
-    {{ full_texts_assessed_count }} of {{ relevant_publications_count }} completed ({{ full_texts_assessed_percent}}%)
-    <br />
-    <a href="{% url 'publications' subject=subject.slug state='relevant' %}">Your full texts</a>
-    <br />
-    <a href="{% url 'publications' subject=subject.slug state='relevant_full_texts' %}">Included</a>
-    <a href="{% url 'publications' subject=subject.slug state='relevant_full_texts' download='CSV' %}">(CSV)</a>
-    <br />
-    <a href="{% url 'publications' subject=subject.slug state='not_relevant_full_texts' %}">Excluded</a>
-    <a href="{% url 'publications' subject=subject.slug state='not_relevant_full_texts' download='CSV' %}">(CSV)</a>
-    <br />
-    <a class="indented" href="{% url 'publications' subject=subject.slug state='cannot_find' %}">Cannot find</a>
-    <br />
-    <a class="indented" href="{% url 'publications' subject=subject.slug state='cannot_access' %}">Cannot access</a>
-    <br />
-    <a class="indented" href="{% url 'publications' subject=subject.slug state='secondary_literature' %}">Secondary literature</a>
-    <br />
-    <a class="indented" href="{% url 'publications' subject=subject.slug state='no_pico' %}">No relevant PICO component</a>
-    <br />
-    <a class="indented" href="{% url 'publications' subject=subject.slug state='other' %}">Other</a>
-    <br />
-    <a href="{% url 'publications' subject=subject.slug state='completed' %}">Completed</a>
-    <br />
-    <a href="{% url 'publications' subject=subject.slug state='not_assessed_full_texts' %}">Not completed</a>
+    {% if user_subject %}
+
+      <h1>Titles/Abstracts</h1>
+      <a href="{% url 'publication' subject=subject.slug publication_pk=next_assessment %}">Your next title/abstract</a> <span class="red">(start or restart here)</span>
+      <br />
+      {{ publications_assessed_count }} of {{ publications_count }} completed ({{ publications_assessed_percent }}%)
+      <br />
+      <a href="{% url 'publications' subject=subject.slug state='all' %}">Your titles/abstracts</a>
+      <br />
+      <a href="{% url 'publications' subject=subject.slug state='relevant' %}">Included</a>
+      <a href="{% url 'publications' subject=subject.slug state='relevant' download='CSV' %}">(CSV)</a>
+      <br />
+      <a href="{% url 'publications' subject=subject.slug state='not_relevant' %}">Excluded</a>
+      <a href="{% url 'publications' subject=subject.slug state='not_relevant' download='CSV' %}">(CSV)</a>
+      <br />
+      <a href="{% url 'publications' subject=subject.slug state='not_assessed' %}">Not completed</a>
+      <h1>Full Texts</h1>
+      <a href="{% url 'full_text_navigation' subject=subject.slug state='next-incomplete' %}">Your next full text</a> <span class="red">(start or restart here)</span>
+      <br />
+      {{ full_texts_assessed_count }} of {{ relevant_publications_count }} completed ({{ full_texts_assessed_percent}}%)
+      <br />
+      <a href="{% url 'publications' subject=subject.slug state='relevant' %}">Your full texts</a>
+      <br />
+      <a href="{% url 'publications' subject=subject.slug state='relevant_full_texts' %}">Included</a>
+      <a href="{% url 'publications' subject=subject.slug state='relevant_full_texts' download='CSV' %}">(CSV)</a>
+      <br />
+      <a href="{% url 'publications' subject=subject.slug state='not_relevant_full_texts' %}">Excluded</a>
+      <a href="{% url 'publications' subject=subject.slug state='not_relevant_full_texts' download='CSV' %}">(CSV)</a>
+      <br />
+      <a class="indented" href="{% url 'publications' subject=subject.slug state='cannot_find' %}">Cannot find</a>
+      <br />
+      <a class="indented" href="{% url 'publications' subject=subject.slug state='cannot_access' %}">Cannot access</a>
+      <br />
+      <a class="indented" href="{% url 'publications' subject=subject.slug state='secondary_literature' %}">Secondary literature</a>
+      <br />
+      <a class="indented" href="{% url 'publications' subject=subject.slug state='no_pico' %}">No relevant PICO component</a>
+      <br />
+      <a class="indented" href="{% url 'publications' subject=subject.slug state='other' %}">Other</a>
+      <br />
+      <a href="{% url 'publications' subject=subject.slug state='completed' %}">Completed</a>
+      <br />
+      <a href="{% url 'publications' subject=subject.slug state='not_assessed_full_texts' %}">Not completed</a>
+
+    {% endif %}
 
   {% endif %}
 

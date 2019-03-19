@@ -18,7 +18,7 @@ from itertools import chain
 from random import shuffle
 from .tokens import account_activation_token
 from .forms import AssessmentForm, EffectForm, ExperimentForm, ExperimentCountryForm, ExperimentDateForm, ExperimentDesignForm, ExperimentLatLongForm, ExperimentLatLongDMSForm, ExperimentPopulationForm, ExperimentPopulationOutcomeForm, FullTextAssessmentForm, InterventionForm, OutcomeForm, ProfileForm, PublicationForm, PublicationCountryForm, PublicationDateForm, PublicationLatLongForm, PublicationLatLongDMSForm, PublicationPopulationForm, PublicationPopulationOutcomeForm, SignUpForm, UserForm
-from .models import Assessment, AssessmentStatus, Country, Crop, Design, Experiment, ExperimentCountry, ExperimentCrop, ExperimentDate, ExperimentDesign, ExperimentLatLong, ExperimentLatLongDMS, ExperimentPopulation, ExperimentPopulationOutcome, Intervention, Outcome, Publication, PublicationCountry, PublicationDate, PublicationLatLong, PublicationLatLongDMS, PublicationPopulation, PublicationPopulationOutcome, Subject, User
+from .models import Assessment, AssessmentStatus, Country, Crop, Design, Experiment, ExperimentCountry, ExperimentCrop, ExperimentDate, ExperimentDesign, ExperimentLatLong, ExperimentLatLongDMS, ExperimentPopulation, ExperimentPopulationOutcome, Intervention, Outcome, Publication, PublicationCountry, PublicationDate, PublicationLatLong, PublicationLatLongDMS, PublicationPopulation, PublicationPopulationOutcome, Subject, User, UserSubject
 from .serializers import CountrySerializer, DesignSerializer, ExperimentSerializer, ExperimentCountrySerializer, ExperimentDesignSerializer, ExperimentPopulationSerializer, ExperimentPopulationOutcomeSerializer, InterventionSerializer, OutcomeSerializer, PublicationSerializer, PublicationPopulationSerializer, PublicationPopulationOutcomeSerializer, SubjectSerializer, UserSerializer
 from .decorators import group_required
 from mptt.forms import TreeNodeChoiceField
@@ -58,7 +58,7 @@ class ExperimentViewSet(viewsets.ReadOnlyModelViewSet):
 
 class ExperimentCountryViewSet(viewsets.ReadOnlyModelViewSet):
     """
-    API endpoint for "experiment countries" (i.e. one "country" in one "experiment")
+    API endpoint for "experiment_countries" (i.e. one "country" in one "experiment")
     """
     queryset = ExperimentCountry.objects.distinct()
     serializer_class = ExperimentCountrySerializer
@@ -66,7 +66,7 @@ class ExperimentCountryViewSet(viewsets.ReadOnlyModelViewSet):
 
 class ExperimentDesignViewSet(viewsets.ReadOnlyModelViewSet):
     """
-    API endpoint for "experiment designs" (i.e. one "design" element in one "experiment")
+    API endpoint for "experiment_designs" (i.e. one "design" element in one "experiment")
     """
     queryset = ExperimentDesign.objects.distinct()
     serializer_class = ExperimentDesignSerializer
@@ -74,7 +74,7 @@ class ExperimentDesignViewSet(viewsets.ReadOnlyModelViewSet):
 
 class ExperimentPopulationViewSet(viewsets.ReadOnlyModelViewSet):
     """
-    API endpoint for "experiment populations" (i.e. one "population" in one "experiment")
+    API endpoint for "experiment_populations" (i.e. one "population" in one "experiment")
     """
     queryset = ExperimentPopulation.objects.all()
     serializer_class = ExperimentPopulationSerializer
@@ -88,7 +88,7 @@ class ExperimentPopulationOutcomeViewSetFilter(filters.FilterSet):
 
 class ExperimentPopulationOutcomeViewSet(viewsets.ReadOnlyModelViewSet):
     """
-    API endpoint for "effects" = "experiment populations outcomes" (i.e. one "outcome" for one "population" in one "experiment")
+    API endpoint for "effects" ("experiment populations outcomes") (i.e. one "outcome" for one "population" in one "experiment")
     """
     queryset = ExperimentPopulationOutcome.objects.all()
     serializer_class = ExperimentPopulationOutcomeSerializer
@@ -137,7 +137,7 @@ class PublicationViewSet(viewsets.ReadOnlyModelViewSet):
 
 class PublicationPopulationViewSet(viewsets.ReadOnlyModelViewSet):
     """
-    API endpoint for "publication populations" (i.e. one "population" in one "publication")
+    API endpoint for "publication_populations" (i.e. one "population" in one "publication")
     """
     queryset = PublicationPopulation.objects.all()
     serializer_class = PublicationPopulationSerializer
@@ -145,7 +145,7 @@ class PublicationPopulationViewSet(viewsets.ReadOnlyModelViewSet):
 
 class PublicationPopulationOutcomeViewSet(viewsets.ReadOnlyModelViewSet):
     """
-    API endpoint for "publication populations outcomes" (i.e. one "outcome" for one "population" in one "publication")
+    API endpoint for "publication_population_outcomes" (i.e. one "outcome" for one "population" in one "publication")
     """
     queryset = PublicationPopulationOutcome.objects.all()
     serializer_class = PublicationPopulationOutcomeSerializer
@@ -473,6 +473,7 @@ def publication(request, subject, publication_pk):
     user = request.user
     data = request.POST or None
     subject = Subject.objects.get(slug=subject)
+    user_subject = get_object_or_404(UserSubject, user=user, subject=subject)  # Check if this user has permission to work on this subject.
     intervention = subject.intervention  # The root intervention for this subject (each subject can have its own classification of interventions)
     publication_pk = int(publication_pk)
     # This publication
@@ -697,6 +698,7 @@ def metadata(request, subject, publication_pk):
     user = request.user
     data = request.POST or None
     subject = Subject.objects.get(slug=subject)
+    user_subject = get_object_or_404(UserSubject, user=user, subject=subject)  # Check if this user has permission to work on this subject.
     outcome = subject.outcome  # The root outcome for this subject (each subject can have its own classification of outcomes)
     # This publication
     publication = get_object_or_404(Publication, pk=publication_pk, subject=subject)
@@ -799,6 +801,7 @@ def publication_population(request, subject, publication_pk, publication_populat
     user = request.user
     data = request.POST or None
     subject = Subject.objects.get(slug=subject)
+    user_subject = get_object_or_404(UserSubject, user=user, subject=subject)  # Check if this user has permission to work on this subject.
     outcome = subject.outcome  # The root outcome for this subject (each subject can have its own classification of outcomes)
     PublicationPopulationOutcomeFormSet = modelformset_factory(PublicationPopulationOutcome, form=PublicationPopulationOutcomeForm, extra=4, can_delete=True)
     # This publication
@@ -843,6 +846,7 @@ def edit_publication(request, subject, publication_pk):
     user = request.user
     data = request.POST or None
     subject = Subject.objects.get(slug=subject)
+    user_subject = get_object_or_404(UserSubject, user=user, subject=subject)  # Check if this user has permission to work on this subject.
     publication_pk = int(publication_pk)
     # This publication
     publication = get_object_or_404(Publication, pk=publication_pk, subject=subject)
@@ -874,6 +878,7 @@ def experiment(request, subject, publication_pk, experiment_index):
     user = request.user
     data = request.POST or None
     subject = Subject.objects.get(slug=subject)
+    user_subject = get_object_or_404(UserSubject, user=user, subject=subject)  # Check if this user has permission to work on this subject.
     design = subject.design  # The root design for this subject (each subject can have its own classification of designs)
     intervention = subject.intervention  # The root intervention for this subject (each subject can have its own classification of interventions)
     outcome = subject.outcome  # The root outcome for this subject (each subject can have its own classification of outcomes)
@@ -1004,8 +1009,10 @@ def population(request, subject, publication_pk, experiment_index, population_in
     """
     On this page, the user chooses outcomes for this population.
     """
+    user = request.user
     data = request.POST or None
     subject = Subject.objects.get(slug=subject)
+    user_subject = get_object_or_404(UserSubject, user=user, subject=subject)  # Check if this user has permission to work on this subject.
     ExperimentPopulationOutcomeFormSet = modelformset_factory(ExperimentPopulationOutcome, form=ExperimentPopulationOutcomeForm, extra=4, can_delete=True)
     # This publication
     publication = get_object_or_404(Publication, pk=publication_pk, subject=subject)
@@ -1049,8 +1056,10 @@ def outcome(request, subject, publication_pk, experiment_index, population_index
     """
     On this page, the user enters effect sizes and related data for this outcome.
     """
+    user = request.user
     data = request.POST or None
     subject = Subject.objects.get(slug=subject)
+    user_subject = get_object_or_404(UserSubject, user=user, subject=subject)  # Check if this user has permission to work on this subject.
     EffectFormSet = modelformset_factory(ExperimentPopulationOutcome, form=EffectForm, extra=0, can_delete=True)
     # This publication
     publication = get_object_or_404(Publication, pk=publication_pk, subject=subject)
@@ -1325,7 +1334,11 @@ def publications_x(request, subject, intervention_pk='default', outcome_pk='defa
 
 
 def get_status(user, subject):
-    # Publications should be assessed in a random order, but each user should see the same order from session to session. Therefore, a random assessment_order is created for each user (for each subject), and it is saved in the database.
+    """
+    Publications should be assessed in a random order, but each user should see
+    the same order from session to session. Therefore, a random assessment_order
+    is created for each user (for each subject), and it is saved in the database.
+    """
 
     # If an assessment_order has been created for this user and subject, get it from the database.
     if AssessmentStatus.objects.filter(user=user, subject=subject).exists():
@@ -1394,6 +1407,7 @@ def get_status(user, subject):
     else:
         full_texts_assessed_percent = 100
     status = {
+        'user_subject': UserSubject.objects.filter(user=user, subject=subject).exists(),
         'item': item,
         'publications_count': publications_count,
         'publications_assessed_count': publications_assessed_count,
