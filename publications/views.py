@@ -17,8 +17,8 @@ from collections import Counter
 from itertools import chain
 from random import shuffle
 from .tokens import account_activation_token
-from .forms import AssessmentForm, EffectForm, ExperimentForm, ExperimentCountryForm, ExperimentDateForm, ExperimentDesignForm, ExperimentLatLongForm, ExperimentLatLongDMSForm, ExperimentPopulationForm, ExperimentPopulationOutcomeForm, FullTextAssessmentForm, InterventionForm, OutcomeForm, ProfileForm, PublicationForm, PublicationCountryForm, PublicationDateForm, PublicationLatLongForm, PublicationLatLongDMSForm, PublicationPopulationForm, PublicationPopulationOutcomeForm, SignUpForm, UserForm
-from .models import Assessment, AssessmentStatus, Country, Crop, Design, Experiment, ExperimentCountry, ExperimentCrop, ExperimentDate, ExperimentDesign, ExperimentLatLong, ExperimentLatLongDMS, ExperimentPopulation, ExperimentPopulationOutcome, Intervention, Outcome, Publication, PublicationCountry, PublicationDate, PublicationLatLong, PublicationLatLongDMS, PublicationPopulation, PublicationPopulationOutcome, Subject, User, UserSubject
+from .forms import AssessmentForm, AttributeForm, AttributeOptionForm, EAVExperimentForm, EAVOutcomeForm, EAVPublicationForm, EffectForm, ExperimentForm, ExperimentCountryForm, ExperimentDateForm, ExperimentDesignForm, ExperimentLatLongForm, ExperimentLatLongDMSForm, ExperimentPopulationForm, ExperimentPopulationOutcomeForm, FullTextAssessmentForm, InterventionForm, OutcomeForm, ProfileForm, PublicationForm, PublicationCountryForm, PublicationDateForm, PublicationLatLongForm, PublicationLatLongDMSForm, PublicationPopulationForm, PublicationPopulationOutcomeForm, SignUpForm, UserForm
+from .models import Assessment, AssessmentStatus, Attribute, Country, Crop, Design, EAV, Experiment, ExperimentCountry, ExperimentCrop, ExperimentDate, ExperimentDesign, ExperimentLatLong, ExperimentLatLongDMS, ExperimentPopulation, ExperimentPopulationOutcome, Intervention, Outcome, Publication, PublicationCountry, PublicationDate, PublicationLatLong, PublicationLatLongDMS, PublicationPopulation, PublicationPopulationOutcome, Subject, User, UserSubject
 from .serializers import CountrySerializer, DesignSerializer, ExperimentSerializer, ExperimentCountrySerializer, ExperimentDesignSerializer, ExperimentPopulationSerializer, ExperimentPopulationOutcomeSerializer, InterventionSerializer, OutcomeSerializer, PublicationSerializer, PublicationPopulationSerializer, PublicationPopulationOutcomeSerializer, SubjectSerializer, UserSerializer
 from .decorators import group_required
 from mptt.forms import TreeNodeChoiceField
@@ -700,22 +700,63 @@ def metadata(request, subject, publication_pk):
     subject = Subject.objects.get(slug=subject)
     user_subject = get_object_or_404(UserSubject, user=user, subject=subject)  # Check if this user has permission to work on this subject.
     outcome = subject.outcome  # The root outcome for this subject (each subject can have its own classification of outcomes)
+    attribute = subject.attribute  # The root attribute for this subject (each subject can have its own classification of attributes)
+    attributes = Attribute.objects.get(pk=attribute.pk).get_children()
+    attributes_count = attributes.count()
     # This publication
     publication = get_object_or_404(Publication, pk=publication_pk, subject=subject)
+    # Formsets
     PublicationCountryFormSet = modelformset_factory(PublicationCountry, form=PublicationCountryForm, extra=2, can_delete=True)
     PublicationDateFormSet = modelformset_factory(PublicationDate, form=PublicationDateForm, extra=2, max_num=2, can_delete=True)
     PublicationLatLongFormSet = modelformset_factory(PublicationLatLong, form=PublicationLatLongForm, extra=1, can_delete=True)
     PublicationLatLongDMSFormSet = modelformset_factory(PublicationLatLongDMS, form=PublicationLatLongDMSForm, extra=1, can_delete=True)
     PublicationPopulationFormSet = modelformset_factory(PublicationPopulation, form=PublicationPopulationForm, extra=4, can_delete=True)
+    EAVFormSet = modelformset_factory(EAV, form=EAVPublicationForm, extra=attributes_count, max_num=attributes_count, can_delete=True)
     # Formsets for this publication
     publication_country_formset = PublicationCountryFormSet(data=data, queryset=PublicationCountry.objects.filter(publication=publication), prefix="publication_country_formset")
     publication_date_formset = PublicationDateFormSet(data=data, queryset=PublicationDate.objects.filter(publication=publication), prefix="publication_date_formset")
     publication_lat_long_formset = PublicationLatLongFormSet(data=data, queryset=PublicationLatLong.objects.filter(publication=publication), prefix="publication_lat_long_formset")
     publication_lat_long_dms_formset = PublicationLatLongDMSFormSet(data=data, queryset=PublicationLatLongDMS.objects.filter(publication=publication), prefix="publication_lat_long_dms_formset")
+    # publication_population_formset
     publication_population_formset = PublicationPopulationFormSet(data=data, queryset=PublicationPopulation.objects.filter(publication=publication), prefix="publication_population_formset")
+    populations = TreeNodeChoiceField(queryset=Outcome.objects.filter(pk=outcome.pk).get_descendants(include_self=True).filter(level=1), level_indicator = "---")
+    for form in publication_population_formset:
+        form.fields['population'] = populations
+    # EAV_formset
+    EAV_formset = EAVFormSet(data=data, queryset=EAV.objects.filter(publication=publication), prefix="EAV_formset")
+    for form in EAV_formset:
+        # There should only be one instance per attribute, so we need to
+        # check which attributes have instances and create extra formset forms
+        # only for attributes without instances.
+        if form.instance.pk is not None:
+            attribute = form.instance.attribute
+            attributes = attributes.exclude(attribute=attribute)
+        else:
+            attribute = attributes[0]
+            attributes = attributes.exclude(attribute=attribute)
+            form.initial['attribute'] = attribute
+            form.initial['publication'] = publication  # For unique_together validation
+            form.initial['user'] = user  # For unique_together validation
+        if attribute.is_leaf_node():  # If factor options have not been defined, or if the data type is a number, not a factor
+            form.fields['value_as_factor'].disabled = True
+        else:  # If factor options have been defined (which is not possible if the data type is a number)
+            form.fields['value_as_number'].disabled = True
+            form.fields['value_as_factor'] = TreeNodeChoiceField(queryset=attribute.get_children(), level_indicator="")
     if request.method == 'POST':
         if 'save' in request.POST or 'delete' in request.POST:
             with transaction.atomic():
+                formset = EAV_formset
+                if formset.is_valid():
+                    instances = formset.save(commit=False)
+                    if 'delete' in request.POST:
+                        for obj in formset.deleted_objects:
+                            obj.delete()
+                    else:
+                        for instance in instances:
+                            instance.publication = publication
+                            instance.user = user
+                            instance.publication_index = publication
+                            instance.save()
                 formset = publication_country_formset
                 if formset.is_valid():
                     instances = formset.save(commit=False)
@@ -761,10 +802,6 @@ def metadata(request, subject, publication_pk):
                             instance.user = user
                             instance.save()
                 formset = publication_population_formset
-                # Before the formset is validated, the choices need to be redefined, or the validation will fail. This is because only a subset of all choices (high level choices in the MPTT tree) were initially shown in the dropdown (for better UI).
-                populations = TreeNodeChoiceField(queryset=Outcome.objects.filter(pk=outcome.pk).get_descendants(include_self=True), level_indicator = "---")
-                for form in formset:
-                    form.fields['population'] = populations
                 if formset.is_valid():
                     instances = formset.save(commit=False)
                     if 'delete' in request.POST:
@@ -776,11 +813,6 @@ def metadata(request, subject, publication_pk):
                             instance.user = user
                             instance.save()
                 return redirect('metadata', subject=subject.slug, publication_pk=publication_pk)
-    else:
-        # Population choices for the formset (populations are the level 1 in the classification of outcomes; level 0 is for different subjects, and here we only show the populations/outcomes for this subject, at level=1)
-        populations = TreeNodeChoiceField(required=False, queryset=Outcome.objects.filter(pk=outcome.pk).get_descendants(include_self=True).filter(level=1), level_indicator = "---")
-        for form in publication_population_formset:
-            form.fields['population'] = populations
     context = {
         'subject': subject,
         'publication': publication,
@@ -788,9 +820,82 @@ def metadata(request, subject, publication_pk):
         'publication_date_formset': publication_date_formset,
         'publication_lat_long_formset': publication_lat_long_formset,
         'publication_lat_long_dms_formset': publication_lat_long_dms_formset,
-        'publication_population_formset': publication_population_formset
+        'publication_population_formset': publication_population_formset,
+        'EAV_formset': EAV_formset
     }
     return render(request, 'publications/metadata.html', context)
+
+
+@login_required
+def attributes(request, subject):
+    """
+    On this page, the user adds/edits attributes for this subject.
+    """
+    user = request.user
+    data = request.POST or None
+    subject = Subject.objects.get(slug=subject)
+    user_subject = get_object_or_404(UserSubject, user=user, subject=subject)  # Check if this user has permission to work on this subject.
+    attribute = subject.attribute  # The root attribute for this subject (each subject can have its own classification of attributes)
+    attributes = Attribute.objects.get(pk=attribute.pk).get_children()
+    FormSet = modelformset_factory(Attribute, form=AttributeForm, extra=1, can_delete=True)
+    formset = FormSet(data=data, queryset=attributes, initial=[{'parent': attribute}])  # To check for unique_together = ('attribute', 'parent'), parent needs to be passed to the formset as initial data, but it is hidden in the template and ignored in the view.
+    if request.method == 'POST':
+        if 'save' in request.POST or 'delete' in request.POST:
+            with transaction.atomic():
+                if formset.is_valid():
+                    instances = formset.save(commit=False)
+                    if 'delete' in request.POST:
+                        for obj in formset.deleted_objects:
+                            obj.delete()
+                    else:
+                        for instance in instances:
+                            instance.parent = attribute
+                            instance.user = user
+                            if instance.type == 'factor':
+                                instance.unit = 'NA for factors'
+                            instance.save()
+                return redirect('attributes', subject=subject.slug)
+    context = {
+        'subject': subject,
+        'formset': formset
+    }
+    return render(request, 'publications/attributes.html', context)
+
+
+@login_required
+def attribute(request, subject, attribute_pk):
+    """
+    On this page, the user adds/edits options for this attribute.
+    """
+    user = request.user
+    data = request.POST or None
+    subject = Subject.objects.get(slug=subject)
+    user_subject = get_object_or_404(UserSubject, user=user, subject=subject)  # Check if this user has permission to work on this subject.
+    attribute = Attribute.objects.get(pk=attribute_pk)
+    options = attribute.get_children()
+    FormSet = modelformset_factory(Attribute, form=AttributeOptionForm, extra=1, can_delete=True)
+    formset = FormSet(data=data, queryset=options, initial=[{'parent': attribute}])  # To check for unique_together = ('attribute', 'parent'), parent needs to be passed to the formset as initial data, but it is hidden in the template and ignored in the view.
+    if request.method == 'POST':
+        if 'save' in request.POST or 'delete' in request.POST:
+            with transaction.atomic():
+                if formset.is_valid():
+                    instances = formset.save(commit=False)
+                    if 'delete' in request.POST:
+                        for obj in formset.deleted_objects:
+                            obj.delete()
+                    else:
+                        for instance in instances:
+                            instance.parent = attribute
+                            instance.user = user
+                            instance.type = 'factor'
+                            instance.save()
+                return redirect('attribute', subject=subject.slug, attribute_pk=attribute_pk)
+    context = {
+        'subject': subject,
+        'formset': formset,
+        'attribute': attribute
+    }
+    return render(request, 'publications/attribute.html', context)
 
 
 @login_required
@@ -838,7 +943,6 @@ def publication_population(request, subject, publication_pk, publication_populat
 
 
 @login_required
-@group_required('can_edit_publications')
 def edit_publication(request, subject, publication_pk):
     """
     On this page, the user edits the title, abstract, etc. for this publication.
@@ -882,8 +986,12 @@ def experiment(request, subject, publication_pk, experiment_index):
     design = subject.design  # The root design for this subject (each subject can have its own classification of designs)
     intervention = subject.intervention  # The root intervention for this subject (each subject can have its own classification of interventions)
     outcome = subject.outcome  # The root outcome for this subject (each subject can have its own classification of outcomes)
+    attribute = subject.attribute  # The root attribute for this subject (each subject can have its own classification of attributes)
+    attributes = Attribute.objects.get(pk=attribute.pk).get_children()
+    attributes_count = attributes.count()
     # This publication
     publication = get_object_or_404(Publication, pk=publication_pk, subject=subject)
+    # Formsets
     ExperimentFormSet = modelformset_factory(Experiment, form=ExperimentForm, extra=0, can_delete=False)
     ExperimentCountryFormSet = modelformset_factory(ExperimentCountry, form=ExperimentCountryForm, extra=2, can_delete=True)
     ExperimentDateFormSet = modelformset_factory(ExperimentDate, form=ExperimentDateForm, extra=2, max_num=2, can_delete=True)
@@ -891,6 +999,7 @@ def experiment(request, subject, publication_pk, experiment_index):
     ExperimentLatLongFormSet = modelformset_factory(ExperimentLatLong, form=ExperimentLatLongForm, extra=1, can_delete=True)
     ExperimentLatLongDMSFormSet = modelformset_factory(ExperimentLatLongDMS, form=ExperimentLatLongDMSForm, extra=1, can_delete=True)
     ExperimentPopulationFormSet = modelformset_factory(ExperimentPopulation, form=ExperimentPopulationForm, extra=4, can_delete=True)
+    EAVFormSet = modelformset_factory(EAV, form=EAVExperimentForm, extra=attributes_count, max_num=attributes_count, can_delete=True)
     # This experiment
     experiments = Experiment.objects.filter(publication=publication).order_by('pk')
     experiment = experiments[experiment_index]
@@ -899,22 +1008,59 @@ def experiment(request, subject, publication_pk, experiment_index):
     # Show interventions for only this subject (level 0 in the classification of interventions is for different subjects, and here we show interventions for only this subject)
     experiment_form.fields['intervention'] = TreeNodeChoiceField(queryset=Intervention.objects.filter(pk=intervention.pk).get_descendants(include_self=True), level_indicator = "---")
     # Formsets for this experiment
-    experiment_population_formset = ExperimentPopulationFormSet(data=data, queryset=ExperimentPopulation.objects.filter(experiment=experiment), prefix="experiment_population_formset")
     experiment_country_formset = ExperimentCountryFormSet(data=data, queryset=ExperimentCountry.objects.filter(experiment=experiment), prefix="experiment_country_formset")
     experiment_date_formset = ExperimentDateFormSet(data=data, queryset=ExperimentDate.objects.filter(experiment=experiment), prefix="experiment_date_formset")
-    experiment_design_formset = ExperimentDesignFormSet(data=data, queryset=ExperimentDesign.objects.filter(experiment=experiment), prefix="experiment_design_formset")
     experiment_lat_long_formset = ExperimentLatLongFormSet(data=data, queryset=ExperimentLatLong.objects.filter(experiment=experiment), prefix="experiment_lat_long_formset")
     experiment_lat_long_dms_formset = ExperimentLatLongDMSFormSet(data=data, queryset=ExperimentLatLongDMS.objects.filter(experiment=experiment), prefix="experiment_lat_long_dms_formset")
+    # experiment_design_formset
+    experiment_design_formset = ExperimentDesignFormSet(data=data, queryset=ExperimentDesign.objects.filter(experiment=experiment), prefix="experiment_design_formset")
+    designs = TreeNodeChoiceField(required=False, queryset=Design.objects.filter(pk=design.pk).get_descendants(include_self=True).filter(level__gte=1), level_indicator = "---")
+    for form in experiment_design_formset:
+        form.fields['design'] = designs
+    # experiment_population_formset
+    experiment_population_formset = ExperimentPopulationFormSet(data=data, queryset=ExperimentPopulation.objects.filter(experiment=experiment), prefix="experiment_population_formset")
+    populations = TreeNodeChoiceField(queryset=Outcome.objects.filter(pk=outcome.pk).get_descendants(include_self=True).filter(level=1), level_indicator = "---")
+    for form in experiment_population_formset:
+        form.fields['population'] = populations
+    # EAV_formset
+    EAV_formset = EAVFormSet(data=data, queryset=EAV.objects.filter(experiment=experiment), prefix="EAV_formset")
+    for form in EAV_formset:
+        # There should only be one instance per attribute, so we need to
+        # check which attributes have instances and create extra formset forms
+        # only for attributes without instances.
+        if form.instance.pk is not None:
+            attribute = form.instance.attribute
+            attributes = attributes.exclude(attribute=attribute)
+        else:
+            attribute = attributes[0]
+            attributes = attributes.exclude(attribute=attribute)
+            form.initial['attribute'] = attribute
+            form.initial['experiment'] = experiment  # For unique_together validation
+            form.initial['user'] = user  # For unique_together validation
+        if attribute.is_leaf_node():  # If factor options have not been defined, or if the data type is a number, not a factor
+            form.fields['value_as_factor'].disabled = True
+        else:  # If factor options have been defined (which is not possible if the data type is a number)
+            form.fields['value_as_number'].disabled = True
+            form.fields['value_as_factor'] = TreeNodeChoiceField(queryset=attribute.get_children(), level_indicator="")
     if request.method == 'POST':
         with transaction.atomic():
             form = experiment_form
             if form.is_valid():
                 form.save()
+            formset = EAV_formset
+            if formset.is_valid():
+                instances = formset.save(commit=False)
+                if 'delete' in request.POST:
+                    for obj in formset.deleted_objects:
+                        obj.delete()
+                else:
+                    for instance in instances:
+                        instance.experiment = experiment
+                        instance.user = user
+                        instance.publication_index = publication
+                        instance.experiment_index = experiment
+                        instance.save()
             formset = experiment_population_formset
-            # Before the formset is validated, the choices need to be redefined, or the validation will fail. This is because only a subset of all choices (high level choices in the MPTT tree) were initially shown in the dropdown (for better UI).
-            populations = TreeNodeChoiceField(queryset=Outcome.objects.filter(pk=outcome.pk).get_descendants(include_self=True), level_indicator = "---")
-            for form in formset:
-                form.fields['population'] = populations
             if formset.is_valid():
                 instances = formset.save(commit=False)
                 if 'delete' in request.POST:
@@ -979,15 +1125,6 @@ def experiment(request, subject, publication_pk, experiment_index):
                         instance.experiment = experiment
                         instance.save()
             return redirect('experiment', subject=subject.slug, publication_pk=publication_pk, experiment_index=experiment_index)
-    else:
-        # Population choices for the formset (populations are the level 1 in the classification of outcomes; level 0 is for different subjects, and here we only show the populations/outcomes for this subject, at level=1)
-        populations = TreeNodeChoiceField(required=False, queryset=Outcome.objects.filter(pk=outcome.pk).get_descendants(include_self=True).filter(level=1), level_indicator = "---")
-        for form in experiment_population_formset:
-            form.fields['population'] = populations
-        # Design choices for the formset (level 0 in the classification of designs is for different subjects, and here we only show the classification for this subject, at level__gte=1)
-        designs = TreeNodeChoiceField(required=False, queryset=Design.objects.filter(pk=design.pk).get_descendants(include_self=True).filter(level__gte=1), level_indicator = "---")
-        for form in experiment_design_formset:
-            form.fields['design'] = designs
     context = {
         'subject': subject,
         'publication': publication,
@@ -999,7 +1136,8 @@ def experiment(request, subject, publication_pk, experiment_index):
         'experiment_design_formset': experiment_design_formset,
         'experiment_lat_long_formset': experiment_lat_long_formset,
         'experiment_lat_long_dms_formset': experiment_lat_long_dms_formset,
-        'experiment_population_formset': experiment_population_formset
+        'experiment_population_formset': experiment_population_formset,
+        'EAV_formset': EAV_formset
     }
     return render(request, 'publications/experiment.html', context)
 

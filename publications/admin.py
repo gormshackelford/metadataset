@@ -4,7 +4,7 @@ from django.utils.translation import ugettext_lazy as _
 from mptt.admin import DraggableMPTTAdmin
 from reversion.admin import VersionAdmin
 from .models import Profile, User  # AbstractUser with email address as username
-from .models import Subject, Publication, Assessment, AssessmentStatus, Intervention, Outcome, Design, Experiment, Country, Crop, ExperimentCountry, ExperimentCrop, ExperimentDate, ExperimentDesign, ExperimentPopulation, ExperimentLatLong, ExperimentLatLongDMS, ExperimentPopulationOutcome, PublicationCountry, PublicationDate, PublicationLatLong, PublicationLatLongDMS, PublicationPopulation, PublicationPopulationOutcome, UserSubject
+from .models import Subject, Publication, Assessment, AssessmentStatus, Attribute, EAV, Intervention, Outcome, Design, Experiment, Country, Crop, ExperimentCountry, ExperimentCrop, ExperimentDate, ExperimentDesign, ExperimentPopulation, ExperimentLatLong, ExperimentLatLongDMS, ExperimentPopulationOutcome, PublicationCountry, PublicationDate, PublicationLatLong, PublicationLatLongDMS, PublicationPopulation, PublicationPopulationOutcome, UserSubject
 
 
 @admin.register(User)
@@ -49,6 +49,10 @@ admin.site.register(Assessment, AssessmentAdmin)
 class AssessmentStatusAdmin(admin.ModelAdmin):
     readonly_fields = ('created', 'updated')
 admin.site.register(AssessmentStatus, AssessmentStatusAdmin)
+
+class EAVAdmin(admin.ModelAdmin):
+    readonly_fields = ('created', 'updated')
+admin.site.register(EAV, EAVAdmin)
 
 class ExperimentAdmin(admin.ModelAdmin):
     readonly_fields = ('created', 'updated')
@@ -112,6 +116,18 @@ admin.site.register(PublicationPopulation, PublicationPopulationAdmin)
 
 
 # Admin for hierarchical models (django-mptt)
+admin.site.register(
+    Attribute,
+    DraggableMPTTAdmin,
+    list_display=(
+        'tree_actions',
+        'indented_title',
+    ),
+    list_display_links=(
+        'indented_title',
+    ),
+)
+
 admin.site.register(
     Design,
     DraggableMPTTAdmin,

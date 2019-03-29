@@ -20,10 +20,10 @@
   {{ experiment_form.intervention }}
 
   <table>
-    <tr><th colspan="3">Populations</th></tr>
-    <tr><td colspan="3">When you select and save a population, a link will appear for "Outcomes". Click that link to select outcomes for this population.</td></tr>
+    <tr><th colspan="4">Populations</th></tr>
+    <tr><td colspan="4">When you select and save a population, a link will appear for "Outcomes". Click that link to select outcomes for this population.</td></tr>
     <tr>
-      <td colspan="2"></td>
+      <td colspan="3"></td>
       <td class="centered">Select</td>
     </tr>
     {{ experiment_population_formset.management_form }}
@@ -37,7 +37,14 @@
             {{ form.population.label }}:
           {% endif %}
         </td>
-        <td>{{ form.population }}
+        <td>
+          {% if form.instance.population %}
+            {{ form.instance.population }}
+          {% else %}
+            {{ form.population }}
+          {% endif %}
+        </td>
+        <td>
           {% if form.instance.population %}
             <a href="{% url 'population' subject=subject.slug publication_pk=publication.pk experiment_index=experiment_index population_index=forloop.counter0 %}">Outcomes</a>
           {% endif %}
@@ -48,15 +55,16 @@
     <tr>
       <td class="bottom"></td>
       <td class="button bottom"><input type="submit" name="save" value="Save all changes" /></td>
+      <td></td>
       <td class="button bottom centered"><input type="submit" name="delete" value="Delete selected" /></td>
     </tr>
 
-    <tr><td class="empty" colspan="3">&nbsp;</td></tr>
+    <tr><td class="empty" colspan="4">&nbsp;</td></tr>
 
-    <tr><th colspan="3">Experimental design</th></tr>
-    <tr><td class="top" colspan="3">We will assume that the same experimental design was used to test the effects of this intervention on all of the populations that you selected above. If different experimental designs were used, please create a separate intervention (on the <a href="{% url 'publication' subject=subject.slug publication_pk=publication.pk %}">previous page</a>) for each experimental design.</td></tr>
+    <tr><th colspan="4">Experimental design</th></tr>
+    <tr><td class="top" colspan="4">We will assume that the same experimental design was used to test the effects of this intervention on all of the populations that you selected above. If different experimental designs were used, please create a separate intervention (on the <a href="{% url 'publication' subject=subject.slug publication_pk=publication.pk %}">previous page</a>) for each experimental design.</td></tr>
     <tr>
-      <td colspan="2"></td>
+      <td colspan="3"></td>
       <td class="centered">Select</td>
     </tr>
     {{ experiment_design_formset.management_form }}
@@ -70,23 +78,26 @@
           {{ form.design.label }}:
         {% endif %}
       </td>
-      <td>{{ form.design }}</td><td class="centered">{{ form.DELETE }}</td>
+      <td>{{ form.design }}</td>
+      <td></td>
+      <td class="centered">{{ form.DELETE }}</td>
     </tr>
     {% endfor %}
     <tr>
       <td class="bottom"></td>
       <td class="button bottom"><input type="submit" name="save" value="Save all changes" /></td>
+      <td></td>
       <td class="button bottom centered"><input type="submit" name="delete" value="Delete selected" /></td>
     </tr>
 
-    <tr><td class="empty" colspan="3">&nbsp;</td></tr>
+    <tr><td class="empty" colspan="4">&nbsp;</td></tr>
 
-    <tr><th colspan="3">Tags</th></tr>
+    <tr><th colspan="4">Covariates</th></tr>
     <tr>
-      <td class="top" colspan="3">If you have already entered the following metadata for this publication (see <a href="{% url 'metadata' subject=subject.slug publication_pk=publication.pk %}">other metadata</a>), then you do not have to enter it here. However, if there is metadata that applies to this intervention only, then you should enter it here.</td>
+      <td class="top" colspan="4">If you have already entered the following metadata for this publication (see <a href="{% url 'metadata' subject=subject.slug publication_pk=publication.pk %}">other metadata</a>), then you do not have to enter it here. However, if there is metadata that applies to this intervention only, then you should enter it here.</td>
     </tr>
     <tr>
-      <td colspan="2"></td>
+      <td colspan="3"></td>
       <td class="centered">Select</td>
     </tr>
     {{ experiment_country_formset.management_form }}
@@ -100,7 +111,9 @@
             {{ form.country.label }}:
           {% endif %}
         </td>
-        <td>{{ form.country }}</td><td class="centered">{{ form.DELETE }}</td>
+        <td>{{ form.country }}</td>
+        <td></td>
+        <td class="centered">{{ form.DELETE }}</td>
       </tr>
     {% endfor %}
     {{ experiment_lat_long_dms_formset.management_form }}
@@ -152,19 +165,67 @@
             {{ hidden_field }}
           {% endfor %}
           {% if forloop.first %}
-            Date/start date:
+            Start date:
           {% else %}
-            Date/end date:
+            End date:
           {% endif %}
         </td>
-        <td>Year: {{ form.year }} Month: {{ form.month }} Day: {{ form.day }}</td><td class="centered">{{ form.DELETE }}</td>
+        <td>Year: {{ form.year }} Month: {{ form.month }} Day: {{ form.day }}</td>
+        <td></td>
+        <td class="centered">{{ form.DELETE }}</td>
       </tr>
     {% endfor %}
     <tr>
       <td class="bottom"></td>
       <td class="button bottom"><input type="submit" name="save" value="Save all changes" /></td>
+      <td></td>
       <td class="button bottom centered"><input type="submit" name="delete" value="Delete selected" /></td>
     </tr>
+
+    <tr><td class="empty" colspan="4">&nbsp;</td></tr>
+
+    <tr><th colspan="4">Other covariates</th></tr>
+    <tr>
+      <td class="top" colspan="4"><a target="_blank" href="{% url 'attributes' subject=subject.slug %}">Add/edit other covariates</a></td>
+    </tr>
+
+    {{ EAV_formset.management_form }}
+    {% if EAV_formset.forms %}
+      {% for form in EAV_formset %}
+        <tr>
+          <td>
+            {% for hidden_field in form.hidden_fields %}
+              {{ hidden_field }}
+            {% endfor %}
+            {% if form.instance.attribute %}
+              {{ form.instance.attribute }}:
+            {% else %}
+              {{ form.attribute.initial }}:
+            {% endif %}
+            {{ form.attribute.as_hidden }}
+            {{ form.experiment.as_hidden }}
+            {{ form.user.as_hidden }}
+          </td>
+          <td>
+            {% if form.value_as_factor.field.disabled is False %}
+              {{ form.value_as_factor }}
+            {% endif %}
+            {% if form.value_as_number.field.disabled is False %}
+              {{ form.value_as_number }}
+            {% endif %}
+          </td>
+          <td></td>
+          <td class="centered">{{ form.DELETE }}</td>
+        </tr>
+      {% endfor %}
+      <tr>
+        <td class="bottom"></td>
+        <td class="button bottom"><input type="submit" name="save" value="Save all changes" /></td>
+        <td></td>
+        <td class="button bottom centered"><input type="submit" name="delete" value="Delete selected" /></td>
+      </tr>
+    {% endif %}
+
   </table>
 </form>
 

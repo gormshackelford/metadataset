@@ -2,7 +2,7 @@ from django import forms
 from django.db import models
 from django.contrib.auth.forms import UserCreationForm
 from mptt.forms import TreeNodeChoiceField
-from .models import Assessment, Experiment, ExperimentCountry, ExperimentDate, ExperimentDesign, ExperimentLatLong, ExperimentLatLongDMS, ExperimentPopulation, ExperimentPopulationOutcome, Intervention, Outcome, Profile, Publication, PublicationCountry, PublicationDate, PublicationLatLong, PublicationLatLongDMS, PublicationPopulation, PublicationPopulationOutcome, User
+from .models import Assessment, Attribute, EAV, Experiment, ExperimentCountry, ExperimentDate, ExperimentDesign, ExperimentLatLong, ExperimentLatLongDMS, ExperimentPopulation, ExperimentPopulationOutcome, Intervention, Outcome, Profile, Publication, PublicationCountry, PublicationDate, PublicationLatLong, PublicationLatLongDMS, PublicationPopulation, PublicationPopulationOutcome, User
 
 
 class SignUpForm(UserCreationForm):
@@ -194,3 +194,57 @@ class EffectForm(forms.ModelForm):
     class Meta:
         model = ExperimentPopulationOutcome
         exclude = ['experiment_population', 'outcome']
+
+
+class AttributeForm(forms.ModelForm):
+
+    class Meta:
+        model = Attribute
+        exclude = ['slug', 'user']
+        widgets = {
+            'attribute': forms.TextInput(attrs={
+                'placeholder': 'e.g., "Application rate" or "Herbicide type"'
+            }),
+            'unit': forms.TextInput(attrs={
+                'placeholder': 'e.g., "kg/ha" (only if the data type is "Number")'
+            })
+        }
+
+    def __init__(self, *args, **kwargs):
+        super(AttributeForm, self).__init__(*args, **kwargs)
+        instance = getattr(self, 'instance', None)
+        if instance and instance.pk:
+            self.fields['type'].disabled = True
+
+
+class AttributeOptionForm(forms.ModelForm):
+
+    class Meta:
+        model = Attribute
+        exclude = ['slug', 'type', 'user']
+        widgets = {
+            'attribute': forms.TextInput(attrs={
+                'placeholder': 'e.g., "Yes" or "No"'
+            })
+        }
+
+
+class EAVExperimentForm(forms.ModelForm):
+
+    class Meta:
+        model = EAV
+        exclude = ['outcome', 'publication', 'note']
+
+
+class EAVOutcomeForm(forms.ModelForm):
+
+    class Meta:
+        model = EAV
+        exclude = ['experiment', 'publication', 'note']
+
+
+class EAVPublicationForm(forms.ModelForm):
+
+    class Meta:
+        model = EAV
+        exclude = ['experiment', 'outcome', 'note']

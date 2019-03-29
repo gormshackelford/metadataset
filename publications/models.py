@@ -86,7 +86,7 @@ def update_user_profile(sender, instance, created, **kwargs):
 class Intervention(MPTTModel):
     intervention = models.CharField(max_length=255)
     parent = TreeForeignKey('self', null=True, blank=True, related_name='children', db_index=True, on_delete=models.CASCADE)
-    slug = models.SlugField(max_length=255)
+    slug = models.SlugField(max_length=255, blank=True)
     code = models.CharField(max_length=30, null=True, blank=True)
 
     def save(self, *args, **kwargs):
@@ -114,7 +114,7 @@ class Intervention(MPTTModel):
 class Outcome(MPTTModel):
     outcome = models.CharField(max_length=255)
     parent = TreeForeignKey('self', null=True, blank=True, related_name='children', db_index=True, on_delete=models.CASCADE)
-    slug = models.SlugField(max_length=255)
+    slug = models.SlugField(max_length=255, blank=True)
     code = models.CharField(max_length=30, null=True, blank=True)
 
     def save(self, *args, **kwargs):
@@ -138,7 +138,7 @@ class Outcome(MPTTModel):
 class Crop(MPTTModel):
     crop = models.CharField(max_length=255)
     parent = TreeForeignKey('self', null=True, blank=True, related_name='children', db_index=True, on_delete=models.CASCADE)
-    slug = models.SlugField(max_length=255)
+    slug = models.SlugField(max_length=255, blank=True)
 
     def save(self, *args, **kwargs):
         max_length = 255  # For MySQL, unique/indexed fields must be < 256.
@@ -177,7 +177,7 @@ class Country(models.Model):
 class Design(MPTTModel):
     design = models.CharField(max_length=60)
     parent = TreeForeignKey('self', null=True, blank=True, related_name='children', db_index=True, on_delete=models.CASCADE)
-    slug = models.SlugField(max_length=255)
+    slug = models.SlugField(max_length=255, blank=True)
 
     def save(self, *args, **kwargs):
         max_length = 255  # For MySQL, unique/indexed fields must be < 256.
@@ -197,15 +197,56 @@ class Design(MPTTModel):
         order_insertion_by = ['design']
 
 
+# Attributes for the entity-attribute-value (EAV) model
+class Attribute(MPTTModel):
+    attribute = models.CharField(max_length=255)
+    parent = TreeForeignKey('self', null=True, blank=True, related_name='children', db_index=True, on_delete=models.CASCADE)
+    slug = models.SlugField(max_length=255, blank=True)
+    TYPE_FACTOR = 'factor'
+    TYPE_NUMBER = 'number'
+    TYPE_CHOICES = (
+        (TYPE_FACTOR, 'Factor'),
+        (TYPE_NUMBER, 'Number')
+    )
+    type = models.CharField(max_length=10, choices=TYPE_CHOICES)
+    unit = models.CharField(max_length=30, blank=True)
+    note = models.TextField(blank=True)
+    created = models.DateTimeField(auto_now_add=True)
+    updated = models.DateTimeField(auto_now=True)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+
+    def save(self, *args, **kwargs):
+        max_length = 255  # For MySQL, unique/indexed fields must be < 256.
+        self.slug = slugify(self.attribute)[:max_length]
+        # Check if this slug exists. If it exists, add a hyphen and a number and repeat until the slug is unique.
+        for counter in itertools.count(1):
+            if not Attribute.objects.filter(slug=self.slug).exists():
+                break
+            # Add a hyphen and a number (minus the length of the hyphen and the counter, to maintain max_length).
+            self.slug = "{slug}-{counter}".format(slug=self.slug[:max_length - len(str(counter)) - 1], counter=counter)
+        super(Attribute, self).save(*args, **kwargs)
+
+    def __str__(self):
+        return self.attribute
+
+    class Meta:
+        unique_together = ('attribute', 'parent')
+
+    class MPTTMeta:
+        order_insertion_by = ['attribute']
+
+
 # Subjects for systematic reviews (as "subject-wide evidence syntheses")
 class Subject(MPTTModel):
     subject = models.CharField(max_length=255, unique=True)
     parent = TreeForeignKey('self', null=True, blank=True, related_name='children', db_index=True, on_delete=models.CASCADE)
-    intervention = models.ForeignKey(Intervention, blank=True, null=True, on_delete=models.CASCADE)  # The root node for this subject in the tree of interventions (each subject can have its own classification of interventions)
-    outcome = models.ForeignKey(Outcome, blank=True, null=True, on_delete=models.CASCADE)  # The root node for this subject in the tree of outcomes (each subject can have its own classification of outcomes)
-    design = models.ForeignKey(Design, blank=True, null=True, on_delete=models.CASCADE)  # The root node for this subject in the tree of designs (each subject can have its own classification of designs)
-    slug = models.SlugField(max_length=255)
+    intervention = models.ForeignKey(Intervention, blank=True, null=True, on_delete=models.SET_NULL)  # The root node for this subject in the tree of interventions (each subject can have its own classification of interventions)
+    outcome = models.ForeignKey(Outcome, blank=True, null=True, on_delete=models.SET_NULL)  # The root node for this subject in the tree of outcomes (each subject can have its own classification of outcomes)
+    design = models.ForeignKey(Design, blank=True, null=True, on_delete=models.SET_NULL)  # The root node for this subject in the tree of designs (each subject can have its own classification of designs)
+    attribute = models.ForeignKey(Attribute, blank=True, null=True, on_delete=models.SET_NULL)  # The root node for this subject in the tree of attributes (each subject can have its own classification of attributes)
+    slug = models.SlugField(max_length=255, blank=True)
     text = models.TextField(blank=True)
+    is_public = models.BooleanField(default=False)
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
 
@@ -566,6 +607,50 @@ class ExperimentPopulationOutcome(models.Model):
 
     def __str__(self):
         return self.experiment_population.experiment.publication.title
+
+
+class EAV(models.Model):
+    """
+    This is an entity-attribute-value (EAV) model, and the entity can be
+    recorded at different levels (publication, experiment, experiment_population,
+    experiment_population_outcome). Note that these different levels are related
+    to one another hierarchically (publication > experiment >
+    experiment_population > experiment_population_outcome).
+    """
+    # E: Entity options (only one of these should be non-null per instance)
+    publication = models.ForeignKey(Publication, related_name="EAV_publication", blank=True, null=True, on_delete=models.CASCADE)
+    experiment = models.ForeignKey(Experiment, related_name="EAV_experiment", blank=True, null=True, on_delete=models.CASCADE)
+    outcome = models.ForeignKey(ExperimentPopulationOutcome, related_name="EAV_outcome", blank=True, null=True, on_delete=models.CASCADE)
+    # End of entity options
+    # A: Attribute
+    attribute = models.ForeignKey(Attribute, related_name="EAV_attribute", on_delete=models.CASCADE)
+    # V: Value options (only one of these should be non-null per instance)
+    value_as_number = models.FloatField(blank=True, null=True)
+    value_as_factor = models.ForeignKey(Attribute, related_name="EAV_value_as_factor", blank=True, null=True, on_delete=models.CASCADE)
+    # End of value options
+    note = models.CharField(max_length=255, blank=True, null=True)
+    # Indexes: these allow for distinct() queries at multiple levels in the
+    # hierarchy, while allowing for instances to be created at only one level in
+    # the hierarchy (i.e. for only one of the "entity options" above), and also
+    # allowing for unique_together (i.e. one EAV instance per entity per user).
+    publication_index = models.ForeignKey(Publication, related_name="EAV_publication_index", blank=True, null=True, on_delete=models.CASCADE)
+    experiment_index = models.ForeignKey(Experiment, related_name="EAV_experiment_index", blank=True, null=True, on_delete=models.CASCADE)
+    outcome_index = models.ForeignKey(ExperimentPopulationOutcome, related_name="EAV_outcome_index", blank=True, null=True, on_delete=models.CASCADE)
+    # End of indexes
+    created = models.DateTimeField(auto_now_add=True)
+    updated = models.DateTimeField(auto_now=True)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return self.attribute.attribute
+
+    class Meta:
+        # There should be only one EAV instance per entity per user.
+        unique_together = (
+            ('attribute', 'publication', 'user'),
+            ('attribute', 'experiment', 'user'),
+            ('attribute', 'outcome', 'user')
+        )
 
 
 class Assessment(models.Model):

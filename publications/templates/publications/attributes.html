@@ -1,0 +1,69 @@
+{% extends 'publications/base.html' %}
+
+{% block title %}
+  Other covariates | Metadataset | www.metadataset.com
+{% endblock %}
+
+{% block css %}
+  {% load staticfiles %}
+{% endblock %}
+
+{% block content %}
+
+<h1>Other covariates</h1>
+<p>Please be careful when changing this metadata. Your changes will affect all
+  users.</p>
+
+<form method="post" action="">{% csrf_token %}
+  <table>
+    <tr>
+      <td colspan="2"></td>
+      <td class="centered">Select</td>
+    </tr>
+    {{ formset.management_form }}
+    {% for form in formset %}
+      <tr>
+        <td>
+          Covariate:
+          {% for hidden_field in form.hidden_fields %}
+            {{ hidden_field }}
+          {% endfor %}
+          {{ form.parent.as_hidden }}
+        </td>
+        <td>{{ form.attribute }}</td>
+        <td class="centered">{{ form.DELETE }}</td>
+      </tr>
+      <tr>
+        <td>Data type:</td>
+        <td>
+          {{ form.type }}
+          {% if form.instance.type == 'factor' %}
+            <a target="_blank" href="{% url 'attribute' subject=subject.slug attribute_pk=form.instance.pk %}">Add/edit factor levels</a>
+          {% endif %}
+        </td>
+        <td></td>
+      </tr>
+      <tr>
+        <td>Data units:</td>
+        <td>{{ form.unit }}</td>
+        <td></td>
+      </tr>
+      <tr>
+        <td>Note:</td>
+        <td>{{ form.note }}</td>
+        <td></td>
+      </tr>
+      <tr><td class="empty" colspan="3">&nbsp;</td></tr>
+    {% endfor %}
+    <tr>
+      <td class="bottom"></td>
+      <td class="button bottom"><input type="submit" name="save" value="Save all changes" /></td>
+      <td class="button bottom centered">
+        <input type="submit" name="delete" value="Delete selected" onclick="return confirm('This will delete all data related to the selected covariate(s), not only for you but also for all other people working on this subject.')" />
+      </td>
+    </tr>
+
+  </table>
+</form>
+
+{% endblock %}
