@@ -38,7 +38,7 @@ for result in results:
     year = result.get('year', '')
     if year == 'NA':
         year = ''
-    journal = result.get('journal_name', '')
+    journal = result.get('secondary_title', '')
     if journal == 'NA':
         journal = ''
     volume = result.get('volume', '')
