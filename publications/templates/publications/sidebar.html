@@ -3,19 +3,19 @@
 
 <h1>Subjects</h1>
 
-{% get_subjects as subjects %}
+{% if user.is_authenticated %}
+  {% user_subjects user as subjects %}
+{% else %}
+  {% public_subjects as subjects %}
+{% endif %}
 
 {% recursetree subjects %}
   {% if node.level == 0 %}
-    <p>
-      {{ node.subject|capfirst }}<br />
-  {% endif %}
-  {% if node.level > 0 %}
-      <span class="indented"><a href="{% url 'subject' subject=node.slug %}">{{ node.subject|capfirst }}</a> <span class="red">(work in progress)</span></span><br />
+    {{ node.subject|capfirst }}<br />
+  {% else %}
+    <span class="indented"><a href="{% url 'subject' subject=node.slug %}">{{ node.subject|capfirst }}</a> <span class="red">(work in progress)</span></span><br />
   {% endif %}
   {% if not node.is_leaf_node %}
-    {{ children }}
-  {% else %}
-    </p>
+    {{ children }}<br />
   {% endif %}
 {% endrecursetree %}

@@ -1,12 +1,22 @@
 from django import template
 from django.contrib.auth.models import Group
-from ..models import Subject
+from django.db.models import Q
+from ..models import Subject, UserSubject
 
 register = template.Library()
 
 @register.simple_tag
-def get_subjects():
-    subjects = Subject.objects.all()
+def public_subjects():
+    subjects = Subject.objects.filter(is_public=True)
+    return subjects
+
+@register.simple_tag
+def user_subjects(user):
+    user_subjects = UserSubject.objects.filter(user=user)
+    subjects = Subject.objects.filter(
+        Q(usersubject__in=user_subjects) |
+        Q(is_public=True)
+    ).distinct()
     return subjects
 
 @register.filter(name='add_class')
