@@ -1,7 +1,7 @@
 {% extends 'publications/base.html' %}
 
 {% block title %}
-  Population | Metadataset | www.metadataset.com
+  Population-level metadata | Metadataset | www.metadataset.com
 {% endblock %}
 
 {% block css %}
@@ -10,17 +10,23 @@
 
 {% block content %}
 
-<h1>Population: {{ experiment_population.population|capfirst }}</h1>
+<h1>Population-level metadata</h1>
 
-<p><a href="{% url 'experiment' subject=subject.slug publication_pk=publication.pk experiment_index=experiment_index %}">Back to all populations</a></p>
+<p><a href="{% url 'experiment' subject=subject.slug publication_pk=publication.pk experiment_index=experiment_index %}">Go back to intervention-level metadata</a></p>
 
 <form method="post" action="">{% csrf_token %}
+
   <table>
-    <tr><th colspan="3">Outcomes</th></tr>
-    <tr>
-      <td colspan="2"></td>
-      <td class="centered">Select</td>
-    </tr>
+
+    <tr><th colspan="4">This population</th></tr>
+    <tr><td colspan="4">{{ experiment_population.population|capfirst }}</td></tr>
+
+    <tr><td class="empty" colspan="4">&nbsp;</td></tr>
+
+    <tr><th colspan="4">Outcomes for this population</th></tr>
+    <tr><td class="top" colspan="4">When you select and save an outcome, a link will appear for "Effects".</td></tr>
+    <tr><td colspan="3"></td><td class="centered">Select</td></tr>
+
     {{ experiment_population_outcome_formset.management_form }}
     {% for form in experiment_population_outcome_formset %}
       <tr>
@@ -28,11 +34,11 @@
           {% for hidden_field in form.hidden_fields %}
             {{ hidden_field }}
           {% endfor %}
-          {% if forloop.first %}
-            {{ form.outcome.label }}:
-          {% endif %}
         </td>
-        <td>{{ form.outcome }}
+        <td>
+          {{ form.outcome }}
+        </td>
+        <td>
           {% if form.instance.outcome %}
             <a href="{% url 'outcome' subject=subject.slug publication_pk=publication.pk experiment_index=experiment_index population_index=population_index outcome_index=forloop.counter0 %}">Effect</a>
           {% endif %}
@@ -41,11 +47,62 @@
       </tr>
     {% endfor %}
     <tr>
+      <td class="bottom"></td>
       <td class="button bottom"><input type="submit" name="save" value="Save all changes" /></td>
       <td class="bottom"></td>
       <td class="button bottom centered"><input type="submit" name="delete" value="Delete selected" /></td>
     </tr>
+
+    <tr><td class="empty" colspan="4">&nbsp;</td></tr>
+
+    <tr><th colspan="4">Other covariates for this population</th></tr>
+    <tr>
+      <td class="top" colspan="4"><a target="_blank" href="{% url 'attributes' subject=subject.slug %}">Add/edit other covariates</a></td>
+    </tr>
+
+    {{ EAV_formset.management_form }}
+    {% if EAV_formset.forms %}
+      <tr>
+        <td class="top" colspan="3"></td>
+        <td class="centered">Select</td>
+      </tr>
+      {% for form in EAV_formset %}
+        <tr>
+          <td>
+            {% for hidden_field in form.hidden_fields %}
+              {{ hidden_field }}
+            {% endfor %}
+            {% if form.instance.attribute %}
+              {{ form.instance.attribute }}:
+            {% else %}
+              {{ form.attribute.initial }}:
+            {% endif %}
+            {{ form.attribute.as_hidden }}
+            {{ form.population.as_hidden }}
+            {{ form.user.as_hidden }}
+          </td>
+          <td>
+            {% if form.value_as_factor.field.disabled is False %}
+              {{ form.value_as_factor }}
+            {% endif %}
+            {% if form.value_as_number.field.disabled is False %}
+              {{ form.value_as_number }}
+            {% endif %}
+          </td>
+          <td></td>
+          <td class="centered">{{ form.DELETE }}</td>
+        </tr>
+      {% endfor %}
+      <tr>
+        <td class="bottom"></td>
+        <td class="button bottom"><input type="submit" name="save" value="Save all changes" /></td>
+        <td class="bottom"></td>
+        <td class="button bottom centered"><input type="submit" name="delete" value="Delete selected" /></td>
+      </tr>
+    {% endif %}
+
   </table>
+
 </form>
 
 {% endblock %}

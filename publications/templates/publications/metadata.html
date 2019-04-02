@@ -3,7 +3,7 @@
 {% load metadataset_tags %}
 
 {% block title %}
-  Other Metadata | Metadataset | www.metadataset.com
+  Other publication-level metadata | Metadataset | www.metadataset.com
 {% endblock %}
 
 {% block css %}
@@ -12,13 +12,13 @@
 
 {% block content %}
 
-<h1>Other Metadata</h1>
-<p><a href="{% url 'publication' subject=subject.slug publication_pk=publication.pk %}">Back to all metadata for this publication</a></p>
+<h1>Other publication-level metadata</h1>
+<p><a href="{% url 'publication' subject=subject.slug publication_pk=publication.pk %}">Go back to the publication</a></p>
 
 <form method="post" action="">{% csrf_token %}
   <table>
     <tr><th colspan="4">Populations</th></tr>
-    <tr><td colspan="4">When you select and save a population, a link will appear for "Outcomes". Click that link to select outcomes for this population.</td></tr>
+    <tr><td class="top" colspan="4">When you select and save a population, a link will appear for "Outcomes". Click that link to select outcomes for this population.</td></tr>
     <tr>
       <td colspan="3"></td>
       <td class="centered">Select</td>
@@ -30,9 +30,6 @@
           {% for hidden_field in form.hidden_fields %}
             {{ hidden_field }}
           {% endfor %}
-          {% if forloop.first %}
-            Population:
-          {% endif %}
         </td>
         <td>
           {% if form.instance.population %}

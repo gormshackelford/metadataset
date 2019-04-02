@@ -3,7 +3,7 @@
 {% load metadataset_tags %}
 
 {% block title %}
-  Experiment | Metadataset | www.metadataset.com
+  Intervention-level metadata | Metadataset | www.metadataset.com
 {% endblock %}
 
 {% block css %}
@@ -12,16 +12,20 @@
 
 {% block content %}
 
-<h1>Intervention: {{ experiment.intervention|capfirst }}</h1>
-<p><a href="{% url 'publication' subject=subject.slug publication_pk=publication.pk %}">Back to all interventions</a></p>
-<p>If possible, please select a more specific intervention from this more detailed list.</p>
+<h1>Intervention-level metadata</h1>
+<p><a href="{% url 'publication' subject=subject.slug publication_pk=publication.pk %}">Go back to publication-level metadata</a></p>
 
 <form method="post" action="">{% csrf_token %}
-  {{ experiment_form.intervention }}
 
   <table>
-    <tr><th colspan="4">Populations</th></tr>
-    <tr><td colspan="4">When you select and save a population, a link will appear for "Outcomes". Click that link to select outcomes for this population.</td></tr>
+
+    <tr><th colspan="4">This intervention</th></tr>
+    <tr><td colspan="4">{{ experiment_form.intervention }}</td></tr>
+
+    <tr><td class="empty" colspan="4">&nbsp;</td></tr>
+
+    <tr><th colspan="4">Populations for this intervention</th></tr>
+    <tr><td class="top" colspan="4">When you select and save a population, a link will appear for "Outcomes". Click that link to select outcomes for this population.</td></tr>
     <tr>
       <td colspan="3"></td>
       <td class="centered">Select</td>
@@ -33,9 +37,6 @@
           {% for hidden_field in form.hidden_fields %}
             {{ hidden_field }}
           {% endfor %}
-          {% if forloop.first %}
-            {{ form.population.label }}:
-          {% endif %}
         </td>
         <td>
           {% if form.instance.population %}
@@ -55,13 +56,13 @@
     <tr>
       <td class="bottom"></td>
       <td class="button bottom"><input type="submit" name="save" value="Save all changes" /></td>
-      <td></td>
+      <td class="bottom"></td>
       <td class="button bottom centered"><input type="submit" name="delete" value="Delete selected" /></td>
     </tr>
 
     <tr><td class="empty" colspan="4">&nbsp;</td></tr>
 
-    <tr><th colspan="4">Experimental design</th></tr>
+    <tr><th colspan="4">Experimental design for this intervention</th></tr>
     <tr><td class="top" colspan="4">We will assume that the same experimental design was used to test the effects of this intervention on all of the populations that you selected above. If different experimental designs were used, please create a separate intervention (on the <a href="{% url 'publication' subject=subject.slug publication_pk=publication.pk %}">previous page</a>) for each experimental design.</td></tr>
     <tr>
       <td colspan="3"></td>
@@ -74,9 +75,6 @@
         {% for hidden_field in form.hidden_fields %}
           {{ hidden_field }}
         {% endfor %}
-        {% if forloop.first %}
-          {{ form.design.label }}:
-        {% endif %}
       </td>
       <td>{{ form.design }}</td>
       <td></td>
@@ -86,15 +84,15 @@
     <tr>
       <td class="bottom"></td>
       <td class="button bottom"><input type="submit" name="save" value="Save all changes" /></td>
-      <td></td>
+      <td class="bottom"></td>
       <td class="button bottom centered"><input type="submit" name="delete" value="Delete selected" /></td>
     </tr>
 
     <tr><td class="empty" colspan="4">&nbsp;</td></tr>
 
-    <tr><th colspan="4">Covariates</th></tr>
+    <tr><th colspan="4">Covariates for this intervention</th></tr>
     <tr>
-      <td class="top" colspan="4">If you have already entered the following metadata for this publication (see <a href="{% url 'metadata' subject=subject.slug publication_pk=publication.pk %}">other metadata</a>), then you do not have to enter it here. However, if there is metadata that applies to this intervention only, then you should enter it here.</td>
+      <td class="top" colspan="4">If you enter <a href="{% url 'metadata' subject=subject.slug publication_pk=publication.pk %}">other metadata</a> at the publication level, then you do not need to enter it here (at the intervention level), unless there is metadata that applies only to this intervention.</td>
     </tr>
     <tr>
       <td colspan="3"></td>
@@ -178,19 +176,23 @@
     <tr>
       <td class="bottom"></td>
       <td class="button bottom"><input type="submit" name="save" value="Save all changes" /></td>
-      <td></td>
+      <td class="bottom"></td>
       <td class="button bottom centered"><input type="submit" name="delete" value="Delete selected" /></td>
     </tr>
 
     <tr><td class="empty" colspan="4">&nbsp;</td></tr>
 
-    <tr><th colspan="4">Other covariates</th></tr>
+    <tr><th colspan="4">Other covariates for this intervention</th></tr>
     <tr>
       <td class="top" colspan="4"><a target="_blank" href="{% url 'attributes' subject=subject.slug %}">Add/edit other covariates</a></td>
     </tr>
 
     {{ EAV_formset.management_form }}
     {% if EAV_formset.forms %}
+      <tr>
+        <td class="top" colspan="3"></td>
+        <td class="centered">Select</td>
+      </tr>
       {% for form in EAV_formset %}
         <tr>
           <td>
@@ -221,12 +223,13 @@
       <tr>
         <td class="bottom"></td>
         <td class="button bottom"><input type="submit" name="save" value="Save all changes" /></td>
-        <td></td>
+        <td class="bottom"></td>
         <td class="button bottom centered"><input type="submit" name="delete" value="Delete selected" /></td>
       </tr>
     {% endif %}
 
   </table>
+
 </form>
 
 {% endblock %}

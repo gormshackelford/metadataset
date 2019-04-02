@@ -279,6 +279,7 @@ class Publication(models.Model):
     place = models.CharField(max_length=510, blank=True)
     note = models.TextField(blank=True)
     subject = models.ForeignKey(Subject, on_delete=models.CASCADE, null=True)
+    is_from_systematic_search = models.BooleanField(default=True)
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
 
@@ -620,6 +621,7 @@ class EAV(models.Model):
     # E: Entity options (only one of these should be non-null per instance)
     publication = models.ForeignKey(Publication, related_name="EAV_publication", blank=True, null=True, on_delete=models.CASCADE)
     experiment = models.ForeignKey(Experiment, related_name="EAV_experiment", blank=True, null=True, on_delete=models.CASCADE)
+    population = models.ForeignKey(ExperimentPopulation, related_name="EAV_population", blank=True, null=True, on_delete=models.CASCADE)
     outcome = models.ForeignKey(ExperimentPopulationOutcome, related_name="EAV_outcome", blank=True, null=True, on_delete=models.CASCADE)
     # End of entity options
     # A: Attribute
@@ -635,6 +637,7 @@ class EAV(models.Model):
     # allowing for unique_together (i.e. one EAV instance per entity per user).
     publication_index = models.ForeignKey(Publication, related_name="EAV_publication_index", blank=True, null=True, on_delete=models.CASCADE)
     experiment_index = models.ForeignKey(Experiment, related_name="EAV_experiment_index", blank=True, null=True, on_delete=models.CASCADE)
+    population_index = models.ForeignKey(ExperimentPopulation, related_name="EAV_population_index", blank=True, null=True, on_delete=models.CASCADE)
     outcome_index = models.ForeignKey(ExperimentPopulationOutcome, related_name="EAV_outcome_index", blank=True, null=True, on_delete=models.CASCADE)
     # End of indexes
     created = models.DateTimeField(auto_now_add=True)
@@ -649,6 +652,7 @@ class EAV(models.Model):
         unique_together = (
             ('attribute', 'publication', 'user'),
             ('attribute', 'experiment', 'user'),
+            ('attribute', 'population', 'user'),
             ('attribute', 'outcome', 'user')
         )
 

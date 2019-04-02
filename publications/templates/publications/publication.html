@@ -3,7 +3,7 @@
 {% load metadataset_tags %}
 
 {% block title %}
-  Publication | Metadataset | www.metadataset.com
+  Publication-level metadata | Metadataset | www.metadataset.com
 {% endblock %}
 
 {% block css %}
@@ -16,7 +16,7 @@
 <form method="post" action="">{% csrf_token %}
 
   <h1>
-    Stage 1: Title/Abstract
+    Stage 1: Title/abstract
     {% if is_relevant == 'True' %}
       <span class="blue">[included at Stage 1]</span>
     {% elif is_relevant == 'False' %}
@@ -45,7 +45,7 @@
   <p><a href="{% url 'edit_publication' subject=subject.slug publication_pk=publication.pk %}">Edit this title/abstract</a></p>
 
   <h1 id="stage_2">
-    Stage 2: Full Text
+    Stage 2: Full text
     {% if full_text_is_relevant == 'True' %}
       <span class="blue">[included at Stage 2]</span>
     {% elif full_text_is_relevant == 'False' %}
@@ -55,10 +55,7 @@
   <p>
     <span class="bold">Based on the full text, should this publication be included or excluded?</span> If you excluded this publication at Stage 1, then skip this step and go to the next publication.
   </p>
-  <h1>Full Text</h1>
-  <p>
-    <a target="_blank" href="https://www.google.com/search?q=%22{{ publication.google_string }}%22">{{ publication.title|default:'[title not available]' }}</a>
-  </p>
+  <h1>Citation for this full text</h1>
   <p>
     {% if publication.author_list %}
       {{ publication.author_list|join:", "|default:'[authors not available]' }}
@@ -66,6 +63,7 @@
       {{ publication.authors|default:'[authors not available]' }}
     {% endif %}
      ({{ publication.year|default:'[year not available]' }})
+     <a target="_blank" href="https://www.google.com/search?q=%22{{ publication.google_string }}%22">{{ publication.title|default:'[title not available]' }}</a>
      <span class="italic">{{ publication.journal|default:'[journal not available]' }}</span>
     {% if publication.volume %}
       <span class="bold">{{ publication.volume }}</span>
@@ -86,7 +84,7 @@
     {% endif %}
   </p>
 
-  <h1>Exclude?</h1>
+  <h1>Exclude this full text?</h1>
   <p>
     <span class="bold">If it should be excluded</span>, select one or more reason(s), write a note (if you want), and then click "Exclude based on the full text".
   </p>
@@ -133,7 +131,7 @@
     <input type="submit" name="full_text_is_not_relevant" value="Exclude based on the full text" />
   </p>
 
-  <h1>Include?</h1>
+  <h1>Include this full text?</h1>
   <p><span class="bold">If it should be included</span>, select one or more intervention(s) that were tested in this publication, and then click "Include based on the full text".</p>
 
   <table>
@@ -170,7 +168,7 @@
     </tr>
   </table>
 
-  <h1>Other Metadata?</h1>
+  <h1>Other metadata?</h1>
   <p>When you select and save an intervention, a link will appear for "Populations" (above). Click this link to enter other metadata for that intervention. To enter other metadata for this publication in general (not for each specific intervention within this publication), click "Other metadata".</p>
   <p>
     <a class="button" href="{% url 'metadata' subject=subject.slug publication_pk=publication.pk %}">Other metadata</a>

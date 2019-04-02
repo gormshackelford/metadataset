@@ -3,7 +3,7 @@
 {% load metadataset_tags %}
 
 {% block title %}
-  Edit publication | Metadataset | www.metadataset.com
+  Add Publication | Metadataset | www.metadataset.com
 {% endblock %}
 
 {% block css %}
@@ -13,14 +13,7 @@
 
 {% block content %}
 
-<h1>Edit publication</h1>
-
-<p>
-  Please be careful when changing this metadata. Your changes will affect all users, some of whom may already have screened or extracted metadata from this publication.
-</p>
-<p>
-  If you make any major changes (e.g., adding an abstract, if no abstract was available), then you should leave a note that justifies your changes (e.g., the source of the abstract). Your name will be attached to your changes. All changes will be version controlled, and so it will be possible for us to revert to an earlier version, if there are any major problems.
-</p>
+<h1>Add a publication</h1>
 
 <form method="post" action="">{% csrf_token %}
   <table>

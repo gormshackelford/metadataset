@@ -17,7 +17,7 @@ from collections import Counter
 from itertools import chain
 from random import shuffle
 from .tokens import account_activation_token
-from .forms import AssessmentForm, AttributeForm, AttributeOptionForm, EAVExperimentForm, EAVOutcomeForm, EAVPublicationForm, EffectForm, ExperimentForm, ExperimentCountryForm, ExperimentDateForm, ExperimentDesignForm, ExperimentLatLongForm, ExperimentLatLongDMSForm, ExperimentPopulationForm, ExperimentPopulationOutcomeForm, FullTextAssessmentForm, InterventionForm, OutcomeForm, ProfileForm, PublicationForm, PublicationCountryForm, PublicationDateForm, PublicationLatLongForm, PublicationLatLongDMSForm, PublicationPopulationForm, PublicationPopulationOutcomeForm, SignUpForm, UserForm
+from .forms import AssessmentForm, AttributeForm, AttributeOptionForm, EAVExperimentForm, EAVOutcomeForm, EAVPopulationForm, EAVPublicationForm, EffectForm, ExperimentForm, ExperimentCountryForm, ExperimentDateForm, ExperimentDesignForm, ExperimentLatLongForm, ExperimentLatLongDMSForm, ExperimentPopulationForm, ExperimentPopulationOutcomeForm, FullTextAssessmentForm, InterventionForm, OutcomeForm, ProfileForm, PublicationForm, PublicationCountryForm, PublicationDateForm, PublicationLatLongForm, PublicationLatLongDMSForm, PublicationPopulationForm, PublicationPopulationOutcomeForm, SignUpForm, UserForm
 from .models import Assessment, AssessmentStatus, Attribute, Country, Crop, Design, EAV, Experiment, ExperimentCountry, ExperimentCrop, ExperimentDate, ExperimentDesign, ExperimentLatLong, ExperimentLatLongDMS, ExperimentPopulation, ExperimentPopulationOutcome, Intervention, Outcome, Publication, PublicationCountry, PublicationDate, PublicationLatLong, PublicationLatLongDMS, PublicationPopulation, PublicationPopulationOutcome, Subject, User, UserSubject
 from .serializers import CountrySerializer, DesignSerializer, ExperimentSerializer, ExperimentCountrySerializer, ExperimentDesignSerializer, ExperimentPopulationSerializer, ExperimentPopulationOutcomeSerializer, InterventionSerializer, OutcomeSerializer, PublicationSerializer, PublicationPopulationSerializer, PublicationPopulationOutcomeSerializer, SubjectSerializer, UserSerializer
 from .decorators import group_required
@@ -943,6 +943,38 @@ def publication_population(request, subject, publication_pk, publication_populat
 
 
 @login_required
+def add_publication(request, subject):
+    """
+    On this page, the user adds a publication that has not come from a systematic search (e.g., publications from "other sources" in a PRISMA diagram).
+    """
+    user = request.user
+    data = request.POST or None
+    subject = Subject.objects.get(slug=subject)
+    user_subject = get_object_or_404(UserSubject, user=user, subject=subject)  # Check if this user has permission to work on this subject.
+    publication_form = PublicationForm(data=data)
+    if request.method == 'POST':
+        with transaction.atomic():
+            form = publication_form
+            if form.is_valid():
+                with reversion.create_revision():  # Version control (django-revision)
+                    instance = form.save(commit=False)
+                    instance.subject = subject
+                    instance.is_from_systematic_search = False
+                    instance.save()
+                    publication_pk = instance.pk
+                    reversion.set_user(request.user)
+        return redirect('publication', subject=subject.slug, publication_pk=publication_pk)
+    context = {
+        'subject': subject,
+        'publication_form': publication_form
+    }
+    # Get data for the sidebar.
+    status = get_status(user, subject)
+    context.update(status)
+    return render(request, 'publications/add_publication.html', context)
+
+
+@login_required
 def edit_publication(request, subject, publication_pk):
     """
     On this page, the user edits the title, abstract, etc. for this publication.
@@ -954,6 +986,7 @@ def edit_publication(request, subject, publication_pk):
     publication_pk = int(publication_pk)
     # This publication
     publication = get_object_or_404(Publication, pk=publication_pk, subject=subject)
+    publication_form = PublicationForm(data=data, instance=publication)
     if request.method == 'POST':
         publication_form = PublicationForm(request.POST, instance=publication)
         if publication_form.is_valid():
@@ -961,8 +994,6 @@ def edit_publication(request, subject, publication_pk):
                 publication_form.save()
                 reversion.set_user(request.user)
         return redirect('publication', subject=subject.slug, publication_pk=publication_pk)
-    else:
-        publication_form = PublicationForm(instance=publication)
     context = {
         'subject': subject,
         'publication': publication,
@@ -1151,22 +1182,62 @@ def population(request, subject, publication_pk, experiment_index, population_in
     data = request.POST or None
     subject = Subject.objects.get(slug=subject)
     user_subject = get_object_or_404(UserSubject, user=user, subject=subject)  # Check if this user has permission to work on this subject.
-    ExperimentPopulationOutcomeFormSet = modelformset_factory(ExperimentPopulationOutcome, form=ExperimentPopulationOutcomeForm, extra=4, can_delete=True)
+    attribute = subject.attribute  # The root attribute for this subject (each subject can have its own classification of attributes)
+    attributes = Attribute.objects.get(pk=attribute.pk).get_children()
+    attributes_count = attributes.count()
     # This publication
     publication = get_object_or_404(Publication, pk=publication_pk, subject=subject)
-    experiments = Experiment.objects.filter(publication=publication).order_by('pk')
     # This experiment
+    experiments = Experiment.objects.filter(publication=publication).order_by('pk')
     experiment = experiments[experiment_index]
-    experiment_populations = ExperimentPopulation.objects.filter(experiment=experiment).order_by('pk')
     # This population
+    experiment_populations = ExperimentPopulation.objects.filter(experiment=experiment).order_by('pk')
     experiment_population = experiment_populations[population_index]
-    # Formset for this population
-    formset = ExperimentPopulationOutcomeFormSet(data=data, queryset=ExperimentPopulationOutcome.objects.filter(experiment_population=experiment_population), prefix="experiment_population_outcome_formset")
-    # Outcome choices for the formset
-    for form in formset:
-        form.fields['outcome'] = TreeNodeChoiceField(queryset=Outcome.objects.get(pk=experiment_population.population.pk).get_descendants(include_self=True), level_indicator = "---")
+    # Formsets
+    ExperimentPopulationOutcomeFormSet = modelformset_factory(ExperimentPopulationOutcome, form=ExperimentPopulationOutcomeForm, extra=4, can_delete=True)
+    EAVFormSet = modelformset_factory(EAV, form=EAVPopulationForm, extra=attributes_count, max_num=attributes_count, can_delete=True)
+    # experiment_population_outcome_formset
+    experiment_population_outcome_formset = ExperimentPopulationOutcomeFormSet(data=data, queryset=ExperimentPopulationOutcome.objects.filter(experiment_population=experiment_population), prefix="experiment_population_outcome_formset")
+    outcomes = TreeNodeChoiceField(required=False, queryset=Outcome.objects.get(pk=experiment_population.population.pk).get_descendants(include_self=True), level_indicator = "---")
+    for form in experiment_population_outcome_formset:
+        form.fields['outcome'] = outcomes
+    # EAV_formset
+    EAV_formset = EAVFormSet(data=data, queryset=EAV.objects.filter(population=experiment_population), prefix="EAV_formset")
+    for form in EAV_formset:
+        # There should only be one instance per attribute, so we need to
+        # check which attributes have instances and create extra formset forms
+        # only for attributes without instances.
+        if form.instance.pk is not None:
+            attribute = form.instance.attribute
+            attributes = attributes.exclude(attribute=attribute)
+        else:
+            attribute = attributes[0]
+            attributes = attributes.exclude(attribute=attribute)
+            form.initial['attribute'] = attribute
+            form.initial['population'] = experiment_population  # For unique_together validation
+            form.initial['user'] = user  # For unique_together validation
+        if attribute.is_leaf_node():  # If factor options have not been defined, or if the data type is a number, not a factor
+            form.fields['value_as_factor'].disabled = True
+        else:  # If factor options have been defined (which is not possible if the data type is a number)
+            form.fields['value_as_number'].disabled = True
+            form.fields['value_as_factor'] = TreeNodeChoiceField(queryset=attribute.get_children(), level_indicator="")
     if request.method == 'POST':
         with transaction.atomic():
+            formset = EAV_formset
+            if formset.is_valid():
+                instances = formset.save(commit=False)
+                if 'delete' in request.POST:
+                    for obj in formset.deleted_objects:
+                        obj.delete()
+                else:
+                    for instance in instances:
+                        instance.population = experiment_population
+                        instance.user = user
+                        instance.publication_index = publication
+                        instance.experiment_index = experiment
+                        instance.population_index = experiment_population
+                        instance.save()
+            formset = experiment_population_outcome_formset
             if formset.is_valid():
                 instances = formset.save(commit=False)
                 if 'delete' in request.POST:
@@ -1184,7 +1255,8 @@ def population(request, subject, publication_pk, experiment_index, population_in
         'experiment_population': experiment_population,
         'experiment_index': experiment_index,
         'population_index': population_index,
-        'experiment_population_outcome_formset': formset
+        'experiment_population_outcome_formset': experiment_population_outcome_formset,
+        'EAV_formset': EAV_formset
     }
     return render(request, 'publications/population.html', context)
 

@@ -56,9 +56,6 @@ for result in results:
     doi = result.get('doi', '')
     if doi == 'NA':
         doi = ''
-    url = result.get('url', '')
-    if url == 'NA':
-        url = ''
 
     if start_page != '' and end_page != '':
         pages = '{start_page}-{end_page}'.format(start_page=start_page, end_page=end_page)
@@ -80,8 +77,6 @@ for result in results:
         pages = pages[0:30]
     if len(doi) > 510:
         doi = ''  # A broken DOI will not work.
-    if len(url) > 510:
-        doi = ''  # A broken URL will not work.
 
     record = Publication(
         title=title,
@@ -93,7 +88,6 @@ for result in results:
         issue=issue,
         pages=pages,
         doi=doi,
-        url=url,
         subject=subject
     )
     record.save()

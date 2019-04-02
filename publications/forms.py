@@ -1,6 +1,7 @@
 from django import forms
 from django.db import models
 from django.contrib.auth.forms import UserCreationForm
+from ast import literal_eval
 from mptt.forms import TreeNodeChoiceField
 from .models import Assessment, Attribute, EAV, Experiment, ExperimentCountry, ExperimentDate, ExperimentDesign, ExperimentLatLong, ExperimentLatLongDMS, ExperimentPopulation, ExperimentPopulationOutcome, Intervention, Outcome, Profile, Publication, PublicationCountry, PublicationDate, PublicationLatLong, PublicationLatLongDMS, PublicationPopulation, PublicationPopulationOutcome, User
 
@@ -56,7 +57,29 @@ class PublicationForm(forms.ModelForm):
 
     class Meta:
         model = Publication
-        exclude = ['subject']
+        exclude = ['subject', 'is_from_systematic_search']
+        widgets = {
+            'authors': forms.TextInput(attrs={
+                'placeholder': "Use commas and square brackets: ['Darwin, C.', 'Wallace, A. R.']"
+            }),
+            'pages': forms.TextInput(attrs={
+                'placeholder': '1-10'
+            }),
+            'doi': forms.TextInput(attrs={
+                'placeholder': '10.1186/s13750-018-0142-2'
+            })
+        }
+
+    def clean_authors(self):
+        # authors must be a Python list
+        authors = self.cleaned_data['authors']
+        try:
+            authors = literal_eval(authors)
+            if type(authors) is list:
+                return authors
+        except:
+            authors = ''
+            return authors
 
 
 class PublicationCountryForm(forms.ModelForm):
@@ -233,18 +256,25 @@ class EAVExperimentForm(forms.ModelForm):
 
     class Meta:
         model = EAV
-        exclude = ['outcome', 'publication', 'note']
+        exclude = ['outcome', 'population', 'publication', 'note']
+
+
+class EAVPopulationForm(forms.ModelForm):
+
+    class Meta:
+        model = EAV
+        exclude = ['experiment', 'outcome', 'publication', 'note']
 
 
 class EAVOutcomeForm(forms.ModelForm):
 
     class Meta:
         model = EAV
-        exclude = ['experiment', 'publication', 'note']
+        exclude = ['experiment', 'population', 'publication', 'note']
 
 
 class EAVPublicationForm(forms.ModelForm):
 
     class Meta:
         model = EAV
-        exclude = ['experiment', 'outcome', 'note']
+        exclude = ['experiment', 'outcome', 'population', 'note']

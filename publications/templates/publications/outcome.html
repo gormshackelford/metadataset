@@ -1,7 +1,7 @@
 {% extends 'publications/base.html' %}
 
 {% block title %}
-  Outcome | Metadataset | www.metadataset.com
+  Outcome-level metadata | Metadataset | www.metadataset.com
 {% endblock %}
 
 {% block css %}
@@ -10,15 +10,19 @@
 
 {% block content %}
 
-<h1>Outcome: {{ experiment_population_outcome.outcome|capfirst }}</h1>
+<h1>Outcome-level metadata</h1>
 
-<p><a href="{% url 'population' subject=subject.slug publication_pk=publication.pk experiment_index=experiment_index population_index=population_index %}">Back to all outcomes</a></p>
+<p><a href="{% url 'population' subject=subject.slug publication_pk=publication.pk experiment_index=experiment_index population_index=population_index %}">Go back to population-level metadata</a></p>
 
 <form method="post" action="">{% csrf_token %}
   <table>
 
-    {{ form }}
+    <tr><th colspan="2">This outcome</th></tr>
+    <tr><td colspan="2">{{ experiment_population_outcome.outcome|capfirst }}</td></tr>
 
+    <tr><td class="empty" colspan="2">&nbsp;</td></tr>
+
+    <tr><th colspan="2">Effects on this outcome</th></tr>
     {{ effect_formset.management_form }}
     {% for form in effect_formset %}
       <tr>
@@ -26,12 +30,8 @@
           {% for hidden_field in form.hidden_fields %}
             {{ hidden_field }}
           {% endfor %}
-          {{ form.comparison.label }}:
+          {{ form.effect.label }}:
         </td>
-        <td>{{ form.comparison }}</td>
-      </tr>
-      <tr>
-        <td>{{ form.effect.label }}:</td>
         <td>{{ form.effect }}</td>
       </tr>
       <tr>
@@ -127,10 +127,15 @@
         <td>{{ form.lsd }} {{ form.lsd.help_text }}</td>
       </tr>
       <tr>
+        <td>{{ form.comparison.label }}:</td>
+        <td>{{ form.comparison }}</td>
+      </tr>
+      <tr>
         <td>{{ form.note.label }}:</td>
         <td>{{ form.note }}</td>
       </tr>
       <tr>
+        <td class="bottom"></td>
         <td class="button bottom"><input type="submit" name="save" value="Save all changes" /></td>
       </tr>
     {% endfor %}
