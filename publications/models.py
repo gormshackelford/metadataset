@@ -543,22 +543,13 @@ class ExperimentPopulationOutcome(models.Model):
     experiment_population = models.ForeignKey(ExperimentPopulation, on_delete=models.CASCADE)
     outcome = TreeForeignKey(Outcome, on_delete=models.CASCADE)
     comparison = models.TextField(blank=True, null=True)  # "Comparison" is the "C" in "PICO".
-    EFFECT_CHOICES = (
-        (1, "+"),
-        (0, "0"),
-        (-1, "-")
-    )
-    effect = models.IntegerField(
-        blank=True,
-        null=True,
-        choices=EFFECT_CHOICES
-    )
-    effect_size = models.FloatField(blank=True, null=True)
+    effect_size = models.FloatField(blank=True, null=True, help_text="As published, not as calculated from the data above")
     EFFECT_SIZE_UNIT_CHOICES = (
-        ("g", "g - Hedges' g (standardized mean difference)"),
-        ("R", "R - Response ratio"),
-        ("L", "L - Log response ratio"),
-        ("Zr", "Zr - Fischer's Z-transformed r"),
+        ("d", "Standardized mean difference (d)"),
+        ("R", "Response ratio (R)"),
+        ("L", "Log response ratio (L)"),
+        ("r", "Correlation coefficient (r)"),
+        ("Zr", "Fischer's Z-transformed r (Zr)"),
         ("Other", "Other")
     )
     effect_size_unit = models.CharField(

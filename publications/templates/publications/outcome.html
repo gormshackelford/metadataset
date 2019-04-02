@@ -22,7 +22,7 @@
 
     <tr><td class="empty" colspan="2">&nbsp;</td></tr>
 
-    <tr><th colspan="2">Effects on this outcome</th></tr>
+    <tr><th colspan="2">Data extracted for this outcome</th></tr>
     {{ effect_formset.management_form }}
     {% for form in effect_formset %}
       <tr>
@@ -30,60 +30,8 @@
           {% for hidden_field in form.hidden_fields %}
             {{ hidden_field }}
           {% endfor %}
-          {{ form.effect.label }}:
+          {{ form.treatment_mean.label }}:
         </td>
-        <td>{{ form.effect }}</td>
-      </tr>
-      <tr>
-        <td>{{ form.effect_size.label }}:</td>
-        <td>{{ form.effect_size }}</td>
-      </tr>
-      <tr>
-        <td>{{ form.effect_size_unit.label }}:</td>
-        <td>{{ form.effect_size_unit }}</td>
-      </tr>
-      <tr>
-        <td>Effect size unit (other):</td>
-        <td>{{ form.other_effect_size_unit }}</td>
-      </tr>
-      <tr>
-        <td>CI lower limit:</td>
-        <td>{{ form.lower_limit }} {{ form.lower_limit.help_text }}</td>
-      </tr>
-      <tr>
-        <td>CI upper limit:</td>
-        <td>{{ form.upper_limit }} {{ form.upper_limit.help_text }}</td>
-      </tr>
-      <tr>
-        <td>{{ form.confidence.label }}:</td>
-        <td>{{ form.confidence }} {{ form.confidence.help_text }}</td>
-      </tr>
-      <tr>
-      <tr>
-        <td>SE:</td>
-        <td>{{ form.se }} {{ form.se.help_text }}</td>
-      </tr>
-      <tr>
-        <td>{{ form.variance.label }}:</td>
-        <td>{{ form.variance }} {{ form.variance.help_text }}</td>
-      </tr>
-      <tr>
-        <td>{{ form.n.label }}:</td>
-        <td>{{ form.n }} {{ form.n.help_text }}</td>
-      </tr>
-        <td>Approximate P-value:</td>
-        <td>{{ form.approximate_p_value }}</td>
-      </tr>
-      <tr>
-        <td>Exact P-value:</td>
-        <td>{{ form.exact_p_value }} {{ form.exact_p_value.help_text }}</td>
-      </tr>
-      <tr>
-        <td>Z-value:</td>
-        <td>{{ form.z_value }}</td>
-      </tr>
-      <tr>
-        <td>{{ form.treatment_mean.label }}:</td>
         <td>{{ form.treatment_mean }}</td>
       </tr>
       <tr>
@@ -127,6 +75,18 @@
         <td>{{ form.lsd }} {{ form.lsd.help_text }}</td>
       </tr>
       <tr>
+        <td>Approximate P-value:</td>
+        <td>{{ form.approximate_p_value }}</td>
+      </tr>
+      <tr>
+        <td>Exact P-value:</td>
+        <td>{{ form.exact_p_value }} {{ form.exact_p_value.help_text }}</td>
+      </tr>
+      <tr>
+        <td>Exact Z-value:</td>
+        <td>{{ form.z_value }}</td>
+      </tr>
+      <tr>
         <td>{{ form.comparison.label }}:</td>
         <td>{{ form.comparison }}</td>
       </tr>
@@ -134,6 +94,60 @@
         <td>{{ form.note.label }}:</td>
         <td>{{ form.note }}</td>
       </tr>
+      <tr>
+        <td class="bottom"></td>
+        <td class="button bottom"><input type="submit" name="save" value="Save all changes" /></td>
+      </tr>
+
+      <tr><td class="empty" colspan="2">&nbsp;</td></tr>
+
+      <tr>
+        <th colspan="2">Effect size extracted for this outcome</th>
+      </tr>
+      <tr>
+        <td class="top" colspan="2">
+          Enter the effect size and the following data only if you extracted them from the publication, not if you calculated them from the other data that you extracted. Effect sizes will be calculated automatically from the extracted data.
+        </td>
+      </tr>
+      <tr>
+        <td>{{ form.effect_size.label }}:</td>
+        <td>{{ form.effect_size }}</td>
+      </tr>
+      <tr>
+        <td>{{ form.effect_size_unit.label }}:</td>
+        <td>{{ form.effect_size_unit }}</td>
+      </tr>
+      <tr>
+        <td>Effect size unit (other):</td>
+        <td>{{ form.other_effect_size_unit }}</td>
+      </tr>
+      <tr>
+        <td>CI lower limit:</td>
+        <td>{{ form.lower_limit }} {{ form.lower_limit.help_text }}</td>
+      </tr>
+      <tr>
+        <td>CI upper limit:</td>
+        <td>{{ form.upper_limit }} {{ form.upper_limit.help_text }}</td>
+      </tr>
+      <tr>
+        <td>{{ form.confidence.label }}:</td>
+        <td>{{ form.confidence }} {{ form.confidence.help_text }}</td>
+      </tr>
+      <tr>
+        <td>SE:</td>
+        <td>{{ form.se }} {{ form.se.help_text }}</td>
+      </tr>
+      <tr>
+        <td>{{ form.variance.label }}:</td>
+        <td>{{ form.variance }} {{ form.variance.help_text }}</td>
+      </tr>
+      <tr>
+        <td>{{ form.n.label }}:</td>
+        <td>{{ form.n }} {{ form.n.help_text }}</td>
+      </tr>
+
+      <tr><td class="empty" colspan="2">&nbsp;</td></tr>
+
       <tr>
         <td class="bottom"></td>
         <td class="button bottom"><input type="submit" name="save" value="Save all changes" /></td>
