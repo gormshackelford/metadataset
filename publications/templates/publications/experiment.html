@@ -92,7 +92,7 @@
 
     <tr><th colspan="4">Covariates for this intervention</th></tr>
     <tr>
-      <td class="top" colspan="4">If you enter <a href="{% url 'metadata' subject=subject.slug publication_pk=publication.pk %}">other metadata</a> at the publication level, then you do not need to enter it here (at the intervention level), unless there is metadata that applies only to this intervention.</td>
+      <td class="top" colspan="4">If you entered this metadata at the <a href="{% url 'metadata' subject=subject.slug publication_pk=publication.pk %}">publication level</a>, then you do not need to enter it here (at the intervention level). However, if there is metadata that applies only to this intervention, then you should enter it here. It will supercede the metadata at the publication level.</td>
     </tr>
     <tr>
       <td colspan="3"></td>
@@ -185,6 +185,9 @@
     <tr><th colspan="4">Other covariates for this intervention</th></tr>
     <tr>
       <td class="top" colspan="4"><a target="_blank" href="{% url 'attributes' subject=subject.slug %}">Add/edit other covariates</a></td>
+    </tr>
+    <tr>
+      <td class="top" colspan="4">If you entered this metadata at the <a href="{% url 'metadata' subject=subject.slug publication_pk=publication.pk %}">publication level</a>, then you do not need to enter it here (at the intervention level). However, if there is metadata that applies only to this intervention, then you should enter it here. It will supercede the metadata at the publication level.</td>
     </tr>
 
     {{ EAV_formset.management_form }}
