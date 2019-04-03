@@ -3,7 +3,7 @@ from django.db import models
 from django.contrib.auth.forms import UserCreationForm
 from ast import literal_eval
 from mptt.forms import TreeNodeChoiceField
-from .models import Assessment, Attribute, EAV, Experiment, ExperimentCountry, ExperimentDate, ExperimentDesign, ExperimentLatLong, ExperimentLatLongDMS, ExperimentPopulation, ExperimentPopulationOutcome, Intervention, Outcome, Profile, Publication, PublicationCountry, PublicationDate, PublicationLatLong, PublicationLatLongDMS, PublicationPopulation, PublicationPopulationOutcome, User
+from .models import Assessment, Attribute, Data, EAV, Experiment, ExperimentCountry, ExperimentDate, ExperimentDesign, ExperimentLatLong, ExperimentLatLongDMS, ExperimentPopulation, ExperimentPopulationOutcome, Intervention, Outcome, Profile, Publication, PublicationCountry, PublicationDate, PublicationLatLong, PublicationLatLongDMS, PublicationPopulation, PublicationPopulationOutcome, User
 
 
 class SignUpForm(UserCreationForm):
@@ -212,11 +212,11 @@ class ExperimentPopulationOutcomeForm(forms.ModelForm):
         fields = ['outcome']
 
 
-class EffectForm(forms.ModelForm):
+class DataForm(forms.ModelForm):
 
     class Meta:
-        model = ExperimentPopulationOutcome
-        exclude = ['experiment_population', 'outcome']
+        model = Data
+        exclude = ['subject', 'publication', 'experiment', 'experiment_population', 'experiment_population_outcome']
 
 
 class AttributeForm(forms.ModelForm):

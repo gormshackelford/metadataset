@@ -1,4 +1,4 @@
-from .models import Country, Design, Experiment, ExperimentCountry, ExperimentDesign, ExperimentPopulation, ExperimentPopulationOutcome, Intervention, Outcome, Publication, PublicationPopulation, PublicationPopulationOutcome, Subject, User
+from .models import Country, Data, Design, Experiment, ExperimentCountry, ExperimentDesign, ExperimentPopulation, ExperimentPopulationOutcome, Intervention, Outcome, Publication, PublicationPopulation, PublicationPopulationOutcome, Subject, User
 from rest_framework import serializers
 
 
@@ -103,4 +103,15 @@ class PublicationPopulationOutcomeSerializer(serializers.HyperlinkedModelSeriali
 
     class Meta:
         model = PublicationPopulationOutcome
+        exclude = ('created', )
+
+
+class DataSerializer(serializers.HyperlinkedModelSerializer):
+    subject = SubjectSerializer(read_only=True)
+    experiment = ExperimentSerializer(read_only=True)
+    experiment_population = ExperimentPopulationSerializer(read_only=True)
+    experiment_population_outcome = ExperimentPopulationOutcomeSerializer(read_only=True)
+
+    class Meta:
+        model = Data
         exclude = ('created', )

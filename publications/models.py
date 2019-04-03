@@ -542,13 +542,27 @@ class ExperimentPopulation(models.Model):
 class ExperimentPopulationOutcome(models.Model):
     experiment_population = models.ForeignKey(ExperimentPopulation, on_delete=models.CASCADE)
     outcome = TreeForeignKey(Outcome, on_delete=models.CASCADE)
+    created = models.DateTimeField(auto_now_add=True)
+    updated = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.experiment_population.experiment.publication.title
+
+
+class Data(models.Model):
+    comparison = models.CharField(max_length=255, blank=True, null=True)  # "Comparison" is the "C" in "PICO".
+    subject = models.ForeignKey(Subject, on_delete=models.CASCADE)
+    publication = models.ForeignKey(Publication, on_delete=models.CASCADE)
+    experiment = models.ForeignKey(Experiment, on_delete=models.CASCADE)
+    experiment_population = models.ForeignKey(ExperimentPopulation, on_delete=models.CASCADE)
+    experiment_population_outcome = models.ForeignKey(ExperimentPopulationOutcome, on_delete=models.CASCADE)
     treatment_mean = models.FloatField(blank=True, null=True)
-    treatment_sd = models.FloatField(blank=True, null=True)
-    treatment_n = models.IntegerField(blank=True, null=True)
+    treatment_sd = models.FloatField(blank=True, null=True, help_text="Standard deviation")
+    treatment_n = models.IntegerField(blank=True, null=True, help_text="Number of replicates")
     control_mean = models.FloatField(blank=True, null=True)
-    control_sd = models.FloatField(blank=True, null=True)
-    control_n = models.IntegerField(blank=True, null=True)
-    unit = models.CharField(max_length=60, blank=True, null=True)
+    control_sd = models.FloatField(blank=True, null=True, help_text="Standard deviation")
+    control_n = models.IntegerField(blank=True, null=True, help_text="Number of replicates")
+    unit = models.CharField(max_length=60, blank=True, null=True, help_text="Unit for treatment mean and control mean")
     sed = models.FloatField(blank=True, null=True, help_text="Standard error of the difference between the means")
     lsd = models.FloatField(blank=True, null=True, help_text="Least significant difference between the means")
     APPROXIMATE_P_VALUE_CHOICES = (
@@ -566,7 +580,7 @@ class ExperimentPopulationOutcome(models.Model):
         null=True,
         choices=APPROXIMATE_P_VALUE_CHOICES
     )
-    p_value = models.FloatField(blank=True, null=True, validators=[MinValueValidator(0), MaxValueValidator(1)], help_text="Please enter a value from 0 to 1.")
+    p_value = models.FloatField(blank=True, null=True, validators=[MinValueValidator(0), MaxValueValidator(1)])
     z_value = models.FloatField(blank=True, null=True)
     effect_size = models.FloatField(blank=True, null=True, help_text="As published, not as calculated from the data above")
     EFFECT_SIZE_UNIT_CHOICES = (
@@ -590,13 +604,12 @@ class ExperimentPopulationOutcome(models.Model):
     se = models.FloatField(blank=True, null=True, help_text="Standard error of the effect size")
     variance = models.FloatField(blank=True, null=True, help_text="Variance of the effect size")
     n = models.IntegerField(blank=True, null=True, help_text="Number of replicates")
-    comparison = models.TextField(blank=True, null=True)  # "Comparison" is the "C" in "PICO".
-    note = models.TextField(blank=True, null=True)
+    note = models.CharField(max_length=255, blank=True, null=True)
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return self.experiment_population.experiment.publication.title
+        return self.experiment_population_outcome.experiment_population.experiment.publication.title
 
 
 class EAV(models.Model):

@@ -17,9 +17,9 @@ from collections import Counter
 from itertools import chain
 from random import shuffle
 from .tokens import account_activation_token
-from .forms import AssessmentForm, AttributeForm, AttributeOptionForm, EAVExperimentForm, EAVOutcomeForm, EAVPopulationForm, EAVPublicationForm, EffectForm, ExperimentForm, ExperimentCountryForm, ExperimentDateForm, ExperimentDesignForm, ExperimentLatLongForm, ExperimentLatLongDMSForm, ExperimentPopulationForm, ExperimentPopulationOutcomeForm, FullTextAssessmentForm, InterventionForm, OutcomeForm, ProfileForm, PublicationForm, PublicationCountryForm, PublicationDateForm, PublicationLatLongForm, PublicationLatLongDMSForm, PublicationPopulationForm, PublicationPopulationOutcomeForm, SignUpForm, UserForm
-from .models import Assessment, AssessmentStatus, Attribute, Country, Crop, Design, EAV, Experiment, ExperimentCountry, ExperimentCrop, ExperimentDate, ExperimentDesign, ExperimentLatLong, ExperimentLatLongDMS, ExperimentPopulation, ExperimentPopulationOutcome, Intervention, Outcome, Publication, PublicationCountry, PublicationDate, PublicationLatLong, PublicationLatLongDMS, PublicationPopulation, PublicationPopulationOutcome, Subject, User, UserSubject
-from .serializers import CountrySerializer, DesignSerializer, ExperimentSerializer, ExperimentCountrySerializer, ExperimentDesignSerializer, ExperimentPopulationSerializer, ExperimentPopulationOutcomeSerializer, InterventionSerializer, OutcomeSerializer, PublicationSerializer, PublicationPopulationSerializer, PublicationPopulationOutcomeSerializer, SubjectSerializer, UserSerializer
+from .forms import AssessmentForm, AttributeForm, AttributeOptionForm, DataForm, EAVExperimentForm, EAVOutcomeForm, EAVPopulationForm, EAVPublicationForm, ExperimentForm, ExperimentCountryForm, ExperimentDateForm, ExperimentDesignForm, ExperimentLatLongForm, ExperimentLatLongDMSForm, ExperimentPopulationForm, ExperimentPopulationOutcomeForm, FullTextAssessmentForm, InterventionForm, OutcomeForm, ProfileForm, PublicationForm, PublicationCountryForm, PublicationDateForm, PublicationLatLongForm, PublicationLatLongDMSForm, PublicationPopulationForm, PublicationPopulationOutcomeForm, SignUpForm, UserForm
+from .models import Assessment, AssessmentStatus, Attribute, Country, Crop, Data, Design, EAV, Experiment, ExperimentCountry, ExperimentCrop, ExperimentDate, ExperimentDesign, ExperimentLatLong, ExperimentLatLongDMS, ExperimentPopulation, ExperimentPopulationOutcome, Intervention, Outcome, Publication, PublicationCountry, PublicationDate, PublicationLatLong, PublicationLatLongDMS, PublicationPopulation, PublicationPopulationOutcome, Subject, User, UserSubject
+from .serializers import CountrySerializer, DataSerializer, DesignSerializer, ExperimentSerializer, ExperimentCountrySerializer, ExperimentDesignSerializer, ExperimentPopulationSerializer, ExperimentPopulationOutcomeSerializer, InterventionSerializer, OutcomeSerializer, PublicationSerializer, PublicationPopulationSerializer, PublicationPopulationOutcomeSerializer, SubjectSerializer, UserSerializer
 from .decorators import group_required
 from mptt.forms import TreeNodeChoiceField
 from haystack.generic_views import SearchView
@@ -80,37 +80,45 @@ class ExperimentPopulationViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = ExperimentPopulationSerializer
 
 
-class ExperimentPopulationOutcomeViewSetFilter(filters.FilterSet):
-    class Meta:
-        model = ExperimentPopulationOutcome
-        fields = [
-            'experiment_population__experiment__publication__subject',
-            'experiment_population__experiment__intervention',
-            'outcome'
-        ]
-
-
 class ExperimentPopulationOutcomeViewSet(viewsets.ReadOnlyModelViewSet):
     """
-    API endpoint for "effects" ("experiment populations outcomes") (i.e. one "outcome" for one "population" in one "experiment")
+    API endpoint for "experiment populations outcomes" (i.e. one "outcome" for one "population" in one "experiment")
     """
     queryset = ExperimentPopulationOutcome.objects.all()
     serializer_class = ExperimentPopulationOutcomeSerializer
-    filterset_class = ExperimentPopulationOutcomeViewSetFilter
+
+
+class DataViewSetFilter(filters.FilterSet):
+    class Meta:
+        model = Data
+        fields = [
+            'subject',
+            'experiment__intervention',
+            'experiment_population_outcome__outcome'
+        ]
+
+
+class DataViewSet(viewsets.ReadOnlyModelViewSet):
+    """
+    API endpoint for data (e.g., treatment mean, control mean, etc.)
+    """
+    queryset = Data.objects.all()
+    serializer_class = DataSerializer
+    filterset_class = DataViewSetFilter
 
     def get_queryset(self):
-        queryset = ExperimentPopulationOutcome.objects.all()
+        queryset = Data.objects.all()
         intervention_pk = self.kwargs.get('intervention_pk', None)
         if intervention_pk is not None:
             interventions = Intervention.objects.all().filter(pk=intervention_pk).get_descendants(include_self=True)
             queryset = queryset.filter(
-                experiment_population__experiment__intervention__in=interventions
+                experiment__intervention__in=interventions
             )
         outcome_pk = self.kwargs.get('outcome_pk', None)
         if outcome_pk is not None:
             outcomes = Outcome.objects.all().filter(pk=outcome_pk).get_descendants(include_self=True)
             queryset = queryset.filter(
-                outcome__in=outcomes
+                experiment_population_outcome__outcome__in=outcomes
             )
         return queryset
 
@@ -1274,7 +1282,7 @@ def outcome(request, subject, publication_pk, experiment_index, population_index
     data = request.POST or None
     subject = Subject.objects.get(slug=subject)
     user_subject = get_object_or_404(UserSubject, user=user, subject=subject)  # Check if this user has permission to work on this subject.
-    EffectFormSet = modelformset_factory(ExperimentPopulationOutcome, form=EffectForm, extra=0, can_delete=True)
+    DataFormSet = modelformset_factory(Data, form=DataForm, extra=1, can_delete=True)
     # This publication
     publication = get_object_or_404(Publication, pk=publication_pk, subject=subject)
     # This experiment
@@ -1287,9 +1295,10 @@ def outcome(request, subject, publication_pk, experiment_index, population_index
     experiment_population_outcomes = ExperimentPopulationOutcome.objects.filter(experiment_population=experiment_population).order_by('pk')
     experiment_population_outcome = experiment_population_outcomes[outcome_index]
     # Formset for this outcome
-    formset = EffectFormSet(data=data, queryset=ExperimentPopulationOutcome.objects.filter(pk=experiment_population_outcome.pk), prefix="effect_formset")
+    data_formset = DataFormSet(data=data, queryset=Data.objects.filter(experiment_population_outcome=experiment_population_outcome.pk), prefix="data_formset")
     if request.method == 'POST':
         with transaction.atomic():
+            formset = data_formset
             if formset.is_valid():
                 instances = formset.save(commit=False)
                 if 'delete' in request.POST:
@@ -1297,7 +1306,11 @@ def outcome(request, subject, publication_pk, experiment_index, population_index
                         obj.delete()
                 else:
                     for instance in instances:
+                        instance.subject = subject
+                        instance.publication = publication
+                        instance.experiment = experiment
                         instance.experiment_population = experiment_population
+                        instance.experiment_population_outcome = experiment_population_outcome
                         instance.save()
             return redirect('outcome', subject=subject.slug, publication_pk=publication_pk, experiment_index=experiment_index, population_index=population_index, outcome_index=outcome_index)
     context = {
@@ -1309,7 +1322,7 @@ def outcome(request, subject, publication_pk, experiment_index, population_index
         'experiment_index': experiment_index,
         'population_index': population_index,
         'outcome_index': outcome_index,
-        'effect_formset': formset
+        'data_formset': data_formset
     }
     return render(request, 'publications/outcome.html', context)
 

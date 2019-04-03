@@ -23,8 +23,8 @@
     <tr><td class="empty" colspan="2">&nbsp;</td></tr>
 
     <tr><th colspan="2">Data extracted for this outcome</th></tr>
-    {{ effect_formset.management_form }}
-    {% for form in effect_formset %}
+    {{ data_formset.management_form }}
+    {% for form in data_formset %}
       <tr>
         <td>
           {% for hidden_field in form.hidden_fields %}
@@ -36,11 +36,11 @@
       </tr>
       <tr>
         <td>Treatment SD:</td>
-        <td>{{ form.treatment_sd }}</td>
+        <td>{{ form.treatment_sd }} {{ form.treatment_sd.help_text }}</td>
       </tr>
       <tr>
         <td>Treatment N:</td>
-        <td>{{ form.treatment_n }}</td>
+        <td>{{ form.treatment_n }} {{ form.treatment_n.help_text }}</td>
       </tr>
       <tr>
         <td>{{ form.control_mean.label }}:</td>
@@ -48,15 +48,15 @@
       </tr>
       <tr>
         <td>Control SD:</td>
-        <td>{{ form.control_sd }}</td>
+        <td>{{ form.control_sd }} {{ form.control_sd.help_text }}</td>
       </tr>
       <tr>
         <td>Control N:</td>
-        <td>{{ form.control_n }}</td>
+        <td>{{ form.control_n }} {{ form.control_n.help_text }}</td>
       </tr>
       <tr>
         <td>{{ form.unit.label }}:</td>
-        <td>{{ form.unit }}</td>
+        <td>{{ form.unit }} {{ form.unit.help_text }}</td>
       </tr>
       <tr>
         <td>SED:</td>
