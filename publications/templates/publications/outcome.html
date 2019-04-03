@@ -35,36 +35,28 @@
         <td>{{ form.treatment_mean }}</td>
       </tr>
       <tr>
+        <td>Treatment SD:</td>
+        <td>{{ form.treatment_sd }}</td>
+      </tr>
+      <tr>
+        <td>Treatment N:</td>
+        <td>{{ form.treatment_n }}</td>
+      </tr>
+      <tr>
         <td>{{ form.control_mean.label }}:</td>
         <td>{{ form.control_mean }}</td>
       </tr>
       <tr>
+        <td>Control SD:</td>
+        <td>{{ form.control_sd }}</td>
+      </tr>
+      <tr>
+        <td>Control N:</td>
+        <td>{{ form.control_n }}</td>
+      </tr>
+      <tr>
         <td>{{ form.unit.label }}:</td>
         <td>{{ form.unit }}</td>
-      </tr>
-      <tr>
-        <td>{{ form.n_treatment.label }}:</td>
-        <td>{{ form.n_treatment }}</td>
-      </tr>
-      <tr>
-        <td>{{ form.n_control.label }}:</td>
-        <td>{{ form.n_control }}</td>
-      </tr>
-      <tr>
-        <td>SD treatment:</td>
-        <td>{{ form.sd_treatment }}</td>
-      </tr>
-      <tr>
-        <td>SD control:</td>
-        <td>{{ form.sd_control }}</td>
-      </tr>
-      <tr>
-        <td>SE treatment:</td>
-        <td>{{ form.se_treatment }}</td>
-      </tr>
-      <tr>
-        <td>SE control:</td>
-        <td>{{ form.se_control }}</td>
       </tr>
       <tr>
         <td>SED:</td>
@@ -80,7 +72,7 @@
       </tr>
       <tr>
         <td>Exact P-value:</td>
-        <td>{{ form.exact_p_value }} {{ form.exact_p_value.help_text }}</td>
+        <td>{{ form.p_value }} {{ form.p_value.help_text }}</td>
       </tr>
       <tr>
         <td>Exact Z-value:</td>
