@@ -29,7 +29,7 @@ class OutcomeSerializer(serializers.HyperlinkedModelSerializer):
 class PublicationSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = Publication
-        fields = ('title', 'id')
+        fields = ('title', 'subject', 'id')
 
 
 class SubjectSerializer(serializers.HyperlinkedModelSerializer):

@@ -83,7 +83,11 @@ class ExperimentPopulationViewSet(viewsets.ReadOnlyModelViewSet):
 class ExperimentPopulationOutcomeViewSetFilter(filters.FilterSet):
     class Meta:
         model = ExperimentPopulationOutcome
-        fields = ['outcome', 'experiment_population__experiment__intervention']
+        fields = [
+            'experiment_population__experiment__publication__subject',
+            'experiment_population__experiment__intervention',
+            'outcome'
+        ]
 
 
 class ExperimentPopulationOutcomeViewSet(viewsets.ReadOnlyModelViewSet):

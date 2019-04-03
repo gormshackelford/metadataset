@@ -542,7 +542,32 @@ class ExperimentPopulation(models.Model):
 class ExperimentPopulationOutcome(models.Model):
     experiment_population = models.ForeignKey(ExperimentPopulation, on_delete=models.CASCADE)
     outcome = TreeForeignKey(Outcome, on_delete=models.CASCADE)
-    comparison = models.TextField(blank=True, null=True)  # "Comparison" is the "C" in "PICO".
+    treatment_mean = models.FloatField(blank=True, null=True)
+    treatment_sd = models.FloatField(blank=True, null=True)
+    treatment_n = models.IntegerField(blank=True, null=True)
+    control_mean = models.FloatField(blank=True, null=True)
+    control_sd = models.FloatField(blank=True, null=True)
+    control_n = models.IntegerField(blank=True, null=True)
+    unit = models.CharField(max_length=60, blank=True, null=True)
+    sed = models.FloatField(blank=True, null=True, help_text="Standard error of the difference between the means")
+    lsd = models.FloatField(blank=True, null=True, help_text="Least significant difference between the means")
+    APPROXIMATE_P_VALUE_CHOICES = (
+        ("< 0.0001", "< 0.0001"),
+        ("< 0.001", "< 0.001"),
+        ("< 0.01", "< 0.01"),
+        ("< 0.05", "< 0.05"),
+        ("< 0.1", "< 0.1"),
+        ("> 0.05", "> 0.05"),
+        ("> 0.1", "> 0.1")
+    )
+    approximate_p_value = models.CharField(
+        max_length=30,
+        blank=True,
+        null=True,
+        choices=APPROXIMATE_P_VALUE_CHOICES
+    )
+    p_value = models.FloatField(blank=True, null=True, validators=[MinValueValidator(0), MaxValueValidator(1)], help_text="Please enter a value from 0 to 1.")
+    z_value = models.FloatField(blank=True, null=True)
     effect_size = models.FloatField(blank=True, null=True, help_text="As published, not as calculated from the data above")
     EFFECT_SIZE_UNIT_CHOICES = (
         ("d", "Standardized mean difference (d)"),
@@ -565,34 +590,7 @@ class ExperimentPopulationOutcome(models.Model):
     se = models.FloatField(blank=True, null=True, help_text="Standard error of the effect size")
     variance = models.FloatField(blank=True, null=True, help_text="Variance of the effect size")
     n = models.IntegerField(blank=True, null=True, help_text="Number of replicates")
-    APPROXIMATE_P_VALUE_CHOICES = (
-        ("< 0.0001", "< 0.0001"),
-        ("< 0.001", "< 0.001"),
-        ("< 0.01", "< 0.01"),
-        ("< 0.05", "< 0.05"),
-        ("< 0.1", "< 0.1"),
-        ("> 0.05", "> 0.05"),
-        ("> 0.1", "> 0.1")
-    )
-    approximate_p_value = models.CharField(
-        max_length=30,
-        blank=True,
-        null=True,
-        choices=APPROXIMATE_P_VALUE_CHOICES
-    )
-    exact_p_value = models.FloatField(blank=True, null=True, validators=[MinValueValidator(0), MaxValueValidator(1)], help_text="Please enter a value from 0 to 1.")
-    z_value = models.FloatField(blank=True, null=True)
-    treatment_mean = models.FloatField(blank=True, null=True)
-    control_mean = models.FloatField(blank=True, null=True)
-    unit = models.CharField(max_length=60, blank=True, null=True)
-    n_treatment = models.IntegerField(blank=True, null=True)
-    n_control = models.IntegerField(blank=True, null=True)
-    sd_treatment = models.FloatField(blank=True, null=True)
-    sd_control = models.FloatField(blank=True, null=True)
-    se_treatment = models.FloatField(blank=True, null=True)
-    se_control = models.FloatField(blank=True, null=True)
-    sed = models.FloatField(blank=True, null=True, help_text="Standard error of the difference between the means")
-    lsd = models.FloatField(blank=True, null=True, help_text="Least significant difference between the means")
+    comparison = models.TextField(blank=True, null=True)  # "Comparison" is the "C" in "PICO".
     note = models.TextField(blank=True, null=True)
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
