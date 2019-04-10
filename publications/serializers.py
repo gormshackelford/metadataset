@@ -47,6 +47,8 @@ class PublicationSerializer(serializers.HyperlinkedModelSerializer):
 
 
 class SubjectSerializer(serializers.HyperlinkedModelSerializer):
+    attribute = serializers.PrimaryKeyRelatedField(read_only=True)
+
     class Meta:
         model = Subject
         exclude = ()

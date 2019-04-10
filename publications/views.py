@@ -182,6 +182,14 @@ class SubjectViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Subject.objects.all()
     serializer_class = SubjectSerializer
 
+    def get_queryset(self):
+        queryset = Subject.objects.all()
+        subject_pk = self.request.GET.get('subject', '')
+        if subject_pk is not '':
+            subject = Subject.objects.get(pk=subject_pk)
+            queryset = queryset.filter(subject=subject)
+        return queryset
+
 
 class UserViewSet(viewsets.ReadOnlyModelViewSet):
     """
