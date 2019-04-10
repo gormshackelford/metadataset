@@ -19,7 +19,7 @@ from random import shuffle
 from .tokens import account_activation_token
 from .forms import AssessmentForm, AttributeForm, AttributeOptionForm, DataForm, EAVExperimentForm, EAVOutcomeForm, EAVPopulationForm, EAVPublicationForm, ExperimentForm, ExperimentCountryForm, ExperimentDateForm, ExperimentDesignForm, ExperimentLatLongForm, ExperimentLatLongDMSForm, ExperimentPopulationForm, ExperimentPopulationOutcomeForm, FullTextAssessmentForm, InterventionForm, OutcomeForm, ProfileForm, PublicationForm, PublicationCountryForm, PublicationDateForm, PublicationLatLongForm, PublicationLatLongDMSForm, PublicationPopulationForm, PublicationPopulationOutcomeForm, SignUpForm, UserForm
 from .models import Assessment, AssessmentStatus, Attribute, Country, Crop, Data, Design, EAV, Experiment, ExperimentCountry, ExperimentCrop, ExperimentDate, ExperimentDesign, ExperimentLatLong, ExperimentLatLongDMS, ExperimentPopulation, ExperimentPopulationOutcome, Intervention, Outcome, Publication, PublicationCountry, PublicationDate, PublicationLatLong, PublicationLatLongDMS, PublicationPopulation, PublicationPopulationOutcome, Subject, User, UserSubject
-from .serializers import CountrySerializer, DataSerializer, DesignSerializer, ExperimentSerializer, ExperimentCountrySerializer, ExperimentDesignSerializer, ExperimentPopulationSerializer, ExperimentPopulationOutcomeSerializer, InterventionSerializer, OutcomeSerializer, PublicationSerializer, PublicationPopulationSerializer, PublicationPopulationOutcomeSerializer, SubjectSerializer, UserSerializer
+from .serializers import AttributeSerializer, CountrySerializer, DataSerializer, DesignSerializer, EAVSerializer, ExperimentSerializer, ExperimentCountrySerializer, ExperimentDesignSerializer, ExperimentPopulationSerializer, ExperimentPopulationOutcomeSerializer, InterventionSerializer, OutcomeSerializer, PublicationSerializer, PublicationPopulationSerializer, PublicationPopulationOutcomeSerializer, SubjectSerializer, UserSerializer
 from .decorators import group_required
 from mptt.forms import TreeNodeChoiceField
 from haystack.generic_views import SearchView
@@ -30,6 +30,21 @@ from django_filters import rest_framework as filters
 import reversion
 import csv
 import json
+
+
+class AttributeViewSet(viewsets.ReadOnlyModelViewSet):
+    """
+    API endpoint for user-defined attributes (for the EAV model)
+    """
+    queryset = Attribute.objects.all()
+    serializer_class = AttributeSerializer
+
+    def get_queryset(self):
+        queryset = Attribute.objects.all()
+        parent_pk = self.request.GET.get('parent', '')
+        if parent_pk is not '':
+            queryset = Attribute.objects.get(pk=parent_pk).get_children()
+        return queryset
 
 
 class CountryViewSet(viewsets.ReadOnlyModelViewSet):
@@ -46,6 +61,14 @@ class DesignViewSet(viewsets.ReadOnlyModelViewSet):
     """
     queryset = Design.objects.all()
     serializer_class = DesignSerializer
+
+
+class EAVViewSet(viewsets.ReadOnlyModelViewSet):
+    """
+    API endpoint for "EAVs" (entity-attribute-values: user-defined fields)
+    """
+    queryset = EAV.objects.all()
+    serializer_class = EAVSerializer
 
 
 class ExperimentViewSet(viewsets.ReadOnlyModelViewSet):
@@ -88,38 +111,27 @@ class ExperimentPopulationOutcomeViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = ExperimentPopulationOutcomeSerializer
 
 
-class DataViewSetFilter(filters.FilterSet):
-    class Meta:
-        model = Data
-        fields = [
-            'subject',
-            'experiment__intervention',
-            'experiment_population_outcome__outcome'
-        ]
-
-
 class DataViewSet(viewsets.ReadOnlyModelViewSet):
     """
     API endpoint for data (e.g., treatment mean, control mean, etc.)
     """
     queryset = Data.objects.all()
     serializer_class = DataSerializer
-    filterset_class = DataViewSetFilter
 
     def get_queryset(self):
         queryset = Data.objects.all()
-        intervention_pk = self.kwargs.get('intervention_pk', None)
-        if intervention_pk is not None:
-            interventions = Intervention.objects.all().filter(pk=intervention_pk).get_descendants(include_self=True)
-            queryset = queryset.filter(
-                experiment__intervention__in=interventions
-            )
-        outcome_pk = self.kwargs.get('outcome_pk', None)
-        if outcome_pk is not None:
-            outcomes = Outcome.objects.all().filter(pk=outcome_pk).get_descendants(include_self=True)
-            queryset = queryset.filter(
-                experiment_population_outcome__outcome__in=outcomes
-            )
+        subject_pk = self.request.GET.get('subject', '')
+        if subject_pk is not '':
+            subject = Subject.objects.get(pk=subject_pk)
+            queryset = queryset.filter(subject=subject)
+        intervention_pk = self.request.GET.get('intervention', '')
+        if intervention_pk is not '':
+            interventions = Intervention.objects.get(pk=intervention_pk).get_descendants(include_self=True)
+            queryset = queryset.filter(experiment__intervention__in=interventions)
+        outcome_pk = self.request.GET.get('outcome', '')
+        if outcome_pk is not '':
+            outcomes = Outcome.objects.get(pk=outcome_pk).get_descendants(include_self=True)
+            queryset = queryset.filter(experiment_population_outcome__outcome__in=outcomes)
         return queryset
 
 
@@ -1327,14 +1339,22 @@ def outcome(request, subject, publication_pk, experiment_index, population_index
     return render(request, 'publications/outcome.html', context)
 
 
-def browse_by_intervention(request, subject):
+def browse_by_intervention(request, subject, state):
     user = request.user
     subject = Subject.objects.get(slug=subject)
-    intervention = subject.intervention    # The root intervention for this subject (each subject can have its own classification of interventions)
-    interventions = Intervention.objects.filter(pk=intervention.pk).get_descendants(include_self=True)
+    path_to_shiny = ''
+    if (state == 'publications'):
+        intervention = subject.intervention    # The root intervention for this subject (each subject can have its own classification of interventions)
+        interventions = Intervention.objects.filter(pk=intervention.pk).get_descendants(include_self=True)
+    if (state == 'data'):
+        path_to_shiny = get_path_to_shiny(request)
+        data = Data.objects.filter(subject=subject)
+        interventions = Intervention.objects.filter(experiment__data__in=data).get_ancestors(include_self=True)
     context = {
         'subject': subject,  # Browse within this subject
         'interventions': interventions,
+        'state': state,
+        'path_to_shiny': path_to_shiny
     }
     if user.is_authenticated:
         if Publication.objects.filter(subject=subject).exists():
@@ -1343,14 +1363,22 @@ def browse_by_intervention(request, subject):
     return render(request, 'publications/browse_by_intervention.html', context)
 
 
-def browse_by_outcome(request, subject):
+def browse_by_outcome(request, subject, state):
     user = request.user
     subject = Subject.objects.get(slug=subject)
-    outcome = subject.outcome  # The root outcome for this subject (each subject can have its own classification of outcomes)
-    outcomes = Outcome.objects.filter(pk=outcome.pk).get_descendants(include_self=True)
+    path_to_shiny = ''
+    if (state == 'publications'):
+        outcome = subject.outcome  # The root outcome for this subject (each subject can have its own classification of outcomes)
+        outcomes = Outcome.objects.filter(pk=outcome.pk).get_descendants(include_self=True)
+    if (state == 'data'):
+        path_to_shiny = get_path_to_shiny(request)
+        data = Data.objects.filter(subject=subject)
+        outcomes = Outcome.objects.filter(experimentpopulationoutcome__data__in=data).get_ancestors(include_self=True)
     context = {
         'subject': subject,  # Browse within this subject
-        'outcomes': outcomes
+        'outcomes': outcomes,
+        'state': state,
+        'path_to_shiny': path_to_shiny
     }
     if user.is_authenticated:
         if Publication.objects.filter(subject=subject).exists():
@@ -1359,75 +1387,109 @@ def browse_by_outcome(request, subject):
     return render(request, 'publications/browse_by_outcome.html', context)
 
 
-def this_intervention(request, subject, intervention_pk, outcome_pk='default'):
+def this_intervention(request, subject, state, intervention_pk, outcome_pk='default'):
     user = request.user
     subject = Subject.objects.get(slug=subject)
-    publications = Publication.objects.filter(subject=subject)
+    path = ''
+    path_to_shiny = ''
     this_intervention = Intervention.objects.get(pk=intervention_pk)
     interventions = Intervention.objects.filter(pk=intervention_pk).get_descendants(include_self=True)
-    # Publications for this intervention (and its descendants)
-    publications = publications.distinct().filter(experiment__intervention__in=interventions)
-    # Filter these publications by outcome
     if outcome_pk != 'default':
         this_outcome = Outcome.objects.get(pk=outcome_pk)
         outcomes = Outcome.objects.filter(pk=outcome_pk).get_descendants(include_self=True)
-        # Publications for these outcomes
-        publications = publications.distinct().filter(
-                Q(experiment__experimentpopulation__experimentpopulationoutcome__outcome__in=outcomes) |
-                Q(publicationpopulation__publicationpopulationoutcome__outcome__in=outcomes)
+    if state == 'publications':
+        # Publications for this intervention (and its descendants)
+        publications = Publication.objects.filter(subject=subject)
+        publications = publications.distinct().filter(experiment__intervention__in=interventions)
+        # Filter these publications by outcome
+        if outcome_pk != 'default':
+            publications = publications.distinct().filter(
+                    Q(experiment__experimentpopulation__experimentpopulationoutcome__outcome__in=outcomes) |
+                    Q(publicationpopulation__publicationpopulationoutcome__outcome__in=outcomes)
+                )
+            # Pass this path to the template for evidence-atlas.js to generate dynamic links by intervention and outcome.
+            path = reverse('publications_x', args=(), kwargs={'subject': subject.slug, 'intervention_pk': this_intervention.pk, 'outcome_pk': this_outcome.pk})
+        else:
+            this_outcome = None
+            # Pass this path to the template for evidence-atlas.js to generate dynamic links by intervention (not outcome).
+            path = reverse('publications_x', args=(), kwargs={'subject': subject.slug, 'intervention_pk': this_intervention.pk})
+
+        # Outcomes for these publications
+        # By publication (outcomes can be entered by publication or by experiment)
+        publication_population_outcomes = PublicationPopulationOutcome.objects.filter(
+            publication_population__publication__in=publications)
+        # By experiment (outcomes can be entered by publication or by experiment)
+        experiment_population_outcomes = ExperimentPopulationOutcome.objects.filter(
+            experiment_population__experiment__publication__in=publications)
+        # All outcomes for these publications (outcomes by publication OR outcomes by experiment)
+        outcomes = Outcome.objects.distinct().filter(
+                Q(experimentpopulationoutcome__in=experiment_population_outcomes) |
+                Q(publicationpopulationoutcome__in=publication_population_outcomes)
+            ).get_ancestors(include_self=True)
+
+        # Countries for these publications
+        # Countries by publication (countries can be entered by publication or by experiment)
+        publication_countries = PublicationCountry.objects.filter(publication__in=publications)
+        # Countries by experiment (countries can be entered by publication or by experiment)
+        experiments = Experiment.objects.filter(publication__in=publications)
+        experiment_countries = ExperimentCountry.objects.filter(experiment__in=experiments)
+        """
+        # The number of publications by country
+        # All countries (countries by publication OR by experiment)
+        countries = Country.objects.distinct().filter(
+                Q(publicationcountry__in=publication_countries) |
+                Q(experimentcountry__in=experiment_countries)
             )
-        # Pass this path to the template for evidence-atlas.js to generate dynamic links by intervention and outcome.
-        path = reverse('publications_x', args=(), kwargs={'subject': subject.slug, 'intervention_pk': this_intervention.pk, 'outcome_pk': this_outcome.pk})
-    else:
-        this_outcome = None
-        # Pass this path to the template for evidence-atlas.js to generate dynamic links by intervention (not outcome).
-        path = reverse('publications_x', args=(), kwargs={'subject': subject.slug, 'intervention_pk': this_intervention.pk})
+        count_by_country = []
+        for country in countries:
+            publications_for_this_country = publications.filter(
+                    Q(publicationcountry__country=country) |
+                    Q(experiment__experimentcountry__country=country)
+                ).values('pk').count()
+            count = publications_for_this_country
+            count_by_country.append('"{country}": "{count}"'.format(country=country, count=count))
+        """
+        # The number of publications by country
+        # This gets the same results, but is much faster than one query for each country.
+        q1 = publication_countries.values_list('country__iso_alpha_3', 'publication').distinct()
+        q2 = experiment_countries.values_list('country__iso_alpha_3', 'experiment__publication').distinct()
+        publication_countries = list(chain(q1, q2))  # A list of tuples in the form [(country, publication)]. Chain is imported from itertools.
+        publication_countries = set(publication_countries)  # Delete duplicate records, where a publication has the same country in both publication_country and experiment_country: set = unique tuples (and the list is now a dict)
+        count_by_country = Counter(item[0] for item in publication_countries)  # item[0] is country in (country, publication) and this counts the number of tuples for each country. Counter is imported from collections.
+        count_by_country = json.dumps(count_by_country)  # Convert to JSON for use by JavaScript in the template
+        count = publications.count()
 
-    # Outcomes for these publications
-    # By publication (outcomes can be entered by publication or by experiment)
-    publication_population_outcomes = PublicationPopulationOutcome.objects.filter(
-        publication_population__publication__in=publications)
-    # By experiment (outcomes can be entered by publication or by experiment)
-    experiment_population_outcomes = ExperimentPopulationOutcome.objects.filter(
-        experiment_population__experiment__publication__in=publications)
-    # All outcomes for these publications (outcomes by publication OR outcomes by experiment)
-    outcomes = Outcome.objects.distinct().filter(
-            Q(experimentpopulationoutcome__in=experiment_population_outcomes) |
-            Q(publicationpopulationoutcome__in=publication_population_outcomes)
-        ).get_ancestors(include_self=True)
+    if state == 'data':
+        path_to_shiny = get_path_to_shiny(request)
 
-    # Countries for these publications
-    # Countries by publication (countries can be entered by publication or by experiment)
-    publication_countries = PublicationCountry.objects.filter(publication__in=publications)
-    # Countries by experiment (countries can be entered by publication or by experiment)
-    experiments = Experiment.objects.filter(publication__in=publications)
-    experiment_countries = ExperimentCountry.objects.filter(experiment__in=experiments)
-    """
-    # The number of publications by country
-    # All countries (countries by publication OR by experiment)
-    countries = Country.objects.distinct().filter(
-            Q(publicationcountry__in=publication_countries) |
-            Q(experimentcountry__in=experiment_countries)
-        )
-    count_by_country = []
-    for country in countries:
-        publications_for_this_country = publications.filter(
-                Q(publicationcountry__country=country) |
-                Q(experiment__experimentcountry__country=country)
-            ).values('pk').count()
-        count = publications_for_this_country
-        count_by_country.append('"{country}": "{count}"'.format(country=country, count=count))
-    """
-    # The number of publications by country
-    # This gets the same results, but is much faster than one query for each country.
-    q1 = publication_countries.values_list('country__iso_alpha_3', 'publication').distinct()
-    q2 = experiment_countries.values_list('country__iso_alpha_3', 'experiment__publication').distinct()
-    publication_countries = list(chain(q1, q2))  # A list of tuples in the form [(country, publication)]. Chain is imported from itertools.
-    publication_countries = set(publication_countries)  # Delete duplicate records, where a publication has the same country in both publication_country and experiment_country: set = unique tuples (and the list is now a dict)
-    count_by_country = Counter(item[0] for item in publication_countries)  # item[0] is country in (country, publication) and this counts the number of tuples for each country. Counter is imported from collections.
-    count_by_country = json.dumps(count_by_country)  # Convert to JSON for use by JavaScript in the template
+        # Data for this intervention (and its descendants)
+        data = Data.objects.filter(subject=subject)
+        data = data.filter(experiment__intervention__in=interventions)
+        # Filter these data by outcome
+        if outcome_pk != 'default':
+            data = data.filter(experiment_population_outcome__outcome__in=outcomes)
+            # Pass this path to the template for evidence-atlas.js to generate dynamic links by intervention and outcome.
+            path = "{path_to_shiny}?subject={subject}&intervention={intervention}&outcome={outcome}&country=".format(path_to_shiny=path_to_shiny, subject=subject.pk, intervention=this_intervention.pk, outcome=this_outcome.pk)
+        else:
+            this_outcome = None
+            # Pass this path to the template for evidence-atlas.js to generate dynamic links by intervention (not outcome).
+            path = "{path_to_shiny}?subject={subject}&intervention={intervention}&country=".format(path_to_shiny=path_to_shiny, subject=subject.pk, intervention=this_intervention.pk)
 
-    count = publications.count()
+        # Outcomes for these data
+        outcomes = Outcome.objects.distinct().filter(
+                experimentpopulationoutcome__data__in=data
+            ).get_ancestors(include_self=True)
+
+        # Countries for these data
+        # Countries by experiment
+        experiments = Experiment.objects.filter(data__in=data)
+        experiment_countries = ExperimentCountry.objects.filter(experiment__in=experiments)
+        q = experiment_countries.values_list('country__iso_alpha_3', 'experiment__data').distinct()
+        countries = list(chain(q))  # A list of tuples in the form [(country, publication)]. Chain is imported from itertools.
+        countries = set(countries)  # Delete duplicate records, where a publication has the same country in both publication_country and experiment_country: set = unique tuples (and the list is now a dict)
+        count_by_country = Counter(item[0] for item in countries)  # item[0] is country in (country, publication) and this counts the number of tuples for each country. Counter is imported from collections.
+        count_by_country = json.dumps(count_by_country)  # Convert to JSON for use by JavaScript in the template
+        count = data.count()
 
     context = {
         'subject': subject,
@@ -1437,6 +1499,8 @@ def this_intervention(request, subject, intervention_pk, outcome_pk='default'):
         'count': count,
         'count_by_country': count_by_country,
         'path': path,
+        'path_to_shiny': path_to_shiny,
+        'state': state
     }
     if user.is_authenticated:
         if Publication.objects.filter(subject=subject).exists():
@@ -1445,53 +1509,84 @@ def this_intervention(request, subject, intervention_pk, outcome_pk='default'):
     return render(request, 'publications/this_intervention.html', context)
 
 
-def this_outcome(request, subject, outcome_pk, intervention_pk='default'):
+def this_outcome(request, subject, state, outcome_pk, intervention_pk='default'):
     user = request.user
     subject = Subject.objects.get(slug=subject)
-    publications = Publication.objects.distinct().filter(subject=subject)
+    path = ''
+    path_to_shiny = ''
     this_outcome = Outcome.objects.get(pk=outcome_pk)
     outcomes = Outcome.objects.filter(pk=outcome_pk).get_descendants(include_self=True)
-    # Records for these outcomes
-    publication_population_outcomes = PublicationPopulationOutcome.objects.filter(outcome__in=outcomes)
-    experiment_population_outcomes = ExperimentPopulationOutcome.objects.filter(outcome__in=outcomes)
-    # Publications for these records
-    publications = publications.distinct().filter(
-            Q(experiment__experimentpopulation__experimentpopulationoutcome__in=experiment_population_outcomes) |
-            Q(publicationpopulation__publicationpopulationoutcome__in=publication_population_outcomes)
-        )
-    # Filter these publications by intervention
-    if intervention_pk != 'default':
-        this_intervention = Intervention.objects.get(pk=intervention_pk)
-        interventions = Intervention.objects.filter(pk=intervention_pk).get_descendants(include_self=True)
-        # Publications for these interventions
-        publications = publications.distinct().filter(experiment__intervention__in=interventions)
-        # Pass this path to the template for evidence-atlas.js to generate dynamic links by intervention and outcome.
-        path = reverse('publications_x', args=(), kwargs={'subject': subject.slug, 'intervention_pk': this_intervention.pk, 'outcome_pk': this_outcome.pk})
-    else:
-        this_intervention = None
-        # Pass this path to the template for evidence-atlas.js to generate dynamic links by intervention (not outcome).
-        path = reverse('publications_x', args=(), kwargs={'subject': subject.slug, 'outcome_pk': this_outcome.pk})
+    if state == 'publications':
+        # Records for these outcomes
+        publication_population_outcomes = PublicationPopulationOutcome.objects.filter(outcome__in=outcomes)
+        experiment_population_outcomes = ExperimentPopulationOutcome.objects.filter(outcome__in=outcomes)
+        # Publications for these records
+        publications = Publication.objects.distinct().filter(subject=subject)
+        publications = publications.distinct().filter(
+                Q(experiment__experimentpopulation__experimentpopulationoutcome__in=experiment_population_outcomes) |
+                Q(publicationpopulation__publicationpopulationoutcome__in=publication_population_outcomes)
+            )
+        # Filter these publications by intervention
+        if intervention_pk != 'default':
+            this_intervention = Intervention.objects.get(pk=intervention_pk)
+            interventions = Intervention.objects.filter(pk=intervention_pk).get_descendants(include_self=True)
+            # Publications for these interventions
+            publications = publications.distinct().filter(experiment__intervention__in=interventions)
+            # Pass this path to the template for evidence-atlas.js to generate dynamic links by intervention and outcome.
+            path = reverse('publications_x', args=(), kwargs={'subject': subject.slug, 'intervention_pk': this_intervention.pk, 'outcome_pk': this_outcome.pk})
+        else:
+            this_intervention = None
+            # Pass this path to the template for evidence-atlas.js to generate dynamic links by outcome (not intervention).
+            path = reverse('publications_x', args=(), kwargs={'subject': subject.slug, 'outcome_pk': this_outcome.pk})
+        # Interventions for these publications
+        interventions = Intervention.objects.distinct().filter(
+                experiment__publication__in=publications
+            ).get_ancestors(include_self=True)
+        # Countries for these publications
+        # Countries by publication (countries can be entered by publication or by experiment)
+        publication_countries = PublicationCountry.objects.filter(publication__in=publications)
+        # Countries by experiment (countries can be entered by publication or by experiment)
+        experiments = Experiment.objects.filter(publication__in=publications)
+        experiment_countries = ExperimentCountry.objects.filter(experiment__in=experiments)
+        # The number of publications by country
+        q1 = publication_countries.values_list('country__iso_alpha_3', 'publication').distinct()
+        q2 = experiment_countries.values_list('country__iso_alpha_3', 'experiment__publication').distinct()
+        publication_countries = list(chain(q1, q2))  # A list of tuples in the form [(country, publication)]. Chain is imported from itertools.
+        publication_countries = set(publication_countries)  # Delete duplicate records, where a publication has the same country in both publication_country and experiment_country: set = unique tuples (and the list is now a dict)
+        count_by_country = Counter(item[0] for item in publication_countries)  # item[0] is country in (country, publication) and this counts the number of tuples for each country. Counter is imported from collections.
+        count_by_country = json.dumps(count_by_country)  # Convert to JSON for use by JavaScript in the template
+        count = publications.count()
 
-    # Interventions for these publications
-    interventions = Intervention.objects.distinct().filter(
-            experiment__publication__in=publications
-        ).get_ancestors(include_self=True)
+    if state == 'data':
+        path_to_shiny = get_path_to_shiny(request)
 
-    # Countries for these publications
-    # Countries by publication (countries can be entered by publication or by experiment)
-    publication_countries = PublicationCountry.objects.filter(publication__in=publications)
-    # Countries by experiment (countries can be entered by publication or by experiment)
-    experiments = Experiment.objects.filter(publication__in=publications)
-    experiment_countries = ExperimentCountry.objects.filter(experiment__in=experiments)
-    # The number of publications by country
-    q1 = publication_countries.values_list('country__iso_alpha_3', 'publication').distinct()
-    q2 = experiment_countries.values_list('country__iso_alpha_3', 'experiment__publication').distinct()
-    publication_countries = list(chain(q1, q2))  # A list of tuples in the form [(country, publication)]. Chain is imported from itertools.
-    publication_countries = set(publication_countries)  # Delete duplicate records, where a publication has the same country in both publication_country and experiment_country: set = unique tuples (and the list is now a dict)
-    count_by_country = Counter(item[0] for item in publication_countries)  # item[0] is country in (country, publication) and this counts the number of tuples for each country. Counter is imported from collections.
-    count_by_country = json.dumps(count_by_country)  # Convert to JSON for use by JavaScript in the template
+        # Data for this outcome (and its descendants)
+        data = Data.objects.filter(subject=subject)
+        data = data.filter(experiment_population_outcome__outcome__in=outcomes)
+        # Filter these data by intervention
+        if intervention_pk != 'default':
+            data = data.filter(experiment__intervention__in=interventions)
+            # Pass this path to the template for evidence-atlas.js to generate dynamic links by intervention and outcome.
+            path = "{path_to_shiny}?subject={subject}&intervention={intervention}&outcome={outcome}&country=".format(path_to_shiny=path_to_shiny, subject=subject.pk, intervention=this_intervention.pk, outcome=this_outcome.pk)
+        else:
+            this_intervention = None
+            # Pass this path to the template for evidence-atlas.js to generate dynamic links by outcome (not intervention).
+            path = "{path_to_shiny}?subject={subject}&outcome={outcome}&country=".format(path_to_shiny=path_to_shiny, subject=subject.pk, outcome=this_outcome.pk)
+        # Interventions for these data
+        interventions = Intervention.objects.distinct().filter(
+                experiment__data__in=data
+            ).get_ancestors(include_self=True)
 
-    count = publications.count()
+        # Countries for these data
+        # Countries by experiment
+        experiments = Experiment.objects.filter(data__in=data)
+        experiment_countries = ExperimentCountry.objects.filter(experiment__in=experiments)
+        q = experiment_countries.values_list('country__iso_alpha_3', 'experiment__data').distinct()
+        countries = list(chain(q))  # A list of tuples in the form [(country, publication)]. Chain is imported from itertools.
+        countries = set(countries)  # Delete duplicate records, where a publication has the same country in both publication_country and experiment_country: set = unique tuples (and the list is now a dict)
+        count_by_country = Counter(item[0] for item in countries)  # item[0] is country in (country, publication) and this counts the number of tuples for each country. Counter is imported from collections.
+        count_by_country = json.dumps(count_by_country)  # Convert to JSON for use by JavaScript in the template
+        count = data.count()
 
     context = {
         'subject': subject,
@@ -1501,6 +1596,8 @@ def this_outcome(request, subject, outcome_pk, intervention_pk='default'):
         'count': count,
         'count_by_country': count_by_country,
         'path': path,
+        'path_to_shiny': path_to_shiny,
+        'state': state
     }
     if user.is_authenticated:
         if Publication.objects.filter(subject=subject).exists():
@@ -1664,6 +1761,16 @@ def get_next_assessment(publication_pk, next_pk, assessment_order, completed_ass
                 except:
                     next_assessment = uncompleted_assessments[0]
         return(next_assessment)
+
+
+def get_path_to_shiny(request):
+    current_site = get_current_site(request)
+    domain = current_site.domain
+    if domain == "www.metadataset.com":
+        path_to_shiny = "http://shiny.metadataset.com/"
+    else:
+        path_to_shiny = "http://127.0.0.1:7099/"
+    return(path_to_shiny)
 
 
 @login_required

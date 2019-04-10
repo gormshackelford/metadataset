@@ -42,16 +42,16 @@ urlpatterns = [
     path('subject/<subject>/publications/outcome/<int:outcome_pk>/<iso_a3>/', views.publications_x, name='publications_x'),
 
     # Filter by intervention
-    path('subject/<subject>/intervention/<int:intervention_pk>/', views.this_intervention, name='this_intervention'),
+    path('subject/<subject>/intervention/<int:intervention_pk>/<state>/', views.this_intervention, name='this_intervention'),
     # Filter by intervention and outcome
-    path('subject/<subject>/intervention/<int:intervention_pk>/outcome/<int:outcome_pk>/', views.this_intervention, name='this_intervention'),
+    path('subject/<subject>/intervention/<int:intervention_pk>/outcome/<int:outcome_pk>/<state>/', views.this_intervention, name='this_intervention'),
     # Filter by outcome
-    path('subject/<subject>/outcome/<int:outcome_pk>/', views.this_outcome, name='this_outcome'),
+    path('subject/<subject>/outcome/<int:outcome_pk>/<state>/', views.this_outcome, name='this_outcome'),
     # Filter by outcome and intervention
-    path('subject/<subject>/outcome/<int:outcome_pk>/intervention/<int:intervention_pk>/', views.this_outcome, name='this_outcome'),
+    path('subject/<subject>/outcome/<int:outcome_pk>/intervention/<int:intervention_pk>/<state>/', views.this_outcome, name='this_outcome'),
 
-    path('subject/<subject>/browse-by-intervention/', views.browse_by_intervention, name='browse_by_intervention'),
-    path('subject/<subject>/browse-by-outcome/', views.browse_by_outcome, name='browse_by_outcome'),
+    path('subject/<subject>/browse-by-intervention/<state>/', views.browse_by_intervention, name='browse_by_intervention'),
+    path('subject/<subject>/browse-by-outcome/<state>/', views.browse_by_outcome, name='browse_by_outcome'),
     path('subject/<subject>/add-publication/', views.add_publication, name='add_publication'),
     path('subject/<subject>/edit-publication/<int:publication_pk>/', views.edit_publication, name='edit_publication'),
     path('subject/<subject>/publication/<int:publication_pk>/', views.publication, name='publication'),

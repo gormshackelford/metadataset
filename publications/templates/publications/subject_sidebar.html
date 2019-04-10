@@ -2,9 +2,9 @@
 
 <h1>{{ subject|capfirst }}</h1>
 <p>
-  <a href="{% url 'browse_by_intervention' subject=subject.slug %}">Browse by intervention</a>
+  <a href="{% url 'browse_by_intervention' subject=subject.slug state='publications' %}">Publications by intervention</a>
   <br />
-  <a href="{% url 'browse_by_outcome' subject=subject.slug %}">Browse by outcome</a>
+  <a href="{% url 'browse_by_outcome' subject=subject.slug state='publications' %}">Publications by outcome</a>
 </p>
 
 {% if publications_count is not None %}  <!-- Load the sidebar only if publications exist for this subject. -->
@@ -13,7 +13,11 @@
 
     {% if user_subject %}
 
-      <p><a href="{% url 'add_publication' subject=subject.slug %}">Add a publication</a></p>
+      <p>
+        <a href="{% url 'browse_by_intervention' subject=subject.slug state='data' %}">Data by intervention</a>
+        <br />
+        <a href="{% url 'browse_by_outcome' subject=subject.slug state='data' %}">Data by outcome</a>
+      </p>
 
       <h1>Titles/abstracts</h1>
       <a href="{% url 'publication' subject=subject.slug publication_pk=next_assessment %}">Your next title/abstract</a> <span class="red">(start or restart here)</span>
@@ -29,6 +33,10 @@
       <a href="{% url 'publications' subject=subject.slug state='not_relevant' download='CSV' %}">(CSV)</a>
       <br />
       <a href="{% url 'publications' subject=subject.slug state='not_assessed' %}">Not completed</a>
+      <br />
+      <br />
+      <a href="{% url 'add_publication' subject=subject.slug %}">Add a title/abstract</a>
+
       <h1>Full texts</h1>
       <a href="{% url 'full_text_navigation' subject=subject.slug state='next-incomplete' %}">Your next full text</a> <span class="red">(start or restart here)</span>
       <br />

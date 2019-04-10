@@ -21,9 +21,11 @@ from publications import views
 
 
 router = routers.DefaultRouter()
+router.register(r'attributes', views.AttributeViewSet)
 router.register(r'countries', views.CountryViewSet)
 router.register(r'data', views.DataViewSet)
 router.register(r'designs', views.DesignViewSet)
+router.register(r'EAVs', views.EAVViewSet)
 router.register(r'experiments', views.ExperimentViewSet)
 router.register(r'experiment_countries', views.ExperimentCountryViewSet)
 router.register(r'experiment_designs', views.ExperimentDesignViewSet)
@@ -43,5 +45,4 @@ urlpatterns = [
     path('', include('publications.urls')),
     path('api/', include(router.urls)),
     path('api-auth/', include('rest_framework.urls', namespace='rest_framework')),
-    path('api/effects/intervention/<int:intervention_pk>/outcome/<int:outcome_pk>', views.ExperimentPopulationOutcomeViewSet.as_view({'get': 'list'})),
 ]

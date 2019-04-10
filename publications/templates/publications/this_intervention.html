@@ -1,7 +1,7 @@
 {% extends 'publications/base.html' %}
 
 {% block title %}
-  Publications by intervention | Metadataset | www.metadataset.com
+  Selected intervention | Metadataset | www.metadataset.com
 {% endblock %}
 
 {% block css %}
@@ -15,18 +15,33 @@
 
   {% load mptt_tags %}
 
-  <h1>Publications</h1>
-  <p>
-    {% if this_outcome %}
-      <a href="{% url 'publications_x' subject=subject.slug intervention_pk=this_intervention.pk outcome_pk=this_outcome.pk %}">
-        {{ count }} publication{% if count != 1 %}s{% endif %}
-      </a>
-    {% else %}
-      <a href="{% url 'publications_x' subject=subject.slug intervention_pk=this_intervention.pk %}">
-        {{ count }} publication{% if count != 1 %}s{% endif %}
-      </a>
-    {% endif %}
-  </p>
+  <h1>{{ state|capfirst }} for this intervention</h1>
+  {% if state == 'publications' %}
+    <p>
+      {% if this_outcome %}
+        <a href="{% url 'publications_x' subject=subject.slug intervention_pk=this_intervention.pk outcome_pk=this_outcome.pk %}">
+          {{ count }} publication{% if count != 1 %}s{% endif %}
+        </a>
+      {% else %}
+        <a href="{% url 'publications_x' subject=subject.slug intervention_pk=this_intervention.pk %}">
+          {{ count }} publication{% if count != 1 %}s{% endif %}
+        </a>
+      {% endif %}
+    </p>
+  {% elif state == 'data' %}
+    <p>
+      {% if this_outcome %}
+        <a href="{{ path_to_shiny }}?subject={{ subject.pk }}&intervention={{ this_intervention.pk }}&outcome={{ this_outcome.pk }}" target="_blank">
+          {{ count }} data point{% if count != 1 %}s{% endif %}
+        </a>
+      {% else %}
+        <a href="{{ path_to_shiny }}?subject={{ subject.pk }}&intervention={{ this_intervention.pk }}" target="_blank">
+          {{ count }} data point{% if count != 1 %}s{% endif %}
+        </a>
+      {% endif %}
+    </p>
+  {% endif %}
+
   <p>
     Selected intervention:
     <span class="italic">
@@ -41,27 +56,28 @@
       {% endif %}
     </span>
   </p>
-  <p>
-    Selected outcome:
-    <span class="italic">
-      {% if this_outcome %}
-        {% if this_outcome.level == 0 %}
-          All outcomes
-        {% else %}
-          {{ this_outcome.outcome }}
-        {% endif %}
-      {% else %}
-        None
-      {% endif %}
-    </span>
-  </p>
 
-  <h1>Map of publications</h1>
+  {% if state == 'publications' %}
+    <p>
+      Selected outcome:
+      <span class="italic">
+        {% if this_outcome %}
+          {% if this_outcome.level == 0 %}
+            All outcomes
+          {% else %}
+            {{ this_outcome.outcome }}
+          {% endif %}
+        {% else %}
+          None
+        {% endif %}
+      </span>
+    </p>
+  {% endif %}
+
+  <h1>Map of {{ state }} for this intervention</h1>
   <div id="map"></div>
   <p>
-    Please note that some publications do not report the locations of study sites,
-    and thus the number of publications on this map may be less than the number of publications
-    for this intervention.
+    Please note that not all publications provide the locations of study sites.
   </p>
 
   <h1>Filter by outcome</h1>
@@ -79,11 +95,17 @@
           {% if node.code %}
             <span class="outcome_level_{{ node.level }}">{{ node.code }}</span>
           {% endif %}
-          {% if node.level == 0 %}
-            <a href="{% url 'this_intervention' subject=subject.slug intervention_pk=this_intervention.pk outcome_pk=node.pk %}">All outcomes for these publications</a>
-          {% else %}
-            <a href="{% url 'this_intervention' subject=subject.slug intervention_pk=this_intervention.pk outcome_pk=node.pk %}">{{ node.outcome }}</a>
+          {% if state == 'publications' %}
+            <a href="{% url 'this_intervention' subject=subject.slug intervention_pk=this_intervention.pk outcome_pk=node.pk state=state %}">
+          {% elif state == 'data' %}
+            <a href="{{ path_to_shiny }}?subject={{ subject.pk }}&intervention={{ this_intervention.pk }}&outcome={{ node.pk }}" target="_blank">
           {% endif %}
+          {% if node.level == 0 %}
+            All outcomes
+          {% else %}
+            {{ node.outcome }}
+          {% endif %}
+            </a>
         </li>
         {% if not node.is_leaf_node %}
           <ul class="children">
@@ -112,7 +134,8 @@
 
   <!-- Evidence atlas, using Leaflet and Natural Earth -->
   <script type="text/javascript">
-    var path = '{{ path }}';
+    var path = '{{ path|safe }}';
+    var state = '{{ state }}';
     var countByCountry = {{ count_by_country|safe }};  // This needs to be marked as "safe" or the quotation marks in the JSON file will not be preserved. Django template filters (e.g., "|safe") do not work in external JavaScript files, so this variable needs to be created here.
   </script>
   <script type="text/javascript" src="{% static 'javascript/evidence-atlas.js' %}"></script>

@@ -36,16 +36,21 @@ function resetHighlight(e) {
     map_info.update();
 }
 
-function getPublicationsByCountry(e) {
+function getLinkByCountry(e) {
     var layer = e.target;
-    location.href = path + layer.feature.properties.ISO_A3 + '/';
+    if (state == 'publications') {
+      location.href = path + layer.feature.properties.ISO_A3 + '/';
+    }
+    else if (state == 'data') {
+      location.href = path + layer.feature.properties.ISO_A3;
+    }
 }
 
 function onEachFeature(feature, layer) {
     layer.on({
         mouseover: highlightFeature,
         mouseout: resetHighlight,
-        click: getPublicationsByCountry
+        click: getLinkByCountry
     });
 }
 
@@ -60,11 +65,20 @@ map_info.onAdd = function (map) {
     return this._div;
 };
 // Function for updating map_info with feature properties
-map_info.update = function (properties) {
-    this._div.innerHTML = (properties ? properties.ADMIN + '<br />'
-        + properties.PUBLICATIONS + ' publications' : 'Hover over a country<br />'
-        + '(click to see publications)');
-};
+if (state == 'publications') {
+  map_info.update = function (properties) {
+      this._div.innerHTML = (properties ?
+          properties.ADMIN + '<br />' + properties.PUBLICATIONS + ((properties.PUBLICATIONS == 1) ? ' publication' : ' publications')
+          : 'Hover over a country<br />' + '(click to see publications)');
+  };
+}
+else if (state == 'data') {
+  map_info.update = function (properties) {
+      this._div.innerHTML = (properties ?
+          properties.ADMIN + '<br />' + properties.PUBLICATIONS + ((properties.PUBLICATIONS == 1) ? ' data point' : ' data points')
+          : 'Hover over a country<br />' + '(click to see data)');
+  };
+}
 map_info.addTo(map);
 
 
