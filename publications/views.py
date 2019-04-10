@@ -1082,7 +1082,7 @@ def experiment(request, subject, publication_pk, experiment_index):
         form.fields['design'] = designs
     # experiment_population_formset
     experiment_population_formset = ExperimentPopulationFormSet(data=data, queryset=ExperimentPopulation.objects.filter(experiment=experiment), prefix="experiment_population_formset")
-    populations = TreeNodeChoiceField(queryset=Outcome.objects.filter(pk=outcome.pk).get_descendants(include_self=True).filter(level=1), level_indicator = "---")
+    populations = TreeNodeChoiceField(required=False, queryset=Outcome.objects.filter(pk=outcome.pk).get_descendants(include_self=True).filter(level=1), level_indicator = "---")
     for form in experiment_population_formset:
         form.fields['population'] = populations
     # EAV_formset
@@ -1154,10 +1154,6 @@ def experiment(request, subject, publication_pk, experiment_index):
                         instance.experiment = experiment
                         instance.save()
             formset = experiment_design_formset
-            # Before the formset is validated, the choices need to be redefined, or the validation will fail. This is because only a subset of all choices (high level choices in the MPTT tree) were initially shown in the dropdown (for better UI).
-            designs = TreeNodeChoiceField(queryset=Design.objects.filter(pk=design.pk).get_descendants(include_self=True), level_indicator = "---")
-            for form in formset:
-                form.fields['design'] = designs
             if formset.is_valid():
                 instances = formset.save(commit=False)
                 if 'delete' in request.POST:

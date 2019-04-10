@@ -40,7 +40,7 @@
         </td>
         <td>
           {% if form.instance.population %}
-            {{ form.instance.population }}
+            {{ form.instance.population }}{{ form.population.as_hidden }}
           {% else %}
             {{ form.population }}
           {% endif %}

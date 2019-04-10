@@ -202,7 +202,7 @@ class ExperimentPopulationForm(forms.ModelForm):
 
     class Meta:
         model = ExperimentPopulation
-        exclude = ['experiment']
+        fields = ['population']
 
 
 class ExperimentPopulationOutcomeForm(forms.ModelForm):

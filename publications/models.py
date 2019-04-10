@@ -531,7 +531,7 @@ class ExperimentDate(models.Model):
 
 class ExperimentPopulation(models.Model):
     experiment = models.ForeignKey(Experiment, on_delete=models.CASCADE)
-    population = models.ForeignKey(Outcome, blank=True, null=True, on_delete=models.CASCADE)  # Populations are level 1 in the classification of outcomes.
+    population = models.ForeignKey(Outcome, on_delete=models.CASCADE)  # Populations are level 1 in the classification of outcomes.
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
 
