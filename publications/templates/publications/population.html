@@ -50,7 +50,7 @@
       <td class="bottom"></td>
       <td class="button bottom"><input type="submit" name="save" value="Save all changes" /></td>
       <td class="bottom"></td>
-      <td class="button bottom centered"><input type="submit" name="delete" value="Delete selected" /></td>
+      <td class="button bottom centered"><input type="submit" name="delete" value="Delete all selected" /></td>
     </tr>
 
     <tr><td class="empty" colspan="4">&nbsp;</td></tr>
@@ -60,7 +60,7 @@
       <td class="top" colspan="4"><a target="_blank" href="{% url 'attributes' subject=subject.slug %}">Add/edit other covariates</a></td>
     </tr>
     <tr>
-      <td class="top" colspan="4">If you entered this metadata at the <a href="{% url 'experiment' subject=subject.slug publication_pk=publication.pk experiment_index=experiment_index %}">intervention level</a>, then you do not need to enter it here (at the population level). However, if there is metadata that applies only to this population, then you should enter it here. It will supercede the metadata at the intervention level.</td>
+      <td class="top" colspan="4">If you entered this metadata at the <a href="{% url 'experiment' subject=subject.slug publication_pk=publication.pk experiment_index=experiment_index %}">intervention level</a> or higher, then you do not need to enter it here (at the population level). However, if there is metadata that applies only to this population, then you should enter it here. It will supercede the metadata at a higher level.</td>
     </tr>
 
     {{ EAV_formset.management_form }}
@@ -89,7 +89,7 @@
               {{ form.value_as_factor }}
             {% endif %}
             {% if form.value_as_number.field.disabled is False %}
-              {{ form.value_as_number }}
+              {{ form.value_as_number }} {{ form.unit }}
             {% endif %}
           </td>
           <td></td>
@@ -100,7 +100,7 @@
         <td class="bottom"></td>
         <td class="button bottom"><input type="submit" name="save" value="Save all changes" /></td>
         <td class="bottom"></td>
-        <td class="button bottom centered"><input type="submit" name="delete" value="Delete selected" /></td>
+        <td class="button bottom centered"><input type="submit" name="delete" value="Delete all selected" /></td>
       </tr>
     {% endif %}
 

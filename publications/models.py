@@ -562,7 +562,7 @@ class Data(models.Model):
     control_mean = models.FloatField(blank=True, null=True)
     control_sd = models.FloatField(blank=True, null=True, help_text="Standard deviation")
     control_n = models.IntegerField(blank=True, null=True, help_text="Number of replicates")
-    unit = models.CharField(max_length=60, blank=True, null=True, help_text="Unit for treatment mean and control mean")
+    unit = models.CharField(max_length=60, blank=True, null=True)
     sed = models.FloatField(blank=True, null=True, help_text="Standard error of the difference between the means")
     lsd = models.FloatField(blank=True, null=True, help_text="Least significant difference between the means")
     APPROXIMATE_P_VALUE_CHOICES = (

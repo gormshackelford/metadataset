@@ -763,12 +763,14 @@ def metadata(request, subject, publication_pk):
         if form.instance.pk is not None:
             attribute = form.instance.attribute
             attributes = attributes.exclude(attribute=attribute)
+            form.unit = attribute.unit
         else:
             attribute = attributes[0]
             attributes = attributes.exclude(attribute=attribute)
             form.initial['attribute'] = attribute
             form.initial['publication'] = publication  # For unique_together validation
             form.initial['user'] = user  # For unique_together validation
+            form.unit = attribute.unit
         if attribute.is_leaf_node():  # If factor options have not been defined, or if the data type is a number, not a factor
             form.fields['value_as_factor'].disabled = True
         else:  # If factor options have been defined (which is not possible if the data type is a number)
@@ -1094,12 +1096,14 @@ def experiment(request, subject, publication_pk, experiment_index):
         if form.instance.pk is not None:
             attribute = form.instance.attribute
             attributes = attributes.exclude(attribute=attribute)
+            form.unit = attribute.unit
         else:
             attribute = attributes[0]
             attributes = attributes.exclude(attribute=attribute)
             form.initial['attribute'] = attribute
             form.initial['experiment'] = experiment  # For unique_together validation
             form.initial['user'] = user  # For unique_together validation
+            form.unit = attribute.unit
         if attribute.is_leaf_node():  # If factor options have not been defined, or if the data type is a number, not a factor
             form.fields['value_as_factor'].disabled = True
         else:  # If factor options have been defined (which is not possible if the data type is a number)
@@ -1223,13 +1227,11 @@ def population(request, subject, publication_pk, experiment_index, population_in
     experiment_population = experiment_populations[population_index]
     # Formsets
     ExperimentPopulationOutcomeFormSet = modelformset_factory(ExperimentPopulationOutcome, form=ExperimentPopulationOutcomeForm, extra=4, can_delete=True)
-    EAVFormSet = modelformset_factory(EAV, form=EAVPopulationForm, extra=attributes_count, max_num=attributes_count, can_delete=True)
-    # experiment_population_outcome_formset
     experiment_population_outcome_formset = ExperimentPopulationOutcomeFormSet(data=data, queryset=ExperimentPopulationOutcome.objects.filter(experiment_population=experiment_population), prefix="experiment_population_outcome_formset")
     outcomes = TreeNodeChoiceField(required=False, queryset=Outcome.objects.get(pk=experiment_population.population.pk).get_descendants(include_self=True), level_indicator = "---")
     for form in experiment_population_outcome_formset:
         form.fields['outcome'] = outcomes
-    # EAV_formset
+    EAVFormSet = modelformset_factory(EAV, form=EAVPopulationForm, extra=attributes_count, max_num=attributes_count, can_delete=True)
     EAV_formset = EAVFormSet(data=data, queryset=EAV.objects.filter(population=experiment_population), prefix="EAV_formset")
     for form in EAV_formset:
         # There should only be one instance per attribute, so we need to
@@ -1238,12 +1240,14 @@ def population(request, subject, publication_pk, experiment_index, population_in
         if form.instance.pk is not None:
             attribute = form.instance.attribute
             attributes = attributes.exclude(attribute=attribute)
+            form.unit = attribute.unit
         else:
             attribute = attributes[0]
             attributes = attributes.exclude(attribute=attribute)
             form.initial['attribute'] = attribute
             form.initial['population'] = experiment_population  # For unique_together validation
             form.initial['user'] = user  # For unique_together validation
+            form.unit = attribute.unit
         if attribute.is_leaf_node():  # If factor options have not been defined, or if the data type is a number, not a factor
             form.fields['value_as_factor'].disabled = True
         else:  # If factor options have been defined (which is not possible if the data type is a number)
@@ -1297,8 +1301,10 @@ def outcome(request, subject, publication_pk, experiment_index, population_index
     user = request.user
     data = request.POST or None
     subject = Subject.objects.get(slug=subject)
+    attribute = subject.attribute  # The root attribute for this subject (each subject can have its own classification of attributes)
+    attributes = Attribute.objects.get(pk=attribute.pk).get_children()
+    attributes_count = attributes.count()
     user_subject = get_object_or_404(UserSubject, user=user, subject=subject)  # Check if this user has permission to work on this subject.
-    DataFormSet = modelformset_factory(Data, form=DataForm, extra=1, can_delete=True)
     # This publication
     publication = get_object_or_404(Publication, pk=publication_pk, subject=subject)
     # This experiment
@@ -1310,10 +1316,48 @@ def outcome(request, subject, publication_pk, experiment_index, population_index
     # This outcome
     experiment_population_outcomes = ExperimentPopulationOutcome.objects.filter(experiment_population=experiment_population).order_by('pk')
     experiment_population_outcome = experiment_population_outcomes[outcome_index]
-    # Formset for this outcome
+    # Formsets
+    DataFormSet = modelformset_factory(Data, form=DataForm, extra=1, can_delete=True)
     data_formset = DataFormSet(data=data, queryset=Data.objects.filter(experiment_population_outcome=experiment_population_outcome.pk), prefix="data_formset")
+    EAVFormSet = modelformset_factory(EAV, form=EAVOutcomeForm, extra=attributes_count, max_num=attributes_count, can_delete=True)
+    EAV_formset = EAVFormSet(data=data, queryset=EAV.objects.filter(outcome=experiment_population_outcome), prefix="EAV_formset")
+    for form in EAV_formset:
+        # There should only be one instance per attribute, so we need to
+        # check which attributes have instances and create extra formset forms
+        # only for attributes without instances.
+        if form.instance.pk is not None:
+            attribute = form.instance.attribute
+            attributes = attributes.exclude(attribute=attribute)
+            form.unit = attribute.unit
+        else:
+            attribute = attributes[0]
+            attributes = attributes.exclude(attribute=attribute)
+            form.initial['attribute'] = attribute
+            form.initial['outcome'] = experiment_population_outcome  # For unique_together validation
+            form.initial['user'] = user  # For unique_together validation
+            form.unit = attribute.unit
+        if attribute.is_leaf_node():  # If factor options have not been defined, or if the data type is a number, not a factor
+            form.fields['value_as_factor'].disabled = True
+        else:  # If factor options have been defined (which is not possible if the data type is a number)
+            form.fields['value_as_number'].disabled = True
+            form.fields['value_as_factor'] = TreeNodeChoiceField(queryset=attribute.get_children(), level_indicator="")
     if request.method == 'POST':
         with transaction.atomic():
+            formset = EAV_formset
+            if formset.is_valid():
+                instances = formset.save(commit=False)
+                if 'delete' in request.POST:
+                    for obj in formset.deleted_objects:
+                        obj.delete()
+                else:
+                    for instance in instances:
+                        instance.outcome = experiment_population_outcome
+                        instance.user = user
+                        instance.publication_index = publication
+                        instance.experiment_index = experiment
+                        instance.population_index = experiment_population
+                        instance.outcome_index = experiment_population_outcome
+                        instance.save()
             formset = data_formset
             if formset.is_valid():
                 instances = formset.save(commit=False)
@@ -1338,7 +1382,8 @@ def outcome(request, subject, publication_pk, experiment_index, population_index
         'experiment_index': experiment_index,
         'population_index': population_index,
         'outcome_index': outcome_index,
-        'data_formset': data_formset
+        'data_formset': data_formset,
+        'EAV_formset': EAV_formset
     }
     return render(request, 'publications/outcome.html', context)
 

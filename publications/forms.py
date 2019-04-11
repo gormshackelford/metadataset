@@ -217,6 +217,14 @@ class DataForm(forms.ModelForm):
     class Meta:
         model = Data
         exclude = ['subject', 'publication', 'experiment', 'experiment_population', 'experiment_population_outcome']
+        widgets = {
+            'comparison': forms.TextInput(attrs={
+                'placeholder': 'e.g., "Plots with cover crops (treatment) compared to plots without cover crops (control)"'
+            }),
+            'unit': forms.TextInput(attrs={
+                'placeholder': 'Units for mean and SD (e.g., "kg/ha")'
+            })
+        }
 
 
 class AttributeForm(forms.ModelForm):
