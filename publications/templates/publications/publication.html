@@ -132,11 +132,11 @@
   </p>
 
   <h1>Include this full text?</h1>
-  <p><span class="bold">If it should be included</span>, select one or more intervention(s) that were tested in this publication, and then click "Include based on the full text".</p>
+  <p><span class="bold">If it should be included</span>, select one or more intervention(s) that were tested in this publication, and click "Include based on the full text".</p>
 
   <table>
     <tr>
-      <td colspan="2">
+      <td>
         {{ experiment_formset.management_form }}
       </td>
       <td class="centered">Select</td>
@@ -148,14 +148,12 @@
           {{ hidden_field }}
         {% endfor %}
         {% if form.instance.intervention %}
-          {{ form.instance.intervention }}{{ form.intervention.as_hidden }}
+          <a href="{% url 'experiment' subject=subject.slug publication_pk=publication.pk experiment_index=forloop.counter0 %}">
+            {{ form.instance.intervention }}
+          </a>
+          {{ form.intervention.as_hidden }}
         {% else %}
           {{ form.intervention|add_class:"select_intervention" }}
-        {% endif %}
-      </td>
-      <td>
-        {% if form.instance.intervention %}
-          <a href="{% url 'experiment' subject=subject.slug publication_pk=publication.pk experiment_index=forloop.counter0 %}">Populations</a>
         {% endif %}
       </td>
       <td class="centered">{{ form.DELETE }}</td>
@@ -163,13 +161,12 @@
     {% endfor %}
     <tr>
       <td class="button bottom"><input type="submit" name="save" value="Include based on the full text" /></td>
-      <td class="bottom"></td>
       <td class="bottom button"><input type="submit" name="delete" value="Delete all selected" /></td>
     </tr>
   </table>
 
   <h1>Other metadata?</h1>
-  <p>When you select and save an intervention, a link will appear for "Populations" (above). Click this link to enter other metadata for that intervention. To enter other metadata for this publication in general (not for each specific intervention within this publication), click "Other metadata".</p>
+  <p>When you select and save an intervention, a link will appear for that intervention (above). Click that link to enter metadata for that intervention. To enter metadata for this publication in general (not for each specific intervention within this publication), click "Other metadata" (below).</p>
   <p>
     <a class="button" href="{% url 'metadata' subject=subject.slug publication_pk=publication.pk %}">Other metadata</a>
   </p>

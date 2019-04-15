@@ -11,8 +11,11 @@
 {% block content %}
 
 <h1>Population-level metadata</h1>
-
-<p><a href="{% url 'metadata' subject=subject.slug publication_pk=publication.pk %}">Go back to publication-level metadata</a></p>
+<p>
+  <a href="{% url 'publication' subject=subject.slug publication_pk=publication.pk %}">This publication</a>
+  > <a href="{% url 'metadata' subject=subject.slug publication_pk=publication.pk %}">Other publication-level metadata</a>
+  > This population
+</p>
 
 <form method="post" action="">{% csrf_token %}
 

@@ -12,7 +12,12 @@
 
 <h1>Outcome-level metadata</h1>
 
-<p><a href="{% url 'population' subject=subject.slug publication_pk=publication.pk experiment_index=experiment_index population_index=population_index %}">Go back to population-level metadata</a></p>
+<p>
+  <a href="{% url 'publication' subject=subject.slug publication_pk=publication.pk %}">This publication</a>
+  > <a href="{% url 'experiment' subject=subject.slug publication_pk=publication.pk experiment_index=experiment_index %}"> This intervention</a>
+  > <a href="{% url 'population' subject=subject.slug publication_pk=publication.pk experiment_index=experiment_index population_index=population_index %}">This population</a>
+  > This outcome
+</p>
 
 <form method="post" action="">{% csrf_token %}
   <table>

@@ -12,20 +12,27 @@
 
 <h1>Population-level metadata</h1>
 
-<p><a href="{% url 'experiment' subject=subject.slug publication_pk=publication.pk experiment_index=experiment_index %}">Go back to intervention-level metadata</a></p>
+<p>
+  <a href="{% url 'publication' subject=subject.slug publication_pk=publication.pk %}">This publication</a>
+  > <a href="{% url 'experiment' subject=subject.slug publication_pk=publication.pk experiment_index=experiment_index %}"> This intervention</a>
+  > This population
+  <span class="grey">
+    > This outcome
+  </span>
+</p>
 
 <form method="post" action="">{% csrf_token %}
 
   <table>
 
-    <tr><th colspan="4">This population</th></tr>
-    <tr><td colspan="4">{{ experiment_population.population|capfirst }}</td></tr>
+    <tr><th colspan="3">This population</th></tr>
+    <tr><td colspan="3">{{ experiment_population.population|capfirst }}</td></tr>
 
-    <tr><td class="empty" colspan="4">&nbsp;</td></tr>
+    <tr><td class="empty" colspan="3">&nbsp;</td></tr>
 
-    <tr><th colspan="4">Outcomes for this population</th></tr>
-    <tr><td class="top" colspan="4">When you select and save an outcome, a link will appear for "Effects".</td></tr>
-    <tr><td colspan="3"></td><td class="centered">Select</td></tr>
+    <tr><th colspan="3">Outcomes for this population</th></tr>
+    <tr><td class="top" colspan="3">When you select and save an outcome, a link will appear for that outcome. Click that link to enter metadata for that outcome.</td></tr>
+    <tr><td colspan="2"></td><td class="centered">Select</td></tr>
 
     {{ experiment_population_outcome_formset.management_form }}
     {% for form in experiment_population_outcome_formset %}
@@ -36,11 +43,13 @@
           {% endfor %}
         </td>
         <td>
-          {{ form.outcome }}
-        </td>
-        <td>
           {% if form.instance.outcome %}
-            <a href="{% url 'outcome' subject=subject.slug publication_pk=publication.pk experiment_index=experiment_index population_index=population_index outcome_index=forloop.counter0 %}">Effect</a>
+            <a href="{% url 'outcome' subject=subject.slug publication_pk=publication.pk experiment_index=experiment_index population_index=population_index outcome_index=forloop.counter0 %}">
+              {{ form.instance.outcome }}
+            </a>
+            {{ form.outcome.as_hidden }}
+          {% else %}
+            {{ form.outcome }}
           {% endif %}
         </td>
         <td class="centered">{{ form.DELETE }}</td>
@@ -49,24 +58,23 @@
     <tr>
       <td class="bottom"></td>
       <td class="button bottom"><input type="submit" name="save" value="Save all changes" /></td>
-      <td class="bottom"></td>
       <td class="button bottom centered"><input type="submit" name="delete" value="Delete all selected" /></td>
     </tr>
 
-    <tr><td class="empty" colspan="4">&nbsp;</td></tr>
+    <tr><td class="empty" colspan="3">&nbsp;</td></tr>
 
-    <tr><th colspan="4">Other covariates for this population</th></tr>
+    <tr><th colspan="3">Other covariates for this population</th></tr>
     <tr>
-      <td class="top" colspan="4"><a target="_blank" href="{% url 'attributes' subject=subject.slug %}">Add/edit other covariates</a></td>
+      <td class="top" colspan="3"><a target="_blank" href="{% url 'attributes' subject=subject.slug %}">Add/edit other covariates</a></td>
     </tr>
     <tr>
-      <td class="top" colspan="4">If you entered this metadata at the <a href="{% url 'experiment' subject=subject.slug publication_pk=publication.pk experiment_index=experiment_index %}">intervention level</a> or higher, then you do not need to enter it here (at the population level). However, if there is metadata that applies only to this population, then you should enter it here. It will supercede the metadata at a higher level.</td>
+      <td class="top" colspan="3">If you entered this metadata at the <a href="{% url 'experiment' subject=subject.slug publication_pk=publication.pk experiment_index=experiment_index %}">intervention level</a> or higher, then you do not need to enter it here (at the population level). However, if there is metadata that applies only to this population, then you should enter it here. It will supercede the metadata at a higher level.</td>
     </tr>
 
     {{ EAV_formset.management_form }}
     {% if EAV_formset.forms %}
       <tr>
-        <td class="top" colspan="3"></td>
+        <td class="top" colspan="2"></td>
         <td class="centered">Select</td>
       </tr>
       {% for form in EAV_formset %}
@@ -92,14 +100,12 @@
               {{ form.value_as_number }} {{ form.unit }}
             {% endif %}
           </td>
-          <td></td>
           <td class="centered">{{ form.DELETE }}</td>
         </tr>
       {% endfor %}
       <tr>
         <td class="bottom"></td>
         <td class="button bottom"><input type="submit" name="save" value="Save all changes" /></td>
-        <td class="bottom"></td>
         <td class="button bottom centered"><input type="submit" name="delete" value="Delete all selected" /></td>
       </tr>
     {% endif %}
