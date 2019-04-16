@@ -3,7 +3,7 @@ from django.db import models
 from django.contrib.auth.forms import UserCreationForm
 from ast import literal_eval
 from mptt.forms import TreeNodeChoiceField
-from .models import Assessment, Attribute, Coordinates, Data, EAV, Experiment, ExperimentCountry, ExperimentDate, ExperimentDesign, ExperimentPopulation, ExperimentPopulationOutcome, Intervention, Outcome, Profile, Publication, PublicationCountry, PublicationDate, PublicationPopulation, PublicationPopulationOutcome, User
+from .models import Assessment, Attribute, Coordinates, Data, EAV, Experiment, ExperimentDate, ExperimentDesign, ExperimentPopulation, ExperimentPopulationOutcome, Intervention, Outcome, Profile, Publication, PublicationDate, PublicationPopulation, PublicationPopulationOutcome, User, XCountry
 
 
 class SignUpForm(UserCreationForm):
@@ -82,13 +82,6 @@ class PublicationForm(forms.ModelForm):
             return authors
 
 
-class PublicationCountryForm(forms.ModelForm):
-
-    class Meta:
-        model = PublicationCountry
-        exclude = ['publication', 'user']
-
-
 class PublicationDateForm(forms.ModelForm):
 
     class Meta:
@@ -133,13 +126,6 @@ class ExperimentForm(forms.ModelForm):
         exclude = ['publication', 'user']
 
 
-class ExperimentCountryForm(forms.ModelForm):
-
-    class Meta:
-        model = ExperimentCountry
-        exclude = ['experiment']
-
-
 class ExperimentDateForm(forms.ModelForm):
 
     class Meta:
@@ -169,6 +155,13 @@ class CoordinatesForm(forms.ModelForm):
             'latitude_direction', 'longitude_degrees', 'longitude_minutes',
             'longitude_seconds', 'longitude_direction'
         ]
+
+
+class XCountryForm(forms.ModelForm):
+
+    class Meta:
+        model = XCountry
+        fields = ['country']
 
 
 class ExperimentPopulationForm(forms.ModelForm):

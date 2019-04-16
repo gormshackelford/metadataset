@@ -487,6 +487,33 @@ class Coordinates(models.Model):
         verbose_name_plural = "coordinates"
 
 
+class XCountry(models.Model):
+    # Entity options (only one of these should be non-null per instance)
+    publication = models.ForeignKey(Publication, related_name="xcountry_publication", blank=True, null=True, on_delete=models.CASCADE)
+    experiment = models.ForeignKey(Experiment, related_name="xcountry_experiment", blank=True, null=True, on_delete=models.CASCADE)
+    population = models.ForeignKey(ExperimentPopulation, related_name="xcountry_population", blank=True, null=True, on_delete=models.CASCADE)
+    outcome = models.ForeignKey(ExperimentPopulationOutcome, related_name="xcountry_outcome", blank=True, null=True, on_delete=models.CASCADE)
+    # End of entity options
+    country = models.ForeignKey(Country, on_delete=models.CASCADE)
+    # Indexes: these allow for distinct() queries at multiple levels in the
+    # hierarchy, while allowing for instances to be created at only one level in
+    # the hierarchy (i.e. for only one of the "entity options" above).
+    publication_index = models.ForeignKey(Publication, related_name="xcountry_publication_index", blank=True, null=True, on_delete=models.CASCADE)
+    experiment_index = models.ForeignKey(Experiment, related_name="xcountry_experiment_index", blank=True, null=True, on_delete=models.CASCADE)
+    population_index = models.ForeignKey(ExperimentPopulation, related_name="xcountry_population_index", blank=True, null=True, on_delete=models.CASCADE)
+    outcome_index = models.ForeignKey(ExperimentPopulationOutcome, related_name="xcountry_outcome_index", blank=True, null=True, on_delete=models.CASCADE)
+    # End of indexes
+    created = models.DateTimeField(auto_now_add=True)
+    updated = models.DateTimeField(auto_now=True)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return "{pk}".format(pk=self.pk)
+
+    class Meta:
+        verbose_name_plural = "xcountries"
+
+
 class ExperimentDate(models.Model):
     experiment = models.ForeignKey(Experiment, on_delete=models.CASCADE)
     year = models.IntegerField(blank=True, null=True)

@@ -1,4 +1,4 @@
-from .models import Attribute, Country, Data, Design, EAV, Experiment, ExperimentCountry, ExperimentDesign, ExperimentPopulation, ExperimentPopulationOutcome, Intervention, Outcome, Publication, PublicationPopulation, PublicationPopulationOutcome, Subject, User
+from .models import Attribute, Country, Data, Design, EAV, Experiment, ExperimentDesign, ExperimentPopulation, ExperimentPopulationOutcome, Intervention, Outcome, Publication, PublicationPopulation, PublicationPopulationOutcome, Subject, User, XCountry
 from rest_framework import serializers
 
 
@@ -60,9 +60,9 @@ class UserSerializer(serializers.HyperlinkedModelSerializer):
         fields = ('id', )
 
 
-class ExperimentCountrySerializer(serializers.HyperlinkedModelSerializer):
+class XCountrySerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
-        model = ExperimentCountry
+        model = XCountry
         exclude = ()
 
 
@@ -74,7 +74,7 @@ class ExperimentDesignSerializer(serializers.HyperlinkedModelSerializer):
 
 class ExperimentSerializer(serializers.HyperlinkedModelSerializer):
     EAV_experiment = EAVSerializer(many=True, read_only=True)  # Reverse foreign-key relationship (the default is the name of the model that has a foreign key to this model + "_set", unless a "related_name" is specified in that model, but that breaks other queries)
-    experimentcountry_set = ExperimentCountrySerializer(many=True, read_only=True)  # Reverse foreign-key relationship (the default is the name of the model that has a foreign key to this model + "_set", unless a "related_name" is specified in that model, but that breaks other queries)
+    xcountry_experiment_index = XCountrySerializer(many=True, read_only=True)  # Reverse foreign-key relationship (the default is the name of the model that has a foreign key to this model + "_set", unless a "related_name" is specified in that model, but that breaks other queries)
     experimentdesign_set = ExperimentDesignSerializer(many=True, read_only=True)  # Reverse foreign-key relationship (the default is the name of the model that has a foreign key to this model + "_set", unless a "related_name" is specified in that model, but that breaks other queries)
     class Meta:
         model = Experiment
@@ -120,11 +120,11 @@ class DataEAVSerializer(serializers.HyperlinkedModelSerializer):
         fields = ('attribute', 'value_as_factor', 'value_as_number')
 
 
-class DataExperimentCountrySerializer(serializers.HyperlinkedModelSerializer):
+class DataXCountrySerializer(serializers.HyperlinkedModelSerializer):
     country = serializers.SlugRelatedField(slug_field='country', read_only=True)
 
     class Meta:
-        model = ExperimentCountry
+        model = XCountry
         fields = ('country', )
 
 
@@ -139,8 +139,8 @@ class DataExperimentDesignSerializer(serializers.HyperlinkedModelSerializer):
 class DataExperimentSerializer(serializers.HyperlinkedModelSerializer):
     intervention = serializers.SlugRelatedField(slug_field='intervention', read_only=True)
     EAV_experiment = DataEAVSerializer(many=True, read_only=True)  # Reverse foreign-key relationship (the default is the name of the model that has a foreign key to this model + "_set", unless a "related_name" is specified in that model, but that breaks other queries)
-    experimentcountry_set = DataExperimentCountrySerializer(many=True, read_only=True)  # Reverse foreign-key relationship (the default is the name of the model that has a foreign key to this model + "_set", unless a "related_name" is specified in that model, but that breaks other queries)
     experimentdesign_set = DataExperimentDesignSerializer(many=True, read_only=True)  # Reverse foreign-key relationship (the default is the name of the model that has a foreign key to this model + "_set", unless a "related_name" is specified in that model, but that breaks other queries)
+    xcountry_experiment_index = DataXCountrySerializer(many=True, read_only=True)  # Reverse foreign-key relationship (the default is the name of the model that has a foreign key to this model + "_set", unless a "related_name" is specified in that model, but that breaks other queries)
 
     class Meta:
         model = Experiment

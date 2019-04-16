@@ -17,9 +17,9 @@ from collections import Counter
 from itertools import chain
 from random import shuffle
 from .tokens import account_activation_token
-from .forms import AssessmentForm, AttributeForm, AttributeOptionForm, CoordinatesForm, DataForm, EAVExperimentForm, EAVOutcomeForm, EAVPopulationForm, EAVPublicationForm, ExperimentForm, ExperimentCountryForm, ExperimentDateForm, ExperimentDesignForm, ExperimentPopulationForm, ExperimentPopulationOutcomeForm, FullTextAssessmentForm, InterventionForm, OutcomeForm, ProfileForm, PublicationForm, PublicationCountryForm, PublicationDateForm, PublicationPopulationForm, PublicationPopulationOutcomeForm, SignUpForm, UserForm
-from .models import Assessment, AssessmentStatus, Attribute, Coordinates, Country, Crop, Data, Design, EAV, Experiment, ExperimentCountry, ExperimentCrop, ExperimentDate, ExperimentDesign, ExperimentPopulation, ExperimentPopulationOutcome, Intervention, Outcome, Publication, PublicationCountry, PublicationDate, PublicationPopulation, PublicationPopulationOutcome, Subject, User, UserSubject
-from .serializers import AttributeSerializer, CountrySerializer, DataSerializer, DesignSerializer, EAVSerializer, ExperimentSerializer, ExperimentCountrySerializer, ExperimentDesignSerializer, ExperimentPopulationSerializer, ExperimentPopulationOutcomeSerializer, InterventionSerializer, OutcomeSerializer, PublicationSerializer, PublicationPopulationSerializer, PublicationPopulationOutcomeSerializer, SubjectSerializer, UserSerializer
+from .forms import AssessmentForm, AttributeForm, AttributeOptionForm, CoordinatesForm, DataForm, EAVExperimentForm, EAVOutcomeForm, EAVPopulationForm, EAVPublicationForm, ExperimentForm, ExperimentDateForm, ExperimentDesignForm, ExperimentPopulationForm, ExperimentPopulationOutcomeForm, FullTextAssessmentForm, InterventionForm, OutcomeForm, ProfileForm, PublicationForm, PublicationDateForm, PublicationPopulationForm, PublicationPopulationOutcomeForm, SignUpForm, UserForm, XCountryForm
+from .models import Assessment, AssessmentStatus, Attribute, Coordinates, Country, Crop, Data, Design, EAV, Experiment, ExperimentCrop, ExperimentDate, ExperimentDesign, ExperimentPopulation, ExperimentPopulationOutcome, Intervention, Outcome, Publication, PublicationDate, PublicationPopulation, PublicationPopulationOutcome, Subject, User, UserSubject, XCountry
+from .serializers import AttributeSerializer, CountrySerializer, DataSerializer, DesignSerializer, EAVSerializer, ExperimentSerializer, ExperimentDesignSerializer, ExperimentPopulationSerializer, ExperimentPopulationOutcomeSerializer, InterventionSerializer, OutcomeSerializer, PublicationSerializer, PublicationPopulationSerializer, PublicationPopulationOutcomeSerializer, SubjectSerializer, UserSerializer
 from .decorators import group_required
 from mptt.forms import TreeNodeChoiceField
 from haystack.generic_views import SearchView
@@ -77,14 +77,6 @@ class ExperimentViewSet(viewsets.ReadOnlyModelViewSet):
     """
     queryset = Experiment.objects.all()
     serializer_class = ExperimentSerializer
-
-
-class ExperimentCountryViewSet(viewsets.ReadOnlyModelViewSet):
-    """
-    API endpoint for "experiment_countries" (i.e. one "country" in one "experiment")
-    """
-    queryset = ExperimentCountry.objects.distinct()
-    serializer_class = ExperimentCountrySerializer
 
 
 class ExperimentDesignViewSet(viewsets.ReadOnlyModelViewSet):
@@ -738,15 +730,15 @@ def metadata(request, subject, publication_pk):
     # This publication
     publication = get_object_or_404(Publication, pk=publication_pk, subject=subject)
     # Formsets
-    PublicationCountryFormSet = modelformset_factory(PublicationCountry, form=PublicationCountryForm, extra=2, can_delete=True)
     PublicationDateFormSet = modelformset_factory(PublicationDate, form=PublicationDateForm, extra=2, max_num=2, can_delete=True)
     PublicationPopulationFormSet = modelformset_factory(PublicationPopulation, form=PublicationPopulationForm, extra=4, can_delete=True)
     CoordinatesFormSet = modelformset_factory(Coordinates, form=CoordinatesForm, extra=1, can_delete=True)
     EAVFormSet = modelformset_factory(EAV, form=EAVPublicationForm, extra=attributes_count, max_num=attributes_count, can_delete=True)
+    XCountryFormSet = modelformset_factory(XCountry, form=XCountryForm, extra=1, can_delete=True)
     # Formsets for this publication
-    publication_country_formset = PublicationCountryFormSet(data=data, queryset=PublicationCountry.objects.filter(publication=publication), prefix="publication_country_formset")
     publication_date_formset = PublicationDateFormSet(data=data, queryset=PublicationDate.objects.filter(publication=publication), prefix="publication_date_formset")
     coordinates_formset = CoordinatesFormSet(data=data, queryset=Coordinates.objects.filter(publication=publication), prefix="coordinates_formset")
+    x_country_formset = XCountryFormSet(data=data, queryset=XCountry.objects.filter(publication=publication), prefix="x_country_formset")
     # publication_population_formset
     publication_population_formset = PublicationPopulationFormSet(data=data, queryset=PublicationPopulation.objects.filter(publication=publication), prefix="publication_population_formset")
     populations = TreeNodeChoiceField(queryset=Outcome.objects.filter(pk=outcome.pk).get_descendants(include_self=True).filter(level=1), level_indicator = "---")
@@ -789,7 +781,7 @@ def metadata(request, subject, publication_pk):
                             instance.user = user
                             instance.publication_index = publication
                             instance.save()
-                formset = publication_country_formset
+                formset = x_country_formset
                 if formset.is_valid():
                     instances = formset.save(commit=False)
                     if 'delete' in request.POST:
@@ -798,6 +790,7 @@ def metadata(request, subject, publication_pk):
                     else:
                         for instance in instances:
                             instance.publication = publication
+                            instance.publication_index = publication
                             instance.user = user
                             instance.save()
                 formset = publication_date_formset
@@ -838,9 +831,9 @@ def metadata(request, subject, publication_pk):
     context = {
         'subject': subject,
         'publication': publication,
-        'publication_country_formset': publication_country_formset,
         'publication_date_formset': publication_date_formset,
         'publication_population_formset': publication_population_formset,
+        'x_country_formset': x_country_formset,
         'coordinates_formset': coordinates_formset,
         'EAV_formset': EAV_formset
     }
@@ -1045,12 +1038,12 @@ def experiment(request, subject, publication_pk, experiment_index):
     publication = get_object_or_404(Publication, pk=publication_pk, subject=subject)
     # Formsets
     ExperimentFormSet = modelformset_factory(Experiment, form=ExperimentForm, extra=0, can_delete=False)
-    ExperimentCountryFormSet = modelformset_factory(ExperimentCountry, form=ExperimentCountryForm, extra=2, can_delete=True)
     ExperimentDateFormSet = modelformset_factory(ExperimentDate, form=ExperimentDateForm, extra=2, max_num=2, can_delete=True)
     ExperimentDesignFormSet = modelformset_factory(ExperimentDesign, form=ExperimentDesignForm, extra=5, max_num=5, can_delete=True)
-    CoordinatesFormSet = modelformset_factory(Coordinates, form=CoordinatesForm, extra=1, can_delete=True)
     ExperimentPopulationFormSet = modelformset_factory(ExperimentPopulation, form=ExperimentPopulationForm, extra=4, can_delete=True)
+    CoordinatesFormSet = modelformset_factory(Coordinates, form=CoordinatesForm, extra=1, can_delete=True)
     EAVFormSet = modelformset_factory(EAV, form=EAVExperimentForm, extra=attributes_count, max_num=attributes_count, can_delete=True)
+    XCountryFormSet = modelformset_factory(XCountry, form=XCountryForm, extra=1, can_delete=True)
     # This experiment
     experiments = Experiment.objects.filter(publication=publication).order_by('pk')
     experiment = experiments[experiment_index]
@@ -1059,9 +1052,9 @@ def experiment(request, subject, publication_pk, experiment_index):
     # Show interventions for only this subject (level 0 in the classification of interventions is for different subjects, and here we show interventions for only this subject)
     experiment_form.fields['intervention'] = TreeNodeChoiceField(queryset=Intervention.objects.filter(pk=intervention.pk).get_descendants(include_self=True), level_indicator = "---")
     # Formsets for this experiment
-    experiment_country_formset = ExperimentCountryFormSet(data=data, queryset=ExperimentCountry.objects.filter(experiment=experiment), prefix="experiment_country_formset")
     experiment_date_formset = ExperimentDateFormSet(data=data, queryset=ExperimentDate.objects.filter(experiment=experiment), prefix="experiment_date_formset")
     coordinates_formset = CoordinatesFormSet(data=data, queryset=Coordinates.objects.filter(experiment=experiment), prefix="coordinates_formset")
+    x_country_formset = XCountryFormSet(data=data, queryset=XCountry.objects.filter(experiment=experiment), prefix="x_country_formset")
     # experiment_design_formset
     experiment_design_formset = ExperimentDesignFormSet(data=data, queryset=ExperimentDesign.objects.filter(experiment=experiment), prefix="experiment_design_formset")
     designs = TreeNodeChoiceField(required=False, queryset=Design.objects.filter(pk=design.pk).get_descendants(include_self=True).filter(level__gte=1), level_indicator = "---")
@@ -1122,7 +1115,7 @@ def experiment(request, subject, publication_pk, experiment_index):
                     for instance in instances:
                         instance.experiment = experiment
                         instance.save()
-            formset = experiment_country_formset
+            formset = x_country_formset
             if formset.is_valid():
                 instances = formset.save(commit=False)
                 if 'delete' in request.POST:
@@ -1131,6 +1124,9 @@ def experiment(request, subject, publication_pk, experiment_index):
                 else:
                     for instance in instances:
                         instance.experiment = experiment
+                        instance.experiment_index = experiment
+                        instance.publication_index = publication
+                        instance.user = user
                         instance.save()
             formset = experiment_date_formset
             if formset.is_valid():
@@ -1172,12 +1168,12 @@ def experiment(request, subject, publication_pk, experiment_index):
         'experiment': experiment,
         'experiment_index': experiment_index,
         'experiment_form': experiment_form,
-        'experiment_country_formset': experiment_country_formset,
         'experiment_date_formset': experiment_date_formset,
         'experiment_design_formset': experiment_design_formset,
         'experiment_population_formset': experiment_population_formset,
         'coordinates_formset': coordinates_formset,
-        'EAV_formset': EAV_formset
+        'EAV_formset': EAV_formset,
+        'x_country_formset': x_country_formset
     }
     return render(request, 'publications/experiment.html', context)
 
@@ -1454,34 +1450,13 @@ def this_intervention(request, subject, state, intervention_pk, outcome_pk='defa
             ).get_ancestors(include_self=True)
 
         # Countries for these publications
-        # Countries by publication (countries can be entered by publication or by experiment)
-        publication_countries = PublicationCountry.objects.filter(publication__in=publications)
-        # Countries by experiment (countries can be entered by publication or by experiment)
-        experiments = Experiment.objects.filter(publication__in=publications)
-        experiment_countries = ExperimentCountry.objects.filter(experiment__in=experiments)
-        """
+        countries = XCountry.objects.filter(publication_index__in=publications)
+
         # The number of publications by country
-        # All countries (countries by publication OR by experiment)
-        countries = Country.objects.distinct().filter(
-                Q(publicationcountry__in=publication_countries) |
-                Q(experimentcountry__in=experiment_countries)
-            )
-        count_by_country = []
-        for country in countries:
-            publications_for_this_country = publications.filter(
-                    Q(publicationcountry__country=country) |
-                    Q(experiment__experimentcountry__country=country)
-                ).values('pk').count()
-            count = publications_for_this_country
-            count_by_country.append('"{country}": "{count}"'.format(country=country, count=count))
-        """
-        # The number of publications by country
-        # This gets the same results, but is much faster than one query for each country.
-        q1 = publication_countries.values_list('country__iso_alpha_3', 'publication').distinct()
-        q2 = experiment_countries.values_list('country__iso_alpha_3', 'experiment__publication').distinct()
-        publication_countries = list(chain(q1, q2))  # A list of tuples in the form [(country, publication)]. Chain is imported from itertools.
-        publication_countries = set(publication_countries)  # Delete duplicate records, where a publication has the same country in both publication_country and experiment_country: set = unique tuples (and the list is now a dict)
-        count_by_country = Counter(item[0] for item in publication_countries)  # item[0] is country in (country, publication) and this counts the number of tuples for each country. Counter is imported from collections.
+        q = countries.values_list('country__iso_alpha_3', 'publication_index').distinct()
+        countries = list(chain(q))  # A list of tuples in the form [(country, publication)]. Chain is imported from itertools.
+        countries = set(countries)  # Delete duplicate records, where a publication has the same country in both publication_country and experiment_country: set = unique tuples (and the list is now a dict)
+        count_by_country = Counter(item[0] for item in countries)  # item[0] is country in (country, publication) and this counts the number of tuples for each country. Counter is imported from collections.
         count_by_country = json.dumps(count_by_country)  # Convert to JSON for use by JavaScript in the template
         count = publications.count()
 
@@ -1507,10 +1482,9 @@ def this_intervention(request, subject, state, intervention_pk, outcome_pk='defa
             ).get_ancestors(include_self=True)
 
         # Countries for these data
-        # Countries by experiment
         experiments = Experiment.objects.filter(data__in=data)
-        experiment_countries = ExperimentCountry.objects.filter(experiment__in=experiments)
-        q = experiment_countries.values_list('country__iso_alpha_3', 'experiment__data').distinct()
+        countries = XCountry.objects.filter(experiment_index__in=experiments)
+        q = countries.values_list('country__iso_alpha_3', 'experiment_index__data').distinct()
         countries = list(chain(q))  # A list of tuples in the form [(country, publication)]. Chain is imported from itertools.
         countries = set(countries)  # Delete duplicate records, where a publication has the same country in both publication_country and experiment_country: set = unique tuples (and the list is now a dict)
         count_by_country = Counter(item[0] for item in countries)  # item[0] is country in (country, publication) and this counts the number of tuples for each country. Counter is imported from collections.
@@ -1569,17 +1543,12 @@ def this_outcome(request, subject, state, outcome_pk, intervention_pk='default')
                 experiment__publication__in=publications
             ).get_ancestors(include_self=True)
         # Countries for these publications
-        # Countries by publication (countries can be entered by publication or by experiment)
-        publication_countries = PublicationCountry.objects.filter(publication__in=publications)
-        # Countries by experiment (countries can be entered by publication or by experiment)
-        experiments = Experiment.objects.filter(publication__in=publications)
-        experiment_countries = ExperimentCountry.objects.filter(experiment__in=experiments)
+        countries = XCountry.objects.filter(publication_index__in=publications)
         # The number of publications by country
-        q1 = publication_countries.values_list('country__iso_alpha_3', 'publication').distinct()
-        q2 = experiment_countries.values_list('country__iso_alpha_3', 'experiment__publication').distinct()
-        publication_countries = list(chain(q1, q2))  # A list of tuples in the form [(country, publication)]. Chain is imported from itertools.
-        publication_countries = set(publication_countries)  # Delete duplicate records, where a publication has the same country in both publication_country and experiment_country: set = unique tuples (and the list is now a dict)
-        count_by_country = Counter(item[0] for item in publication_countries)  # item[0] is country in (country, publication) and this counts the number of tuples for each country. Counter is imported from collections.
+        q = countries.values_list('country__iso_alpha_3', 'publication_index').distinct()
+        countries = list(chain(q))  # A list of tuples in the form [(country, publication)]. Chain is imported from itertools.
+        countries = set(countries)  # Delete duplicate records, where a publication has the same country in both publication_country and experiment_country: set = unique tuples (and the list is now a dict)
+        count_by_country = Counter(item[0] for item in countries)  # item[0] is country in (country, publication) and this counts the number of tuples for each country. Counter is imported from collections.
         count_by_country = json.dumps(count_by_country)  # Convert to JSON for use by JavaScript in the template
         count = publications.count()
 
@@ -1606,8 +1575,8 @@ def this_outcome(request, subject, state, outcome_pk, intervention_pk='default')
         # Countries for these data
         # Countries by experiment
         experiments = Experiment.objects.filter(data__in=data)
-        experiment_countries = ExperimentCountry.objects.filter(experiment__in=experiments)
-        q = experiment_countries.values_list('country__iso_alpha_3', 'experiment__data').distinct()
+        countries = XCountry.objects.filter(experiment_index__in=experiments)
+        q = countries.values_list('country__iso_alpha_3', 'experiment_index__data').distinct()
         countries = list(chain(q))  # A list of tuples in the form [(country, publication)]. Chain is imported from itertools.
         countries = set(countries)  # Delete duplicate records, where a publication has the same country in both publication_country and experiment_country: set = unique tuples (and the list is now a dict)
         count_by_country = Counter(item[0] for item in countries)  # item[0] is country in (country, publication) and this counts the number of tuples for each country. Counter is imported from collections.
@@ -1643,10 +1612,7 @@ def publications_x(request, subject, intervention_pk='default', outcome_pk='defa
     if iso_a3 != 'default':
         if iso_a3 != '-99':  # Disputed territories that are not our Countries model: Kosovo, Northern Cyprus, and Somaliland
             country = Country.objects.get(iso_alpha_3=iso_a3)
-            publications = publications.distinct().filter(
-                    Q(publicationcountry__country=country) |
-                    Q(experiment__experimentcountry__country=country)
-                )
+            publications = publications.distinct().filter(xcountry_publication_index__country=country)
     if outcome_pk != 'default':
         outcomes = Outcome.objects.filter(pk=outcome_pk).get_descendants(include_self=True)
         # Outcomes by experiment (outcomes can be entered by experiment or by publication)
