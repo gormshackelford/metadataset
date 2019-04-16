@@ -4,7 +4,7 @@ from django.utils.translation import ugettext_lazy as _
 from mptt.admin import DraggableMPTTAdmin
 from reversion.admin import VersionAdmin
 from .models import Profile, User  # AbstractUser with email address as username
-from .models import Subject, Publication, Assessment, AssessmentStatus, Attribute, EAV, Intervention, Outcome, Data, Design, Experiment, Country, Crop, ExperimentCountry, ExperimentCrop, ExperimentDate, ExperimentDesign, ExperimentPopulation, ExperimentLatLong, ExperimentLatLongDMS, ExperimentPopulationOutcome, PublicationCountry, PublicationDate, PublicationLatLong, PublicationLatLongDMS, PublicationPopulation, PublicationPopulationOutcome, UserSubject
+from .models import Assessment, AssessmentStatus, Attribute, EAV, Coordinates, Country, Crop, Data, Design, Experiment, ExperimentCountry, ExperimentCrop, ExperimentDate, ExperimentDesign, ExperimentPopulation, ExperimentLatLong, ExperimentPopulationOutcome, Intervention, Outcome, Publication, PublicationCountry, PublicationDate, PublicationLatLong, PublicationLatLongDMS, PublicationPopulation, PublicationPopulationOutcome, Subject, UserSubject
 
 
 @admin.register(User)
@@ -50,6 +50,10 @@ class AssessmentStatusAdmin(admin.ModelAdmin):
     readonly_fields = ('created', 'updated')
 admin.site.register(AssessmentStatus, AssessmentStatusAdmin)
 
+class CoordinatesAdmin(admin.ModelAdmin):
+    readonly_fields = ('created', 'updated')
+admin.site.register(Coordinates, CoordinatesAdmin)
+
 class DataAdmin(admin.ModelAdmin):
     readonly_fields = ('created', 'updated')
 admin.site.register(Data, DataAdmin)
@@ -85,10 +89,6 @@ admin.site.register(ExperimentPopulationOutcome, ExperimentPopulationOutcomeAdmi
 class ExperimentLatLongAdmin(admin.ModelAdmin):
     readonly_fields = ('created', 'updated')
 admin.site.register(ExperimentLatLong, ExperimentLatLongAdmin)
-
-class ExperimentLatLongDMSAdmin(admin.ModelAdmin):
-    readonly_fields = ('created', 'updated')
-admin.site.register(ExperimentLatLongDMS, ExperimentLatLongDMSAdmin)
 
 class ExperimentDateAdmin(admin.ModelAdmin):
     readonly_fields = ('created', 'updated')

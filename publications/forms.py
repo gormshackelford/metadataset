@@ -3,7 +3,7 @@ from django.db import models
 from django.contrib.auth.forms import UserCreationForm
 from ast import literal_eval
 from mptt.forms import TreeNodeChoiceField
-from .models import Assessment, Attribute, Data, EAV, Experiment, ExperimentCountry, ExperimentDate, ExperimentDesign, ExperimentLatLong, ExperimentLatLongDMS, ExperimentPopulation, ExperimentPopulationOutcome, Intervention, Outcome, Profile, Publication, PublicationCountry, PublicationDate, PublicationLatLong, PublicationLatLongDMS, PublicationPopulation, PublicationPopulationOutcome, User
+from .models import Assessment, Attribute, Coordinates, Data, EAV, Experiment, ExperimentCountry, ExperimentDate, ExperimentDesign, ExperimentLatLong, ExperimentPopulation, ExperimentPopulationOutcome, Intervention, Outcome, Profile, Publication, PublicationCountry, PublicationDate, PublicationLatLong, PublicationLatLongDMS, PublicationPopulation, PublicationPopulationOutcome, User
 
 
 class SignUpForm(UserCreationForm):
@@ -185,7 +185,7 @@ class ExperimentLatLongForm(forms.ModelForm):
         exclude = ['experiment']
 
 
-class ExperimentLatLongDMSForm(forms.ModelForm):
+class CoordinatesForm(forms.ModelForm):
     latitude_degrees = forms.FloatField(min_value=0.0, max_value=90.0, required=False)
     latitude_minutes = forms.FloatField(min_value=0.0, max_value=60.0, required=False)
     latitude_seconds = forms.FloatField(min_value=0.0, max_value=60.0, required=False)
@@ -194,8 +194,12 @@ class ExperimentLatLongDMSForm(forms.ModelForm):
     longitude_seconds = forms.FloatField(min_value=0.0, max_value=60.0, required=False)
 
     class Meta:
-        model = ExperimentLatLong
-        exclude = ['experiment']
+        model = Coordinates
+        fields = [
+            'latitude_degrees', 'latitude_minutes', 'latitude_seconds',
+            'latitude_direction', 'longitude_degrees', 'longitude_minutes',
+            'longitude_seconds', 'longitude_direction'
+        ]
 
 
 class ExperimentPopulationForm(forms.ModelForm):

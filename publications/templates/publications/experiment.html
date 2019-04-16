@@ -116,8 +116,8 @@
         <td class="centered">{{ form.DELETE }}</td>
       </tr>
     {% endfor %}
-    {{ experiment_lat_long_dms_formset.management_form }}
-    {% for form in experiment_lat_long_dms_formset %}
+    {{ coordinates_formset.management_form }}
+    {% for form in coordinates_formset %}
     <tr>
       <td>
         {% for hidden_field in form.hidden_fields %}
@@ -127,29 +127,12 @@
           Coordinates:
         {% endif %}
       </td>
-      <td>Latitude (DMS): {{ form.latitude_degrees|add_class:"coordinates" }} &#176; {{ form.latitude_minutes|add_class:"coordinates" }} ' {{ form.latitude_seconds|add_class:"coordinates" }} " {{ form.latitude_direction }}</td>
+      <td>Latitude: {{ form.latitude_degrees|add_class:"coordinates" }} &#176; {{ form.latitude_minutes|add_class:"coordinates" }} ' {{ form.latitude_seconds|add_class:"coordinates" }} " {{ form.latitude_direction }}</td>
       <td class="centered">{{ form.DELETE }}</td>
     </tr>
     <tr>
       <td></td>
-      <td>Longitude (DMS): {{ form.longitude_degrees|add_class:"coordinates" }} &#176; {{ form.longitude_minutes|add_class:"coordinates" }} ' {{ form.longitude_seconds|add_class:"coordinates" }} " {{ form.longitude_direction }}</td>
-      <td></td>
-    </tr>
-    {% endfor %}
-    {{ experiment_lat_long_formset.management_form }}
-    {% for form in experiment_lat_long_formset %}
-    <tr>
-      <td>
-        {% for hidden_field in form.hidden_fields %}
-          {{ hidden_field }}
-        {% endfor %}
-      </td>
-      <td>Latitude (decimal): {{ form.latitude }} &#176;</td>
-      <td class="centered">{{ form.DELETE }}</td>
-    </tr>
-    <tr>
-      <td></td>
-      <td>Longitude (decimal): {{ form.longitude }} &#176;</td>
+      <td>Longitude: {{ form.longitude_degrees|add_class:"coordinates" }} &#176; {{ form.longitude_minutes|add_class:"coordinates" }} ' {{ form.longitude_seconds|add_class:"coordinates" }} " {{ form.longitude_direction }}</td>
       <td></td>
     </tr>
     {% endfor %}

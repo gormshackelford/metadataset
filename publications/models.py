@@ -431,6 +431,26 @@ class Experiment(models.Model):
         return self.publication.title
 
 
+class ExperimentPopulation(models.Model):
+    experiment = models.ForeignKey(Experiment, on_delete=models.CASCADE)
+    population = models.ForeignKey(Outcome, on_delete=models.CASCADE)  # Populations are level 1 in the classification of outcomes.
+    created = models.DateTimeField(auto_now_add=True)
+    updated = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.experiment.publication.title
+
+
+class ExperimentPopulationOutcome(models.Model):
+    experiment_population = models.ForeignKey(ExperimentPopulation, on_delete=models.CASCADE)
+    outcome = TreeForeignKey(Outcome, on_delete=models.CASCADE)
+    created = models.DateTimeField(auto_now_add=True)
+    updated = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.experiment_population.experiment.publication.title
+
+
 # This and other intersection tables that begin with "Experiment" apply to only one experiment in a publication, whereas those that begin with "Publication" (e.g., "PublicationCountry") apply to all experiments within a publication.
 class ExperimentCountry(models.Model):
     experiment = models.ForeignKey(Experiment, on_delete=models.CASCADE)
@@ -477,29 +497,45 @@ class ExperimentLatLong(models.Model):
 
 
 # The lat/long at which the experiments were done in degrees, minutes, and seconds (DMS)
-class ExperimentLatLongDMS(models.Model):
-    experiment = models.ForeignKey(Experiment, on_delete=models.CASCADE)
+class Coordinates(models.Model):
+    # Entity options (only one of these should be non-null per instance)
+    publication = models.ForeignKey(Publication, related_name="coordinates_publication", blank=True, null=True, on_delete=models.CASCADE)
+    experiment = models.ForeignKey(Experiment, related_name="coordinates_experiment", blank=True, null=True, on_delete=models.CASCADE)
+    population = models.ForeignKey(ExperimentPopulation, related_name="coordinates_population", blank=True, null=True, on_delete=models.CASCADE)
+    outcome = models.ForeignKey(ExperimentPopulationOutcome, related_name="coordinates_outcome", blank=True, null=True, on_delete=models.CASCADE)
+    # End of entity options
     latitude_degrees = models.FloatField(null=True, blank=True, default=None, validators=[MinValueValidator(0.0), MaxValueValidator(90.0)])
     latitude_minutes = models.FloatField(null=True, blank=True, default=None, validators=[MinValueValidator(0.0), MaxValueValidator(60.0)])
     latitude_seconds = models.FloatField(null=True, blank=True, default=None, validators=[MinValueValidator(0.0), MaxValueValidator(60.0)])
     LATITUDE_DIRECTIONS = (
-        ("N", "N"),
-        ("S", "S")
+        ("N", "N (+)"),
+        ("S", "S (-)")
     )
     latitude_direction = models.CharField(max_length=10, blank=True, null=True, choices=LATITUDE_DIRECTIONS, default="N")
     longitude_degrees = models.FloatField(null=True, blank=True, default=None, validators=[MinValueValidator(0.0), MaxValueValidator(180.0)])
     longitude_minutes = models.FloatField(null=True, blank=True, default=None, validators=[MinValueValidator(0.0), MaxValueValidator(60.0)])
     longitude_seconds = models.FloatField(null=True, blank=True, default=None, validators=[MinValueValidator(0.0), MaxValueValidator(60.0)])
     LONGITUDE_DIRECTIONS = (
-        ("E", "E"),
-        ("W", "W")
+        ("E", "E (+)"),
+        ("W", "W (-)")
     )
     longitude_direction = models.CharField(max_length=10, blank=True, null=True, choices=LONGITUDE_DIRECTIONS, default="E")
+    # Indexes: these allow for distinct() queries at multiple levels in the
+    # hierarchy, while allowing for instances to be created at only one level in
+    # the hierarchy (i.e. for only one of the "entity options" above).
+    publication_index = models.ForeignKey(Publication, related_name="coordinates_publication_index", blank=True, null=True, on_delete=models.CASCADE)
+    experiment_index = models.ForeignKey(Experiment, related_name="coordinates_experiment_index", blank=True, null=True, on_delete=models.CASCADE)
+    population_index = models.ForeignKey(ExperimentPopulation, related_name="coordinates_population_index", blank=True, null=True, on_delete=models.CASCADE)
+    outcome_index = models.ForeignKey(ExperimentPopulationOutcome, related_name="coordinates_outcome_index", blank=True, null=True, on_delete=models.CASCADE)
+    # End of indexes
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return self.experiment.publication.title
+        return "{pk}".format(pk=self.pk)
+
+    class Meta:
+        verbose_name_plural = "coordinates"
 
 
 class ExperimentDate(models.Model):
@@ -526,27 +562,7 @@ class ExperimentDate(models.Model):
     updated = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return self.experiment.publication.title
-
-
-class ExperimentPopulation(models.Model):
-    experiment = models.ForeignKey(Experiment, on_delete=models.CASCADE)
-    population = models.ForeignKey(Outcome, on_delete=models.CASCADE)  # Populations are level 1 in the classification of outcomes.
-    created = models.DateTimeField(auto_now_add=True)
-    updated = models.DateTimeField(auto_now=True)
-
-    def __str__(self):
-        return self.experiment.publication.title
-
-
-class ExperimentPopulationOutcome(models.Model):
-    experiment_population = models.ForeignKey(ExperimentPopulation, on_delete=models.CASCADE)
-    outcome = TreeForeignKey(Outcome, on_delete=models.CASCADE)
-    created = models.DateTimeField(auto_now_add=True)
-    updated = models.DateTimeField(auto_now=True)
-
-    def __str__(self):
-        return self.experiment_population.experiment.publication.title
+        return self.publication_index.title
 
 
 class Data(models.Model):
