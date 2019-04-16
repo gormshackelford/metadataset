@@ -328,46 +328,6 @@ class PublicationCountry(models.Model):
         verbose_name_plural = "publication countries"
 
 
-# The lat/long at which the experiments were done, in decimal degrees
-class PublicationLatLong(models.Model):
-    publication = models.ForeignKey(Publication, on_delete=models.CASCADE)
-    latitude = models.FloatField(null=True, blank=True, default=None, validators=[MinValueValidator(-90.0), MaxValueValidator(90.0)])
-    longitude = models.FloatField(null=True, blank=True, default=None, validators=[MinValueValidator(-180.0), MaxValueValidator(180.0)])
-    created = models.DateTimeField(auto_now_add=True)
-    updated = models.DateTimeField(auto_now=True)
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
-
-    def __str__(self):
-        return self.publication.title
-
-
-# The lat/long at which the experiments were done in degrees, minutes, and seconds (DMS)
-class PublicationLatLongDMS(models.Model):
-    publication = models.ForeignKey(Publication, on_delete=models.CASCADE)
-    latitude_degrees = models.FloatField(null=True, blank=True, default=None)
-    latitude_minutes = models.FloatField(null=True, blank=True, default=None)
-    latitude_seconds = models.FloatField(null=True, blank=True, default=None)
-    LATITUDE_DIRECTIONS = (
-        ("N", "N"),
-        ("S", "S")
-    )
-    latitude_direction = models.CharField(max_length=10, blank=True, null=True, choices=LATITUDE_DIRECTIONS, default="N")
-    longitude_degrees = models.FloatField(null=True, blank=True, default=None)
-    longitude_minutes = models.FloatField(null=True, blank=True, default=None)
-    longitude_seconds = models.FloatField(null=True, blank=True, default=None)
-    LONGITUDE_DIRECTIONS = (
-        ("E", "E"),
-        ("W", "W")
-    )
-    longitude_direction = models.CharField(max_length=10, blank=True, null=True, choices=LONGITUDE_DIRECTIONS, default="E")
-    created = models.DateTimeField(auto_now_add=True)
-    updated = models.DateTimeField(auto_now=True)
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
-
-    def __str__(self):
-        return self.publication.title
-
-
 # The date on which the experiments were done (not the date of publication)
 class PublicationDate(models.Model):
     publication = models.ForeignKey(Publication, on_delete=models.CASCADE)
@@ -485,18 +445,6 @@ class ExperimentDesign(models.Model):
         return self.experiment.publication.title
 
 
-class ExperimentLatLong(models.Model):
-    experiment = models.ForeignKey(Experiment, on_delete=models.CASCADE)
-    latitude = models.FloatField(null=True, blank=True, default=None, validators=[MinValueValidator(-90.0), MaxValueValidator(90.0)])
-    longitude = models.FloatField(null=True, blank=True, default=None, validators=[MinValueValidator(-180.0), MaxValueValidator(180.0)])
-    created = models.DateTimeField(auto_now_add=True)
-    updated = models.DateTimeField(auto_now=True)
-
-    def __str__(self):
-        return self.experiment.publication.title
-
-
-# The lat/long at which the experiments were done in degrees, minutes, and seconds (DMS)
 class Coordinates(models.Model):
     # Entity options (only one of these should be non-null per instance)
     publication = models.ForeignKey(Publication, related_name="coordinates_publication", blank=True, null=True, on_delete=models.CASCADE)
@@ -530,6 +478,7 @@ class Coordinates(models.Model):
     # End of indexes
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
 
     def __str__(self):
         return "{pk}".format(pk=self.pk)

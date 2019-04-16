@@ -4,7 +4,7 @@ from django.utils.translation import ugettext_lazy as _
 from mptt.admin import DraggableMPTTAdmin
 from reversion.admin import VersionAdmin
 from .models import Profile, User  # AbstractUser with email address as username
-from .models import Assessment, AssessmentStatus, Attribute, EAV, Coordinates, Country, Crop, Data, Design, Experiment, ExperimentCountry, ExperimentCrop, ExperimentDate, ExperimentDesign, ExperimentPopulation, ExperimentLatLong, ExperimentPopulationOutcome, Intervention, Outcome, Publication, PublicationCountry, PublicationDate, PublicationLatLong, PublicationLatLongDMS, PublicationPopulation, PublicationPopulationOutcome, Subject, UserSubject
+from .models import Assessment, AssessmentStatus, Attribute, EAV, Coordinates, Country, Crop, Data, Design, Experiment, ExperimentCountry, ExperimentCrop, ExperimentDate, ExperimentDesign, ExperimentPopulation, ExperimentPopulationOutcome, Intervention, Outcome, Publication, PublicationCountry, PublicationDate, PublicationPopulation, PublicationPopulationOutcome, Subject, UserSubject
 
 
 @admin.register(User)
@@ -86,10 +86,6 @@ class ExperimentPopulationOutcomeAdmin(admin.ModelAdmin):
     readonly_fields = ('created', 'updated')
 admin.site.register(ExperimentPopulationOutcome, ExperimentPopulationOutcomeAdmin)
 
-class ExperimentLatLongAdmin(admin.ModelAdmin):
-    readonly_fields = ('created', 'updated')
-admin.site.register(ExperimentLatLong, ExperimentLatLongAdmin)
-
 class ExperimentDateAdmin(admin.ModelAdmin):
     readonly_fields = ('created', 'updated')
 admin.site.register(ExperimentDate, ExperimentDateAdmin)
@@ -101,14 +97,6 @@ admin.site.register(PublicationCountry, PublicationCountryAdmin)
 class PublicationDateAdmin(admin.ModelAdmin):
     readonly_fields = ('created', 'updated')
 admin.site.register(PublicationDate, PublicationDateAdmin)
-
-class PublicationLatLongAdmin(admin.ModelAdmin):
-    readonly_fields = ('created', 'updated')
-admin.site.register(PublicationLatLong, PublicationLatLongAdmin)
-
-class PublicationLatLongDMSAdmin(admin.ModelAdmin):
-    readonly_fields = ('created', 'updated')
-admin.site.register(PublicationLatLongDMS, PublicationLatLongDMSAdmin)
 
 class PublicationPopulationOutcomeAdmin(admin.ModelAdmin):
     readonly_fields = ('created', 'updated')
