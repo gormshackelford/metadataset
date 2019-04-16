@@ -313,21 +313,6 @@ class UserSubject(models.Model):
         return self.user.email
 
 
-# The country in which the experiments were done (not necessarily the country of the publication authors)
-class PublicationCountry(models.Model):
-    publication = models.ForeignKey(Publication, on_delete=models.CASCADE)
-    country = models.ForeignKey(Country, on_delete=models.CASCADE)
-    created = models.DateTimeField(auto_now_add=True)
-    updated = models.DateTimeField(auto_now=True)
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
-
-    def __str__(self):
-        return self.publication.title
-
-    class Meta:
-        verbose_name_plural = "publication countries"
-
-
 # The date on which the experiments were done (not the date of publication)
 class PublicationDate(models.Model):
     publication = models.ForeignKey(Publication, on_delete=models.CASCADE)
@@ -409,20 +394,6 @@ class ExperimentPopulationOutcome(models.Model):
 
     def __str__(self):
         return self.experiment_population.experiment.publication.title
-
-
-# This and other intersection tables that begin with "Experiment" apply to only one experiment in a publication, whereas those that begin with "Publication" (e.g., "PublicationCountry") apply to all experiments within a publication.
-class ExperimentCountry(models.Model):
-    experiment = models.ForeignKey(Experiment, on_delete=models.CASCADE)
-    country = models.ForeignKey(Country, on_delete=models.CASCADE)
-    created = models.DateTimeField(auto_now_add=True)
-    updated = models.DateTimeField(auto_now=True)
-
-    def __str__(self):
-        return self.experiment.publication.title
-
-    class Meta:
-        verbose_name_plural = "experiment countries"
 
 
 class ExperimentCrop(models.Model):
