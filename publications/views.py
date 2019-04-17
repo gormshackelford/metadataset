@@ -725,7 +725,7 @@ def metadata(request, subject, publication_pk):
     user_subject = get_object_or_404(UserSubject, user=user, subject=subject)  # Check if this user has permission to work on this subject.
     outcome = subject.outcome  # The root outcome for this subject (each subject can have its own classification of outcomes)
     attribute = subject.attribute  # The root attribute for this subject (each subject can have its own classification of attributes)
-    attributes = Attribute.objects.get(pk=attribute.pk).get_children()
+    attributes = Attribute.objects.get(pk=attribute.pk).get_children().order_by('attribute')
     attributes_count = attributes.count()
     # This publication
     publication = get_object_or_404(Publication, pk=publication_pk, subject=subject)
@@ -733,7 +733,7 @@ def metadata(request, subject, publication_pk):
     PublicationDateFormSet = modelformset_factory(PublicationDate, form=PublicationDateForm, extra=2, max_num=2, can_delete=True)
     PublicationPopulationFormSet = modelformset_factory(PublicationPopulation, form=PublicationPopulationForm, extra=4, can_delete=True)
     CoordinatesFormSet = modelformset_factory(Coordinates, form=CoordinatesForm, extra=1, can_delete=True)
-    EAVFormSet = modelformset_factory(EAV, form=EAVPublicationForm, extra=attributes_count, max_num=attributes_count, can_delete=True)
+    EAVFormSet = modelformset_factory(EAV, form=EAVPublicationForm, extra=attributes_count, can_delete=True)
     XCountryFormSet = modelformset_factory(XCountry, form=XCountryForm, extra=1, can_delete=True)
     # Formsets for this publication
     publication_date_formset = PublicationDateFormSet(data=data, queryset=PublicationDate.objects.filter(publication=publication), prefix="publication_date_formset")
@@ -747,13 +747,14 @@ def metadata(request, subject, publication_pk):
     # EAV_formset
     EAV_formset = EAVFormSet(data=data, queryset=EAV.objects.filter(publication=publication), prefix="EAV_formset")
     for form in EAV_formset:
-        # There should only be one instance per attribute, so we need to
-        # check which attributes have instances and create extra formset forms
-        # only for attributes without instances.
+        # Each form can have a different attribute.
+        # If the form has an instance, get the attribute for that instance.
         if form.instance.pk is not None:
             attribute = form.instance.attribute
-            attributes = attributes.exclude(attribute=attribute)
             form.unit = attribute.unit
+        # There should be one "extra" form for each attribute in attributes.
+        # If the form does not have an instance, get an attribute, and then
+        # delete that attribute from attributes.
         else:
             attribute = attributes[0]
             attributes = attributes.exclude(attribute=attribute)
@@ -1032,7 +1033,7 @@ def experiment(request, subject, publication_pk, experiment_index):
     intervention = subject.intervention  # The root intervention for this subject (each subject can have its own classification of interventions)
     outcome = subject.outcome  # The root outcome for this subject (each subject can have its own classification of outcomes)
     attribute = subject.attribute  # The root attribute for this subject (each subject can have its own classification of attributes)
-    attributes = Attribute.objects.get(pk=attribute.pk).get_children()
+    attributes = Attribute.objects.get(pk=attribute.pk).get_children().order_by('attribute')
     attributes_count = attributes.count()
     # This publication
     publication = get_object_or_404(Publication, pk=publication_pk, subject=subject)
@@ -1042,7 +1043,7 @@ def experiment(request, subject, publication_pk, experiment_index):
     ExperimentDesignFormSet = modelformset_factory(ExperimentDesign, form=ExperimentDesignForm, extra=5, max_num=5, can_delete=True)
     ExperimentPopulationFormSet = modelformset_factory(ExperimentPopulation, form=ExperimentPopulationForm, extra=4, can_delete=True)
     CoordinatesFormSet = modelformset_factory(Coordinates, form=CoordinatesForm, extra=1, can_delete=True)
-    EAVFormSet = modelformset_factory(EAV, form=EAVExperimentForm, extra=attributes_count, max_num=attributes_count, can_delete=True)
+    EAVFormSet = modelformset_factory(EAV, form=EAVExperimentForm, extra=attributes_count, can_delete=True)
     XCountryFormSet = modelformset_factory(XCountry, form=XCountryForm, extra=1, can_delete=True)
     # This experiment
     experiments = Experiment.objects.filter(publication=publication).order_by('pk')
@@ -1068,13 +1069,14 @@ def experiment(request, subject, publication_pk, experiment_index):
     # EAV_formset
     EAV_formset = EAVFormSet(data=data, queryset=EAV.objects.filter(experiment=experiment), prefix="EAV_formset")
     for form in EAV_formset:
-        # There should only be one instance per attribute, so we need to
-        # check which attributes have instances and create extra formset forms
-        # only for attributes without instances.
+        # Each form can have a different attribute.
+        # If the form has an instance, get the attribute for that instance.
         if form.instance.pk is not None:
             attribute = form.instance.attribute
-            attributes = attributes.exclude(attribute=attribute)
             form.unit = attribute.unit
+        # There should be one "extra" form for each attribute in attributes.
+        # If the form does not have an instance, get an attribute, and then
+        # delete that attribute from attributes.
         else:
             attribute = attributes[0]
             attributes = attributes.exclude(attribute=attribute)
@@ -1188,7 +1190,7 @@ def population(request, subject, publication_pk, experiment_index, population_in
     subject = Subject.objects.get(slug=subject)
     user_subject = get_object_or_404(UserSubject, user=user, subject=subject)  # Check if this user has permission to work on this subject.
     attribute = subject.attribute  # The root attribute for this subject (each subject can have its own classification of attributes)
-    attributes = Attribute.objects.get(pk=attribute.pk).get_children()
+    attributes = Attribute.objects.get(pk=attribute.pk).get_children().order_by('attribute')
     attributes_count = attributes.count()
     # This publication
     publication = get_object_or_404(Publication, pk=publication_pk, subject=subject)
@@ -1204,16 +1206,17 @@ def population(request, subject, publication_pk, experiment_index, population_in
     outcomes = TreeNodeChoiceField(required=False, queryset=Outcome.objects.get(pk=experiment_population.population.pk).get_descendants(include_self=True), level_indicator = "---")
     for form in experiment_population_outcome_formset:
         form.fields['outcome'] = outcomes
-    EAVFormSet = modelformset_factory(EAV, form=EAVPopulationForm, extra=attributes_count, max_num=attributes_count, can_delete=True)
+    EAVFormSet = modelformset_factory(EAV, form=EAVExperimentForm, extra=attributes_count, can_delete=True)
     EAV_formset = EAVFormSet(data=data, queryset=EAV.objects.filter(population=experiment_population), prefix="EAV_formset")
     for form in EAV_formset:
-        # There should only be one instance per attribute, so we need to
-        # check which attributes have instances and create extra formset forms
-        # only for attributes without instances.
+        # Each form can have a different attribute.
+        # If the form has an instance, get the attribute for that instance.
         if form.instance.pk is not None:
             attribute = form.instance.attribute
-            attributes = attributes.exclude(attribute=attribute)
             form.unit = attribute.unit
+        # There should be one "extra" form for each attribute in attributes.
+        # If the form does not have an instance, get an attribute, and then
+        # delete that attribute from attributes.
         else:
             attribute = attributes[0]
             attributes = attributes.exclude(attribute=attribute)
@@ -1275,7 +1278,7 @@ def outcome(request, subject, publication_pk, experiment_index, population_index
     data = request.POST or None
     subject = Subject.objects.get(slug=subject)
     attribute = subject.attribute  # The root attribute for this subject (each subject can have its own classification of attributes)
-    attributes = Attribute.objects.get(pk=attribute.pk).get_children()
+    attributes = Attribute.objects.get(pk=attribute.pk).get_children().order_by('attribute')
     attributes_count = attributes.count()
     user_subject = get_object_or_404(UserSubject, user=user, subject=subject)  # Check if this user has permission to work on this subject.
     # This publication
@@ -1292,16 +1295,17 @@ def outcome(request, subject, publication_pk, experiment_index, population_index
     # Formsets
     DataFormSet = modelformset_factory(Data, form=DataForm, extra=1, can_delete=True)
     data_formset = DataFormSet(data=data, queryset=Data.objects.filter(experiment_population_outcome=experiment_population_outcome.pk), prefix="data_formset")
-    EAVFormSet = modelformset_factory(EAV, form=EAVOutcomeForm, extra=attributes_count, max_num=attributes_count, can_delete=True)
+    EAVFormSet = modelformset_factory(EAV, form=EAVExperimentForm, extra=attributes_count, can_delete=True)
     EAV_formset = EAVFormSet(data=data, queryset=EAV.objects.filter(outcome=experiment_population_outcome), prefix="EAV_formset")
     for form in EAV_formset:
-        # There should only be one instance per attribute, so we need to
-        # check which attributes have instances and create extra formset forms
-        # only for attributes without instances.
+        # Each form can have a different attribute.
+        # If the form has an instance, get the attribute for that instance.
         if form.instance.pk is not None:
             attribute = form.instance.attribute
-            attributes = attributes.exclude(attribute=attribute)
             form.unit = attribute.unit
+        # There should be one "extra" form for each attribute in attributes.
+        # If the form does not have an instance, get an attribute, and then
+        # delete that attribute from attributes.
         else:
             attribute = attributes[0]
             attributes = attributes.exclude(attribute=attribute)

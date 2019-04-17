@@ -598,8 +598,7 @@ class EAV(models.Model):
     note = models.CharField(max_length=255, blank=True, null=True)
     # Indexes: these allow for distinct() queries at multiple levels in the
     # hierarchy, while allowing for instances to be created at only one level in
-    # the hierarchy (i.e. for only one of the "entity options" above), and also
-    # allowing for unique_together (i.e. one EAV instance per entity per user).
+    # the hierarchy (i.e. for only one of the "entity options" above).
     publication_index = models.ForeignKey(Publication, related_name="EAV_publication_index", blank=True, null=True, on_delete=models.CASCADE)
     experiment_index = models.ForeignKey(Experiment, related_name="EAV_experiment_index", blank=True, null=True, on_delete=models.CASCADE)
     population_index = models.ForeignKey(ExperimentPopulation, related_name="EAV_population_index", blank=True, null=True, on_delete=models.CASCADE)
@@ -611,15 +610,6 @@ class EAV(models.Model):
 
     def __str__(self):
         return self.attribute.attribute
-
-    class Meta:
-        # There should be only one EAV instance per entity per user.
-        unique_together = (
-            ('attribute', 'publication', 'user'),
-            ('attribute', 'experiment', 'user'),
-            ('attribute', 'population', 'user'),
-            ('attribute', 'outcome', 'user')
-        )
 
 
 class Assessment(models.Model):
