@@ -17,8 +17,8 @@ from collections import Counter
 from itertools import chain
 from random import shuffle
 from .tokens import account_activation_token
-from .forms import AssessmentForm, AttributeForm, AttributeOptionForm, CoordinatesForm, DataForm, EAVExperimentForm, EAVOutcomeForm, EAVPopulationForm, EAVPublicationForm, ExperimentForm, ExperimentDateForm, ExperimentDesignForm, ExperimentPopulationForm, ExperimentPopulationOutcomeForm, FullTextAssessmentForm, InterventionForm, OutcomeForm, ProfileForm, PublicationForm, PublicationDateForm, PublicationPopulationForm, PublicationPopulationOutcomeForm, SignUpForm, UserForm, XCountryForm
-from .models import Assessment, AssessmentStatus, Attribute, Coordinates, Country, Crop, Data, Design, EAV, Experiment, ExperimentCrop, ExperimentDate, ExperimentDesign, ExperimentPopulation, ExperimentPopulationOutcome, Intervention, Outcome, Publication, PublicationDate, PublicationPopulation, PublicationPopulationOutcome, Subject, User, UserSubject, XCountry
+from .forms import AssessmentForm, AttributeForm, AttributeOptionForm, CoordinatesForm, DataForm, DateForm, EAVExperimentForm, EAVOutcomeForm, EAVPopulationForm, EAVPublicationForm, ExperimentForm, ExperimentDesignForm, ExperimentPopulationForm, ExperimentPopulationOutcomeForm, FullTextAssessmentForm, InterventionForm, OutcomeForm, ProfileForm, PublicationForm, PublicationPopulationForm, PublicationPopulationOutcomeForm, SignUpForm, UserForm, XCountryForm
+from .models import Assessment, AssessmentStatus, Attribute, Coordinates, Country, Crop, Data, Date, Design, EAV, Experiment, ExperimentDesign, ExperimentPopulation, ExperimentPopulationOutcome, Intervention, Outcome, Publication, PublicationPopulation, PublicationPopulationOutcome, Subject, User, UserSubject, XCountry
 from .serializers import AttributeSerializer, CountrySerializer, DataSerializer, DesignSerializer, EAVSerializer, ExperimentSerializer, ExperimentDesignSerializer, ExperimentPopulationSerializer, ExperimentPopulationOutcomeSerializer, InterventionSerializer, OutcomeSerializer, PublicationSerializer, PublicationPopulationSerializer, PublicationPopulationOutcomeSerializer, SubjectSerializer, UserSerializer
 from .decorators import group_required
 from mptt.forms import TreeNodeChoiceField
@@ -730,13 +730,13 @@ def metadata(request, subject, publication_pk):
     # This publication
     publication = get_object_or_404(Publication, pk=publication_pk, subject=subject)
     # Formsets
-    PublicationDateFormSet = modelformset_factory(PublicationDate, form=PublicationDateForm, extra=2, max_num=2, can_delete=True)
+    DateFormSet = modelformset_factory(Date, form=DateForm, extra=1, max_num=1, can_delete=True)
     PublicationPopulationFormSet = modelformset_factory(PublicationPopulation, form=PublicationPopulationForm, extra=4, can_delete=True)
     CoordinatesFormSet = modelformset_factory(Coordinates, form=CoordinatesForm, extra=1, can_delete=True)
     EAVFormSet = modelformset_factory(EAV, form=EAVPublicationForm, extra=attributes_count, can_delete=True)
     XCountryFormSet = modelformset_factory(XCountry, form=XCountryForm, extra=1, can_delete=True)
     # Formsets for this publication
-    publication_date_formset = PublicationDateFormSet(data=data, queryset=PublicationDate.objects.filter(publication=publication), prefix="publication_date_formset")
+    date_formset = DateFormSet(data=data, queryset=Date.objects.filter(publication=publication), prefix="date_formset")
     coordinates_formset = CoordinatesFormSet(data=data, queryset=Coordinates.objects.filter(publication=publication), prefix="coordinates_formset")
     x_country_formset = XCountryFormSet(data=data, queryset=XCountry.objects.filter(publication=publication), prefix="x_country_formset")
     # publication_population_formset
@@ -794,7 +794,7 @@ def metadata(request, subject, publication_pk):
                             instance.publication_index = publication
                             instance.user = user
                             instance.save()
-                formset = publication_date_formset
+                formset = date_formset
                 if formset.is_valid():
                     instances = formset.save(commit=False)
                     if 'delete' in request.POST:
@@ -803,6 +803,7 @@ def metadata(request, subject, publication_pk):
                     else:
                         for instance in instances:
                             instance.publication = publication
+                            instance.publication_index = publication
                             instance.user = user
                             instance.save()
                 formset = coordinates_formset
@@ -832,10 +833,10 @@ def metadata(request, subject, publication_pk):
     context = {
         'subject': subject,
         'publication': publication,
-        'publication_date_formset': publication_date_formset,
         'publication_population_formset': publication_population_formset,
         'x_country_formset': x_country_formset,
         'coordinates_formset': coordinates_formset,
+        'date_formset': date_formset,
         'EAV_formset': EAV_formset
     }
     return render(request, 'publications/metadata.html', context)
@@ -1037,36 +1038,30 @@ def experiment(request, subject, publication_pk, experiment_index):
     attributes_count = attributes.count()
     # This publication
     publication = get_object_or_404(Publication, pk=publication_pk, subject=subject)
-    # Formsets
-    ExperimentFormSet = modelformset_factory(Experiment, form=ExperimentForm, extra=0, can_delete=False)
-    ExperimentDateFormSet = modelformset_factory(ExperimentDate, form=ExperimentDateForm, extra=2, max_num=2, can_delete=True)
-    ExperimentDesignFormSet = modelformset_factory(ExperimentDesign, form=ExperimentDesignForm, extra=5, max_num=5, can_delete=True)
-    ExperimentPopulationFormSet = modelformset_factory(ExperimentPopulation, form=ExperimentPopulationForm, extra=4, can_delete=True)
-    CoordinatesFormSet = modelformset_factory(Coordinates, form=CoordinatesForm, extra=1, can_delete=True)
-    EAVFormSet = modelformset_factory(EAV, form=EAVExperimentForm, extra=attributes_count, can_delete=True)
-    XCountryFormSet = modelformset_factory(XCountry, form=XCountryForm, extra=1, can_delete=True)
     # This experiment
     experiments = Experiment.objects.filter(publication=publication).order_by('pk')
     experiment = experiments[experiment_index]
-    # Form for this experiment
+    # Forms
     experiment_form = ExperimentForm(data=data, instance=experiment, prefix="experiment_form")
-    # Show interventions for only this subject (level 0 in the classification of interventions is for different subjects, and here we show interventions for only this subject)
     experiment_form.fields['intervention'] = TreeNodeChoiceField(queryset=Intervention.objects.filter(pk=intervention.pk).get_descendants(include_self=True), level_indicator = "---")
-    # Formsets for this experiment
-    experiment_date_formset = ExperimentDateFormSet(data=data, queryset=ExperimentDate.objects.filter(experiment=experiment), prefix="experiment_date_formset")
-    coordinates_formset = CoordinatesFormSet(data=data, queryset=Coordinates.objects.filter(experiment=experiment), prefix="coordinates_formset")
-    x_country_formset = XCountryFormSet(data=data, queryset=XCountry.objects.filter(experiment=experiment), prefix="x_country_formset")
-    # experiment_design_formset
+    # Formsets
+    DateFormSet = modelformset_factory(Date, form=DateForm, extra=1, max_num=1, can_delete=True)
+    date_formset = DateFormSet(data=data, queryset=Date.objects.filter(experiment=experiment), prefix="date_formset")
+    ExperimentDesignFormSet = modelformset_factory(ExperimentDesign, form=ExperimentDesignForm, extra=5, max_num=5, can_delete=True)
     experiment_design_formset = ExperimentDesignFormSet(data=data, queryset=ExperimentDesign.objects.filter(experiment=experiment), prefix="experiment_design_formset")
     designs = TreeNodeChoiceField(required=False, queryset=Design.objects.filter(pk=design.pk).get_descendants(include_self=True).filter(level__gte=1), level_indicator = "---")
     for form in experiment_design_formset:
         form.fields['design'] = designs
-    # experiment_population_formset
+    ExperimentPopulationFormSet = modelformset_factory(ExperimentPopulation, form=ExperimentPopulationForm, extra=4, can_delete=True)
     experiment_population_formset = ExperimentPopulationFormSet(data=data, queryset=ExperimentPopulation.objects.filter(experiment=experiment), prefix="experiment_population_formset")
     populations = TreeNodeChoiceField(required=False, queryset=Outcome.objects.filter(pk=outcome.pk).get_descendants(include_self=True).filter(level=1), level_indicator = "---")
     for form in experiment_population_formset:
         form.fields['population'] = populations
-    # EAV_formset
+    CoordinatesFormSet = modelformset_factory(Coordinates, form=CoordinatesForm, extra=1, can_delete=True)
+    coordinates_formset = CoordinatesFormSet(data=data, queryset=Coordinates.objects.filter(experiment=experiment), prefix="coordinates_formset")
+    XCountryFormSet = modelformset_factory(XCountry, form=XCountryForm, extra=1, can_delete=True)
+    x_country_formset = XCountryFormSet(data=data, queryset=XCountry.objects.filter(experiment=experiment), prefix="x_country_formset")
+    EAVFormSet = modelformset_factory(EAV, form=EAVExperimentForm, extra=attributes_count, can_delete=True)
     EAV_formset = EAVFormSet(data=data, queryset=EAV.objects.filter(experiment=experiment), prefix="EAV_formset")
     for form in EAV_formset:
         # Each form can have a different attribute.
@@ -1094,7 +1089,7 @@ def experiment(request, subject, publication_pk, experiment_index):
             form = experiment_form
             if form.is_valid():
                 form.save()
-            formset = EAV_formset
+            formset = experiment_population_formset
             if formset.is_valid():
                 instances = formset.save(commit=False)
                 if 'delete' in request.POST:
@@ -1103,11 +1098,8 @@ def experiment(request, subject, publication_pk, experiment_index):
                 else:
                     for instance in instances:
                         instance.experiment = experiment
-                        instance.user = user
-                        instance.publication_index = publication
-                        instance.experiment_index = experiment
                         instance.save()
-            formset = experiment_population_formset
+            formset = experiment_design_formset
             if formset.is_valid():
                 instances = formset.save(commit=False)
                 if 'delete' in request.POST:
@@ -1130,26 +1122,6 @@ def experiment(request, subject, publication_pk, experiment_index):
                         instance.publication_index = publication
                         instance.user = user
                         instance.save()
-            formset = experiment_date_formset
-            if formset.is_valid():
-                instances = formset.save(commit=False)
-                if 'delete' in request.POST:
-                    for obj in formset.deleted_objects:
-                        obj.delete()
-                else:
-                    for instance in instances:
-                        instance.experiment = experiment
-                        instance.save()
-            formset = experiment_design_formset
-            if formset.is_valid():
-                instances = formset.save(commit=False)
-                if 'delete' in request.POST:
-                    for obj in formset.deleted_objects:
-                        obj.delete()
-                else:
-                    for instance in instances:
-                        instance.experiment = experiment
-                        instance.save()
             formset = coordinates_formset
             if formset.is_valid():
                 instances = formset.save(commit=False)
@@ -1163,6 +1135,32 @@ def experiment(request, subject, publication_pk, experiment_index):
                         instance.experiment_index = experiment
                         instance.user = user
                         instance.save()
+            formset = date_formset
+            if formset.is_valid():
+                instances = formset.save(commit=False)
+                if 'delete' in request.POST:
+                    for obj in formset.deleted_objects:
+                        obj.delete()
+                else:
+                    for instance in instances:
+                        instance.experiment = experiment
+                        instance.publication_index = publication
+                        instance.experiment_index = experiment
+                        instance.user = user
+                        instance.save()
+            formset = EAV_formset
+            if formset.is_valid():
+                instances = formset.save(commit=False)
+                if 'delete' in request.POST:
+                    for obj in formset.deleted_objects:
+                        obj.delete()
+                else:
+                    for instance in instances:
+                        instance.experiment = experiment
+                        instance.user = user
+                        instance.publication_index = publication
+                        instance.experiment_index = experiment
+                        instance.save()
             return redirect('experiment', subject=subject.slug, publication_pk=publication_pk, experiment_index=experiment_index)
     context = {
         'subject': subject,
@@ -1170,10 +1168,10 @@ def experiment(request, subject, publication_pk, experiment_index):
         'experiment': experiment,
         'experiment_index': experiment_index,
         'experiment_form': experiment_form,
-        'experiment_date_formset': experiment_date_formset,
         'experiment_design_formset': experiment_design_formset,
         'experiment_population_formset': experiment_population_formset,
         'coordinates_formset': coordinates_formset,
+        'date_formset': date_formset,
         'EAV_formset': EAV_formset,
         'x_country_formset': x_country_formset
     }
@@ -1206,6 +1204,10 @@ def population(request, subject, publication_pk, experiment_index, population_in
     outcomes = TreeNodeChoiceField(required=False, queryset=Outcome.objects.get(pk=experiment_population.population.pk).get_descendants(include_self=True), level_indicator = "---")
     for form in experiment_population_outcome_formset:
         form.fields['outcome'] = outcomes
+    CoordinatesFormSet = modelformset_factory(Coordinates, form=CoordinatesForm, extra=1, can_delete=True)
+    coordinates_formset = CoordinatesFormSet(data=data, queryset=Coordinates.objects.filter(population=experiment_population), prefix="coordinates_formset")
+    XCountryFormSet = modelformset_factory(XCountry, form=XCountryForm, extra=1, can_delete=True)
+    x_country_formset = XCountryFormSet(data=data, queryset=XCountry.objects.filter(population=experiment_population), prefix="x_country_formset")
     EAVFormSet = modelformset_factory(EAV, form=EAVExperimentForm, extra=attributes_count, can_delete=True)
     EAV_formset = EAVFormSet(data=data, queryset=EAV.objects.filter(population=experiment_population), prefix="EAV_formset")
     for form in EAV_formset:
@@ -1231,6 +1233,44 @@ def population(request, subject, publication_pk, experiment_index, population_in
             form.fields['value_as_factor'] = TreeNodeChoiceField(queryset=attribute.get_children(), level_indicator="")
     if request.method == 'POST':
         with transaction.atomic():
+            formset = experiment_population_outcome_formset
+            if formset.is_valid():
+                instances = formset.save(commit=False)
+                if 'delete' in request.POST:
+                    for obj in formset.deleted_objects:
+                        obj.delete()
+                else:
+                    for instance in instances:
+                        instance.experiment_population = experiment_population
+                        instance.save()
+            formset = x_country_formset
+            if formset.is_valid():
+                instances = formset.save(commit=False)
+                if 'delete' in request.POST:
+                    for obj in formset.deleted_objects:
+                        obj.delete()
+                else:
+                    for instance in instances:
+                        instance.population = experiment_population
+                        instance.user = user
+                        instance.publication_index = publication
+                        instance.experiment_index = experiment
+                        instance.population_index = experiment_population
+                        instance.save()
+            formset = coordinates_formset
+            if formset.is_valid():
+                instances = formset.save(commit=False)
+                if 'delete' in request.POST:
+                    for obj in formset.deleted_objects:
+                        obj.delete()
+                else:
+                    for instance in instances:
+                        instance.population = experiment_population
+                        instance.user = user
+                        instance.publication_index = publication
+                        instance.experiment_index = experiment
+                        instance.population_index = experiment_population
+                        instance.save()
             formset = EAV_formset
             if formset.is_valid():
                 instances = formset.save(commit=False)
@@ -1245,16 +1285,6 @@ def population(request, subject, publication_pk, experiment_index, population_in
                         instance.experiment_index = experiment
                         instance.population_index = experiment_population
                         instance.save()
-            formset = experiment_population_outcome_formset
-            if formset.is_valid():
-                instances = formset.save(commit=False)
-                if 'delete' in request.POST:
-                    for obj in formset.deleted_objects:
-                        obj.delete()
-                else:
-                    for instance in instances:
-                        instance.experiment_population = experiment_population
-                        instance.save()
             return redirect('population', subject=subject.slug, publication_pk=publication_pk, experiment_index=experiment_index, population_index=population_index)
     context = {
         'subject': subject,
@@ -1264,7 +1294,9 @@ def population(request, subject, publication_pk, experiment_index, population_in
         'experiment_index': experiment_index,
         'population_index': population_index,
         'experiment_population_outcome_formset': experiment_population_outcome_formset,
-        'EAV_formset': EAV_formset
+        'coordinates_formset': coordinates_formset,
+        'EAV_formset': EAV_formset,
+        'x_country_formset': x_country_formset
     }
     return render(request, 'publications/population.html', context)
 
@@ -1295,6 +1327,10 @@ def outcome(request, subject, publication_pk, experiment_index, population_index
     # Formsets
     DataFormSet = modelformset_factory(Data, form=DataForm, extra=1, can_delete=True)
     data_formset = DataFormSet(data=data, queryset=Data.objects.filter(experiment_population_outcome=experiment_population_outcome.pk), prefix="data_formset")
+    CoordinatesFormSet = modelformset_factory(Coordinates, form=CoordinatesForm, extra=1, can_delete=True)
+    coordinates_formset = CoordinatesFormSet(data=data, queryset=Coordinates.objects.filter(outcome=experiment_population_outcome), prefix="coordinates_formset")
+    XCountryFormSet = modelformset_factory(XCountry, form=XCountryForm, extra=1, can_delete=True)
+    x_country_formset = XCountryFormSet(data=data, queryset=XCountry.objects.filter(outcome=experiment_population_outcome), prefix="x_country_formset")
     EAVFormSet = modelformset_factory(EAV, form=EAVExperimentForm, extra=attributes_count, can_delete=True)
     EAV_formset = EAVFormSet(data=data, queryset=EAV.objects.filter(outcome=experiment_population_outcome), prefix="EAV_formset")
     for form in EAV_formset:
@@ -1320,6 +1356,50 @@ def outcome(request, subject, publication_pk, experiment_index, population_index
             form.fields['value_as_factor'] = TreeNodeChoiceField(queryset=attribute.get_children(), level_indicator="")
     if request.method == 'POST':
         with transaction.atomic():
+            formset = data_formset
+            if formset.is_valid():
+                instances = formset.save(commit=False)
+                if 'delete' in request.POST:
+                    for obj in formset.deleted_objects:
+                        obj.delete()
+                else:
+                    for instance in instances:
+                        instance.subject = subject
+                        instance.publication = publication
+                        instance.experiment = experiment
+                        instance.experiment_population = experiment_population
+                        instance.experiment_population_outcome = experiment_population_outcome
+                        instance.save()
+            formset = x_country_formset
+            if formset.is_valid():
+                instances = formset.save(commit=False)
+                if 'delete' in request.POST:
+                    for obj in formset.deleted_objects:
+                        obj.delete()
+                else:
+                    for instance in instances:
+                        instance.outcome = experiment_population_outcome
+                        instance.user = user
+                        instance.publication_index = publication
+                        instance.experiment_index = experiment
+                        instance.population_index = experiment_population
+                        instance.outcome_index = experiment_population_outcome
+                        instance.save()
+            formset = coordinates_formset
+            if formset.is_valid():
+                instances = formset.save(commit=False)
+                if 'delete' in request.POST:
+                    for obj in formset.deleted_objects:
+                        obj.delete()
+                else:
+                    for instance in instances:
+                        instance.outcome = experiment_population_outcome
+                        instance.user = user
+                        instance.publication_index = publication
+                        instance.experiment_index = experiment
+                        instance.population_index = experiment_population
+                        instance.outcome_index = experiment_population_outcome
+                        instance.save()
             formset = EAV_formset
             if formset.is_valid():
                 instances = formset.save(commit=False)
@@ -1335,20 +1415,6 @@ def outcome(request, subject, publication_pk, experiment_index, population_index
                         instance.population_index = experiment_population
                         instance.outcome_index = experiment_population_outcome
                         instance.save()
-            formset = data_formset
-            if formset.is_valid():
-                instances = formset.save(commit=False)
-                if 'delete' in request.POST:
-                    for obj in formset.deleted_objects:
-                        obj.delete()
-                else:
-                    for instance in instances:
-                        instance.subject = subject
-                        instance.publication = publication
-                        instance.experiment = experiment
-                        instance.experiment_population = experiment_population
-                        instance.experiment_population_outcome = experiment_population_outcome
-                        instance.save()
             return redirect('outcome', subject=subject.slug, publication_pk=publication_pk, experiment_index=experiment_index, population_index=population_index, outcome_index=outcome_index)
     context = {
         'subject': subject,
@@ -1360,7 +1426,9 @@ def outcome(request, subject, publication_pk, experiment_index, population_index
         'population_index': population_index,
         'outcome_index': outcome_index,
         'data_formset': data_formset,
-        'EAV_formset': EAV_formset
+        'coordinates_formset': coordinates_formset,
+        'EAV_formset': EAV_formset,
+        'x_country_formset': x_country_formset
     }
     return render(request, 'publications/outcome.html', context)
 

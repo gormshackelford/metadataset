@@ -58,9 +58,7 @@
 
     <tr><td class="empty" colspan="3">&nbsp;</td></tr>
 
-    <tr><th colspan="3">Covariates</th></tr>
-    <tr>
-    </tr>
+    <tr><th colspan="3">Covariates for this publication</th></tr>
     <tr>
       <td colspan="2"></td>
       <td class="centered">Select</td>
@@ -100,36 +98,26 @@
       <td></td>
     </tr>
     {% endfor %}
-    {{ publication_date_formset.management_form }}
-    {% for form in publication_date_formset %}
+    {{ date_formset.management_form }}
+    {% for form in date_formset %}
       <tr>
         <td>
           {% for hidden_field in form.hidden_fields %}
             {{ hidden_field }}
           {% endfor %}
-          {% if forloop.first %}
-            Date/start date:
-          {% else %}
-            Date/end date:
-          {% endif %}
+          Start date:
         </td>
-        <td>Year: {{ form.year }} Month: {{ form.month }} Day: {{ form.day }}</td>
+        <td>Year: {{ form.start_year }} Month: {{ form.start_month }} Day: {{ form.start_day }}</td>
         <td class="centered">{{ form.DELETE }}</td>
       </tr>
+      <tr>
+        <td>
+          End date:
+        </td>
+        <td>Year: {{ form.end_year }} Month: {{ form.end_month }} Day: {{ form.end_day }}</td>
+        <td></td>
+      </tr>
     {% endfor %}
-    <tr>
-      <td class="bottom"></td>
-      <td class="button bottom"><input type="submit" name="save" value="Save all changes" /></td>
-      <td class="button bottom centered"><input type="submit" name="delete" value="Delete selected" /></td>
-    </tr>
-
-    <tr><td class="empty" colspan="3">&nbsp;</td></tr>
-
-    <tr><th colspan="3">Other covariates</th></tr>
-    <tr>
-      <td class="top" colspan="3"><a target="_blank" href="{% url 'attributes' subject=subject.slug %}">Add/edit other covariates</a></td>
-    </tr>
-
     {{ EAV_formset.management_form }}
     {% if EAV_formset.forms %}
       {% for form in EAV_formset %}
@@ -165,7 +153,20 @@
       </tr>
     {% endif %}
 
+    <tr><td class="empty" colspan="3">&nbsp;</td></tr>
+
+    <tr><th colspan="3">Subject-specific covariates</th></tr>
+    <tr>
+      <td class="top bottom" colspan="3">
+        As well as generic covariates (countries, coordinates, and dates), you can also enter subject-specific covariates. For example, you could enter the elevations or soil types of study sites. Subject-specific covariates will appear with the generic covariates, above, if they have been defined.
+      </td>
+    </tr>
+    <tr>
+        <td class="top bottom" colspan="3"><a target="_blank" href="{% url 'attributes' subject=subject.slug %}">Add/edit covariates</a></td>
+    </tr>
+
   </table>
+
 </form>
 
 {% endblock %}

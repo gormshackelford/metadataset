@@ -313,35 +313,6 @@ class UserSubject(models.Model):
         return self.user.email
 
 
-# The date on which the experiments were done (not the date of publication)
-class PublicationDate(models.Model):
-    publication = models.ForeignKey(Publication, on_delete=models.CASCADE)
-    year = models.IntegerField(blank=True, null=True)
-    MONTH_CHOICES = (
-        (1, "January"),
-        (2, "February"),
-        (3, "March"),
-        (4, "April"),
-        (5, "May"),
-        (6, "June"),
-        (7, "July"),
-        (8, "August"),
-        (9, "September"),
-        (10, "October"),
-        (11, "November"),
-        (12, "December")
-    )
-    month = models.IntegerField(blank=True, null=True, choices=MONTH_CHOICES)
-    DAY_CHOICES = tuple((x,x) for x in range(1,32))
-    day = models.IntegerField(choices=DAY_CHOICES, blank=True, null=True)
-    created = models.DateTimeField(auto_now_add=True)
-    updated = models.DateTimeField(auto_now=True)
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
-
-    def __str__(self):
-        return self.publication.title
-
-
 class PublicationPopulation(models.Model):
     publication = models.ForeignKey(Publication, on_delete=models.CASCADE)
     population = models.ForeignKey(Outcome, blank=True, null=True, on_delete=models.CASCADE)  # Populations are the first level in the classification of outcomes.
@@ -396,16 +367,6 @@ class ExperimentPopulationOutcome(models.Model):
         return self.experiment_population.experiment.publication.title
 
 
-class ExperimentCrop(models.Model):
-    experiment = models.ForeignKey(Experiment, on_delete=models.CASCADE)
-    crop = models.ForeignKey(Crop, on_delete=models.CASCADE)
-    created = models.DateTimeField(auto_now_add=True)
-    updated = models.DateTimeField(auto_now=True)
-
-    def __str__(self):
-        return self.experiment.publication.title
-
-
 class ExperimentDesign(models.Model):
     experiment = models.ForeignKey(Experiment, on_delete=models.CASCADE)
     design = models.ForeignKey(Design, on_delete=models.CASCADE)
@@ -456,6 +417,50 @@ class Coordinates(models.Model):
 
     class Meta:
         verbose_name_plural = "coordinates"
+
+
+class Date(models.Model):
+    # Entity options (only one of these should be non-null per instance)
+    publication = models.ForeignKey(Publication, related_name="dates_publication", blank=True, null=True, on_delete=models.CASCADE)
+    experiment = models.ForeignKey(Experiment, related_name="dates_experiment", blank=True, null=True, on_delete=models.CASCADE)
+    population = models.ForeignKey(ExperimentPopulation, related_name="dates_population", blank=True, null=True, on_delete=models.CASCADE)
+    outcome = models.ForeignKey(ExperimentPopulationOutcome, related_name="dates_outcome", blank=True, null=True, on_delete=models.CASCADE)
+    # End of entity options
+    start_year = models.IntegerField(blank=True, null=True)
+    end_year = models.IntegerField(blank=True, null=True)
+    MONTH_CHOICES = (
+        (1, "January"),
+        (2, "February"),
+        (3, "March"),
+        (4, "April"),
+        (5, "May"),
+        (6, "June"),
+        (7, "July"),
+        (8, "August"),
+        (9, "September"),
+        (10, "October"),
+        (11, "November"),
+        (12, "December")
+    )
+    start_month = models.IntegerField(blank=True, null=True, choices=MONTH_CHOICES)
+    end_month = models.IntegerField(blank=True, null=True, choices=MONTH_CHOICES)
+    DAY_CHOICES = tuple((x,x) for x in range(1,32))
+    start_day = models.IntegerField(choices=DAY_CHOICES, blank=True, null=True)
+    end_day = models.IntegerField(choices=DAY_CHOICES, blank=True, null=True)
+    # Indexes: these allow for distinct() queries at multiple levels in the
+    # hierarchy, while allowing for instances to be created at only one level in
+    # the hierarchy (i.e. for only one of the "entity options" above).
+    publication_index = models.ForeignKey(Publication, related_name="dates_publication_index", blank=True, null=True, on_delete=models.CASCADE)
+    experiment_index = models.ForeignKey(Experiment, related_name="dates_experiment_index", blank=True, null=True, on_delete=models.CASCADE)
+    population_index = models.ForeignKey(ExperimentPopulation, related_name="dates_population_index", blank=True, null=True, on_delete=models.CASCADE)
+    outcome_index = models.ForeignKey(ExperimentPopulationOutcome, related_name="dates_outcome_index", blank=True, null=True, on_delete=models.CASCADE)
+    # End of indexes
+    created = models.DateTimeField(auto_now_add=True)
+    updated = models.DateTimeField(auto_now=True)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return "{pk}".format(pk=self.pk)
 
 
 class XCountry(models.Model):

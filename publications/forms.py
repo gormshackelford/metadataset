@@ -3,7 +3,7 @@ from django.db import models
 from django.contrib.auth.forms import UserCreationForm
 from ast import literal_eval
 from mptt.forms import TreeNodeChoiceField
-from .models import Assessment, Attribute, Coordinates, Data, EAV, Experiment, ExperimentDate, ExperimentDesign, ExperimentPopulation, ExperimentPopulationOutcome, Intervention, Outcome, Profile, Publication, PublicationDate, PublicationPopulation, PublicationPopulationOutcome, User, XCountry
+from .models import Assessment, Attribute, Coordinates, Data, Date, EAV, Experiment, ExperimentDate, ExperimentDesign, ExperimentPopulation, ExperimentPopulationOutcome, Intervention, Outcome, Profile, Publication, PublicationPopulation, PublicationPopulationOutcome, User, XCountry
 
 
 class SignUpForm(UserCreationForm):
@@ -82,10 +82,10 @@ class PublicationForm(forms.ModelForm):
             return authors
 
 
-class PublicationDateForm(forms.ModelForm):
+class DateForm(forms.ModelForm):
 
     class Meta:
-        model = PublicationDate
+        model = Date
         exclude = ['publication', 'user']
 
 
