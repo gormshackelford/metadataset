@@ -79,10 +79,6 @@ def update_user_profile(sender, instance, created, **kwargs):
     instance.profile.save()
 
 
-# "Population" is the "P" in "PICO" (also referred to as "Patient" or "Problem"). The purpose of this database is to record the effect of an Intervention ("I") on a Population ("P"), measured in terms of an Outcome ("O"), with respect to a Control ("C"). Population is not a model in itself, but is the first level in the Outcome model.
-
-
-# "Intervention" is the "I" in "PICO".
 class Intervention(MPTTModel):
     intervention = models.CharField(max_length=255)
     parent = TreeForeignKey('self', null=True, blank=True, related_name='children', db_index=True, on_delete=models.CASCADE)
@@ -107,10 +103,6 @@ class Intervention(MPTTModel):
         order_insertion_by = ['code']
 
 
-# "Comparison" is the "C" in "PICO". It is a field in the model for effect sizes ("ExperimentPopulationOutcome").
-
-
-# "Outcome" is the "O" in "PICO".
 class Outcome(MPTTModel):
     outcome = models.CharField(max_length=255)
     parent = TreeForeignKey('self', null=True, blank=True, related_name='children', db_index=True, on_delete=models.CASCADE)
@@ -304,6 +296,7 @@ class Publication(models.Model):
 
 # Intersection tables
 
+
 # The subjects that a user has permission to work on
 class UserSubject(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
@@ -421,10 +414,10 @@ class Coordinates(models.Model):
 
 class Date(models.Model):
     # Entity options (only one of these should be non-null per instance)
-    publication = models.ForeignKey(Publication, related_name="dates_publication", blank=True, null=True, on_delete=models.CASCADE)
-    experiment = models.ForeignKey(Experiment, related_name="dates_experiment", blank=True, null=True, on_delete=models.CASCADE)
-    population = models.ForeignKey(ExperimentPopulation, related_name="dates_population", blank=True, null=True, on_delete=models.CASCADE)
-    outcome = models.ForeignKey(ExperimentPopulationOutcome, related_name="dates_outcome", blank=True, null=True, on_delete=models.CASCADE)
+    publication = models.ForeignKey(Publication, related_name="date_publication", blank=True, null=True, on_delete=models.CASCADE)
+    experiment = models.ForeignKey(Experiment, related_name="date_experiment", blank=True, null=True, on_delete=models.CASCADE)
+    population = models.ForeignKey(ExperimentPopulation, related_name="date_population", blank=True, null=True, on_delete=models.CASCADE)
+    outcome = models.ForeignKey(ExperimentPopulationOutcome, related_name="date_outcome", blank=True, null=True, on_delete=models.CASCADE)
     # End of entity options
     start_year = models.IntegerField(blank=True, null=True)
     end_year = models.IntegerField(blank=True, null=True)
@@ -450,10 +443,10 @@ class Date(models.Model):
     # Indexes: these allow for distinct() queries at multiple levels in the
     # hierarchy, while allowing for instances to be created at only one level in
     # the hierarchy (i.e. for only one of the "entity options" above).
-    publication_index = models.ForeignKey(Publication, related_name="dates_publication_index", blank=True, null=True, on_delete=models.CASCADE)
-    experiment_index = models.ForeignKey(Experiment, related_name="dates_experiment_index", blank=True, null=True, on_delete=models.CASCADE)
-    population_index = models.ForeignKey(ExperimentPopulation, related_name="dates_population_index", blank=True, null=True, on_delete=models.CASCADE)
-    outcome_index = models.ForeignKey(ExperimentPopulationOutcome, related_name="dates_outcome_index", blank=True, null=True, on_delete=models.CASCADE)
+    publication_index = models.ForeignKey(Publication, related_name="date_publication_index", blank=True, null=True, on_delete=models.CASCADE)
+    experiment_index = models.ForeignKey(Experiment, related_name="date_experiment_index", blank=True, null=True, on_delete=models.CASCADE)
+    population_index = models.ForeignKey(ExperimentPopulation, related_name="date_population_index", blank=True, null=True, on_delete=models.CASCADE)
+    outcome_index = models.ForeignKey(ExperimentPopulationOutcome, related_name="date_outcome_index", blank=True, null=True, on_delete=models.CASCADE)
     # End of indexes
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
@@ -488,33 +481,6 @@ class XCountry(models.Model):
 
     class Meta:
         verbose_name_plural = "xcountries"
-
-
-class ExperimentDate(models.Model):
-    experiment = models.ForeignKey(Experiment, on_delete=models.CASCADE)
-    year = models.IntegerField(blank=True, null=True)
-    MONTH_CHOICES = (
-        (1, "January"),
-        (2, "February"),
-        (3, "March"),
-        (4, "April"),
-        (5, "May"),
-        (6, "June"),
-        (7, "July"),
-        (8, "August"),
-        (9, "September"),
-        (10, "October"),
-        (11, "November"),
-        (12, "December")
-    )
-    month = models.IntegerField(blank=True, null=True, choices=MONTH_CHOICES)
-    DAY_CHOICES = tuple((x,x) for x in range(1,32))
-    day = models.IntegerField(choices=DAY_CHOICES, blank=True, null=True)
-    created = models.DateTimeField(auto_now_add=True)
-    updated = models.DateTimeField(auto_now=True)
-
-    def __str__(self):
-        return self.publication_index.title
 
 
 class Data(models.Model):

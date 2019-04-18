@@ -108,6 +108,26 @@
       <td></td>
     </tr>
     {% endfor %}
+    {{ date_formset.management_form }}
+    {% for form in date_formset %}
+      <tr>
+        <td>
+          {% for hidden_field in form.hidden_fields %}
+            {{ hidden_field }}
+          {% endfor %}
+          Start date:
+        </td>
+        <td>Year: {{ form.start_year }} Month: {{ form.start_month }} Day: {{ form.start_day }}</td>
+        <td class="centered">{{ form.DELETE }}</td>
+      </tr>
+      <tr>
+        <td>
+          End date:
+        </td>
+        <td>Year: {{ form.end_year }} Month: {{ form.end_month }} Day: {{ form.end_day }}</td>
+        <td></td>
+      </tr>
+    {% endfor %}    
     {{ EAV_formset.management_form }}
     {% if EAV_formset.forms %}
       {% for form in EAV_formset %}
