@@ -172,6 +172,17 @@ class ExperimentPopulationOutcomeForm(forms.ModelForm):
 
 
 class DataForm(forms.ModelForm):
+    treatment_sd = forms.FloatField(min_value=0, required=False, help_text="Standard deviation of the treatment mean")
+    control_sd = forms.FloatField(min_value=0, required=False, help_text="Standard deviation of the control mean")
+    treatment_n = forms.IntegerField(min_value=0, required=False, help_text="Number of replicates for the treatment")
+    control_n = forms.IntegerField(min_value=0, required=False, help_text="Number of replicates for the control")
+    n = forms.IntegerField(min_value=0, required=False, help_text="Number of replicates (only if treatment N and control N are unavailable)")
+    lsd = forms.FloatField(min_value=0, required=False, help_text="Least significant difference between the means")
+    p_value = forms.FloatField(min_value=0, max_value=1.0, required=False)
+    correlation_coefficient = forms.FloatField(min_value=-1.0, max_value=1.0, required=False, help_text="Pearson correlation coefficient (r)")
+    se = forms.FloatField(min_value=0, required=False, help_text="Standard error of the effect size")
+    variance = forms.FloatField(min_value=0, required=False, help_text="Variance of the effect size")
+    confidence = forms.FloatField(min_value=0, max_value=100, required=False, help_text="Confidence of the confidence interval (percent)")
 
     class Meta:
         model = Data
@@ -181,7 +192,7 @@ class DataForm(forms.ModelForm):
                 'placeholder': 'e.g., "Plots with cover crops (treatment) compared to plots without cover crops (control)"'
             }),
             'unit': forms.TextInput(attrs={
-                'placeholder': 'Units for mean and SD (e.g., "kg/ha")'
+                'placeholder': '(e.g., "kg/ha")'
             })
         }
 
