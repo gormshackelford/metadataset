@@ -516,12 +516,13 @@ class Data(models.Model):
     )
     p_value = models.FloatField(blank=True, null=True, validators=[MinValueValidator(0), MaxValueValidator(1)])
     z_value = models.FloatField(blank=True, null=True)
+    correlation_coefficient = models.FloatField(blank=True, null=True, validators=[MinValueValidator(-1.0), MaxValueValidator(1.0)], help_text="Pearson correlation coefficient (r)")
     effect_size = models.FloatField(blank=True, null=True, help_text="As published, not as calculated from the data above")
     EFFECT_SIZE_UNIT_CHOICES = (
         ("d", "Standardized mean difference (d)"),
         ("R", "Response ratio (R)"),
         ("L", "Log response ratio (L)"),
-        ("r", "Correlation coefficient (r)"),
+        ("r", "Pearson correlation coefficient (r)"),
         ("Zr", "Fischer's Z-transformed r (Zr)"),
         ("Other", "Other")
     )
