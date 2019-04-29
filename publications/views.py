@@ -124,6 +124,14 @@ class DataViewSet(viewsets.ReadOnlyModelViewSet):
         if outcome_pk is not '':
             outcomes = Outcome.objects.get(pk=outcome_pk).get_descendants(include_self=True)
             queryset = queryset.filter(experiment_population_outcome__outcome__in=outcomes)
+        publication_pk = self.request.GET.get('publication', '')
+        if publication_pk is not '':
+            publication = Publication.objects.get(pk=publication_pk)
+            queryset = queryset.filter(experiment__publication=publication)
+        user_pk = self.request.GET.get('user', '')
+        if user_pk is not '':
+            user = User.objects.get(pk=user_pk)
+            queryset = queryset.filter(experiment__user=user)
         return queryset
 
 
@@ -1463,7 +1471,8 @@ def outcome(request, subject, publication_pk, experiment_index, population_index
         'coordinates_formset': coordinates_formset,
         'date_formset': date_formset,
         'EAV_formset': EAV_formset,
-        'x_country_formset': x_country_formset
+        'x_country_formset': x_country_formset,
+        'path_to_shiny': get_path_to_shiny(request)
     }
     return render(request, 'publications/outcome.html', context)
 
