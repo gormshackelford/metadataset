@@ -39,7 +39,7 @@ class OutcomeSerializer(serializers.HyperlinkedModelSerializer):
 
 
 class PublicationSerializer(serializers.HyperlinkedModelSerializer):
-    EAV_publication = EAVSerializer(many=True, read_only=True)  # Reverse foreign-key relationship (the default is the name of the model that has a foreign key to this model + "_set", unless a "related_name" is specified in that model, but that breaks other queries)
+    EAV_publication = EAVSerializer(many=True, read_only=True)
 
     class Meta:
         model = Publication
@@ -73,16 +73,16 @@ class ExperimentDesignSerializer(serializers.HyperlinkedModelSerializer):
 
 
 class ExperimentSerializer(serializers.HyperlinkedModelSerializer):
-    EAV_experiment = EAVSerializer(many=True, read_only=True)  # Reverse foreign-key relationship (the default is the name of the model that has a foreign key to this model + "_set", unless a "related_name" is specified in that model, but that breaks other queries)
-    xcountry_experiment_index = XCountrySerializer(many=True, read_only=True)  # Reverse foreign-key relationship (the default is the name of the model that has a foreign key to this model + "_set", unless a "related_name" is specified in that model, but that breaks other queries)
-    experimentdesign_set = ExperimentDesignSerializer(many=True, read_only=True)  # Reverse foreign-key relationship (the default is the name of the model that has a foreign key to this model + "_set", unless a "related_name" is specified in that model, but that breaks other queries)
+    EAV_experiment = EAVSerializer(many=True, read_only=True)
+    xcountry_experiment_index = XCountrySerializer(many=True, read_only=True)
+    experimentdesign_set = ExperimentDesignSerializer(many=True, read_only=True)  # Reverse foreign-key relationship (the default is the name of the model that has a foreign key to this model + "_set", unless a "related_name" is specified in that model.
     class Meta:
         model = Experiment
         exclude = ()
 
 
 class ExperimentPopulationSerializer(serializers.HyperlinkedModelSerializer):
-    EAV_population = EAVSerializer(many=True, read_only=True)  # Reverse foreign-key relationship (the default is the name of the model that has a foreign key to this model + "_set", unless a "related_name" is specified in that model, but that breaks other queries)
+    EAV_population = EAVSerializer(many=True, read_only=True)
 
     class Meta:
         model = ExperimentPopulation
@@ -92,7 +92,7 @@ class ExperimentPopulationSerializer(serializers.HyperlinkedModelSerializer):
 class ExperimentPopulationOutcomeSerializer(serializers.HyperlinkedModelSerializer):
     experiment_population = ExperimentPopulationSerializer(read_only=True)
     outcome = OutcomeSerializer(read_only=True)
-    EAV_outcome = EAVSerializer(many=True, read_only=True)  # Reverse foreign-key relationship (the default is the name of the model that has a foreign key to this model + "_set", unless a "related_name" is specified in that model, but that breaks other queries)
+    EAV_outcome = EAVSerializer(many=True, read_only=True)
 
     class Meta:
         model = ExperimentPopulationOutcome
@@ -138,9 +138,9 @@ class DataExperimentDesignSerializer(serializers.HyperlinkedModelSerializer):
 
 class DataExperimentSerializer(serializers.HyperlinkedModelSerializer):
     intervention = serializers.SlugRelatedField(slug_field='intervention', read_only=True)
-    EAV_experiment = DataEAVSerializer(many=True, read_only=True)  # Reverse foreign-key relationship (the default is the name of the model that has a foreign key to this model + "_set", unless a "related_name" is specified in that model, but that breaks other queries)
-    experimentdesign_set = DataExperimentDesignSerializer(many=True, read_only=True)  # Reverse foreign-key relationship (the default is the name of the model that has a foreign key to this model + "_set", unless a "related_name" is specified in that model, but that breaks other queries)
-    xcountry_experiment_index = DataXCountrySerializer(many=True, read_only=True)  # Reverse foreign-key relationship (the default is the name of the model that has a foreign key to this model + "_set", unless a "related_name" is specified in that model, but that breaks other queries)
+    EAV_experiment = DataEAVSerializer(many=True, read_only=True)
+    experimentdesign_set = DataExperimentDesignSerializer(many=True, read_only=True)  # Reverse foreign-key relationship (the default is the name of the model that has a foreign key to this model + "_set", unless a "related_name" is specified in that model.
+    xcountry_experiment = DataXCountrySerializer(many=True, read_only=True)
 
     class Meta:
         model = Experiment
@@ -149,20 +149,22 @@ class DataExperimentSerializer(serializers.HyperlinkedModelSerializer):
 
 class DataExperimentPopulationSerializer(serializers.HyperlinkedModelSerializer):
     population = serializers.SlugRelatedField(slug_field='outcome', read_only=True)
-    EAV_population = DataEAVSerializer(many=True, read_only=True)  # Reverse foreign-key relationship (the default is the name of the model that has a foreign key to this model + "_set", unless a "related_name" is specified in that model, but that breaks other queries)
+    EAV_population = DataEAVSerializer(many=True, read_only=True)
+    xcountry_population = DataXCountrySerializer(many=True, read_only=True)
 
     class Meta:
         model = ExperimentPopulation
-        fields = ('population', 'EAV_population', )
+        exclude = ('created', 'updated', 'url', 'experiment')
 
 
 class DataExperimentPopulationOutcomeSerializer(serializers.HyperlinkedModelSerializer):
     outcome = serializers.SlugRelatedField(slug_field='outcome', read_only=True)
-    EAV_outcome = DataEAVSerializer(many=True, read_only=True)  # Reverse foreign-key relationship (the default is the name of the model that has a foreign key to this model + "_set", unless a "related_name" is specified in that model, but that breaks other queries)
+    EAV_outcome = DataEAVSerializer(many=True, read_only=True)
+    xcountry_outcome = DataXCountrySerializer(many=True, read_only=True)
 
     class Meta:
         model = ExperimentPopulationOutcome
-        fields = ('outcome', 'EAV_outcome', )
+        exclude = ('created', 'updated', 'url', 'experiment_population')
 
 
 class DataSerializer(serializers.HyperlinkedModelSerializer):

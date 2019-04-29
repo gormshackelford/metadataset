@@ -291,9 +291,9 @@
 </form>
 
 <h1>Check your data</h1>
-<p>Click "Check your data" to check all the data that you have entered for this publication, in the format that we will use for meta-analysis.</p>
+<p>Click "Check your data" to view all of the data that you have entered for this publication, in the format we will use for meta-analysis. Please check that each row has the correct metadata.</p>
 <p>
-  <a class="button" href="{{ path_to_shiny }}?subject={{ subject.pk }}&publication={{ publication.pk }}&user={{ user.pk }}">Check your data</a>
+  <a class="button" target="_blank" href="{{ path_to_shiny }}?subject={{ subject.pk }}&publication={{ publication.pk }}&user={{ user.pk }}">Check your data</a>
 </p>
 
 {% endblock %}
