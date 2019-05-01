@@ -76,6 +76,16 @@
         <td></td>
       </tr>
       <tr>
+        <td>Treatment SE:</td>
+        <td>{{ form.treatment_se }} {{ form.treatment_se.help_text }}</td>
+        <td></td>
+      </tr>
+      <tr>
+        <td>Control SE:</td>
+        <td>{{ form.control_se }} {{ form.control_se.help_text }}</td>
+        <td></td>
+      </tr>
+      <tr>
         <td>{{ form.unit.label }}:</td>
         <td>{{ form.unit }}</td>
         <td></td>
@@ -83,6 +93,11 @@
       <tr>
         <td>LSD:</td>
         <td>{{ form.lsd }} {{ form.lsd.help_text }}</td>
+        <td></td>
+      </tr>
+      <tr>
+        <td>Significant:</td>
+        <td>{{ form.is_significant }}</td>
         <td></td>
       </tr>
       <tr>
@@ -290,7 +305,7 @@
 
 </form>
 
-<h1>Check your data</h1>
+<h2>Check your data</h2>
 <p>Click "Check your data" to view all of the data that you have entered for this publication, in the format we will use for meta-analysis. Please check that each row has the correct metadata.</p>
 <p>
   <a class="button" target="_blank" href="{{ path_to_shiny }}?subject={{ subject.pk }}&publication={{ publication.pk }}&user={{ user.pk }}">Check your data</a>

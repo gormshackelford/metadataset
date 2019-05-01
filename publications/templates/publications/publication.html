@@ -35,10 +35,10 @@
     <a class="button" href="{% url 'publication' subject=subject.slug publication_pk=next_pk %}">Next title/abstract</a>
   </p>
 
-  <h1>Title</h1>
+  <h2>Title</h2>
   <p>{{ publication.title|default:'[title not available]' }}</p>
 
-  <h1>Abstract</h1>
+  <h2>Abstract</h2>
   <p>{{ publication.abstract|default:'[abstract not available]' }}</p>
 
   <br />
@@ -55,7 +55,8 @@
   <p>
     <span class="bold">Based on the full text, should this publication be included or excluded?</span> If you excluded this publication at Stage 1, then skip this step and go to the next publication.
   </p>
-  <h1>Citation for this full text</h1>
+  
+  <h2>Citation for this full text</h2>
   <p>
     {% if publication.author_list %}
       {{ publication.author_list|join:", "|default:'[authors not available]' }}
@@ -84,7 +85,7 @@
     {% endif %}
   </p>
 
-  <h1>Exclude this full text?</h1>
+  <h2>Exclude this full text?</h2>
   <p>
     <span class="bold">If it should be excluded</span>, select one or more reason(s), write a note (if you want), and then click "Exclude based on the full text".
   </p>
@@ -131,7 +132,7 @@
     <input type="submit" name="full_text_is_not_relevant" value="Exclude based on the full text" />
   </p>
 
-  <h1>Include this full text?</h1>
+  <h2>Include this full text?</h2>
   <p><span class="bold">If it should be included</span>, select one or more intervention(s) that were tested in this publication, and click "Include based on the full text".</p>
 
   <table>
@@ -165,13 +166,13 @@
     </tr>
   </table>
 
-  <h1>Other metadata?</h1>
+  <h2>Other metadata?</h2>
   <p>When you select and save an intervention, a link will appear for that intervention (above). Click that link to enter metadata for that intervention. To enter metadata for this publication (not for each intervention within this publication), click "Other metadata" (below). This is a shortcut for systematic maps, for which metadata will be analysed at the publication-level only. For systematic reviews with meta-analysis, metadata should be entered for each intervention (above).</p>
   <p>
     <a class="button" href="{% url 'metadata' subject=subject.slug publication_pk=publication.pk %}">Other metadata</a>
   </p>
 
-  <h1>Completed?</h1>
+  <h2>Completed?</h2>
   <p>When you have entered all of the metadata for this publication, tick the box marked "Completed" (below) and then click "Save or update" (do not do this if you clicked "Exclude based on the full text").</p>
   <table>
     <tr>
@@ -184,7 +185,7 @@
 
 </form>
 
-<h1>Full-text navigation</h1>
+<h2>Full-text navigation</h2>
 <p>
   <a class="button" href="{% url 'full_text_navigation' subject=subject.slug state='previous' publication_pk=publication.pk %}">Previous full text</a>
   <a class="button" href="{% url 'full_text_navigation' subject=subject.slug state='next' publication_pk=publication.pk %}">Next full text</a>

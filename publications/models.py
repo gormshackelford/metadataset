@@ -493,12 +493,20 @@ class Data(models.Model):
     treatment_mean = models.FloatField(blank=True, null=True)
     treatment_sd = models.FloatField(blank=True, null=True, validators=[MinValueValidator(0)])
     treatment_n = models.IntegerField(blank=True, null=True, validators=[MinValueValidator(0)])
+    treatment_se = models.FloatField(blank=True, null=True, validators=[MinValueValidator(0)])
     control_mean = models.FloatField(blank=True, null=True)
     control_sd = models.FloatField(blank=True, null=True, validators=[MinValueValidator(0)])
     control_n = models.IntegerField(blank=True, null=True, validators=[MinValueValidator(0)])
+    control_se = models.FloatField(blank=True, null=True, validators=[MinValueValidator(0)])
     n = models.IntegerField(blank=True, null=True, validators=[MinValueValidator(0)])
-    unit = models.CharField(max_length=60, blank=True, null=True, help_text='Units for mean and SD (e.g., "kg/ha")')
+    unit = models.CharField(max_length=60, blank=True, null=True)
     lsd = models.FloatField(blank=True, null=True, validators=[MinValueValidator(0)])
+    IS_SIGNIFICANT_CHOICES = (
+        (None, "---------"),
+        (True, "Yes"),
+        (False, "No")
+    )
+    is_significant = models.NullBooleanField(choices=IS_SIGNIFICANT_CHOICES)
     APPROXIMATE_P_VALUE_CHOICES = (
         ("< 0.0001", "< 0.0001"),
         ("< 0.001", "< 0.001"),

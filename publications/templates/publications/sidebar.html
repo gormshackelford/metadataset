@@ -13,7 +13,7 @@
   {% if node.level == 0 %}
     {{ node.subject|capfirst }}<br />
   {% else %}
-    <span class="indented"><a href="{% url 'subject' subject=node.slug %}">{{ node.subject|capfirst }}</a> <span class="red">(work in progress)</span></span><br />
+    <span class="indented"><a href="{% url 'subject' subject=node.slug %}">{{ node.subject|capfirst }}</a></span><br />
   {% endif %}
   {% if not node.is_leaf_node %}
     {{ children }}<br />

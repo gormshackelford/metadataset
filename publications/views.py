@@ -1877,7 +1877,7 @@ def get_path_to_shiny(request):
     if domain == "www.metadataset.com":
         path_to_shiny = "http://shiny.metadataset.com/meta-analysis/"
     else:
-        path_to_shiny = "http://127.0.0.1:7099/"
+        path_to_shiny = "http://127.0.0.1:3838/"
     return(path_to_shiny)
 
 
