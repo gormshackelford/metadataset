@@ -18,11 +18,11 @@ from publications.models import Publication, Subject
 
 
 # Set the systematic review
-subject = 'cover crops'
+subject = 'japanese knotweed'
 subject = Subject.objects.get(subject=subject)
 
 # Load a csv file with the bibliography (exported from Zotero).
-with open('publications/data/cover_crops/publications.txt', 'r') as f:
+with open('publications/data/invasive_species/japanese_knotweed/publications.txt', 'r') as f:
     results = list(readris(f, mapping=TAG_KEY_MAPPING))
 
 for result in results:
