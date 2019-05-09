@@ -57,6 +57,8 @@
       <br />
       <a class="indented" href="{% url 'publications' subject=subject.slug state='cannot_access' %}">Cannot access</a>
       <br />
+      <a class="indented" href="{% url 'publications' subject=subject.slug state='language_barrier' %}">Language barrier</a>
+      <br />
       <a class="indented" href="{% url 'publications' subject=subject.slug state='secondary_literature' %}">Secondary literature</a>
       <br />
       <a class="indented" href="{% url 'publications' subject=subject.slug state='no_pico' %}">No relevant PICO component</a>

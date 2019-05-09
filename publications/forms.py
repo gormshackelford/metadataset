@@ -48,7 +48,7 @@ class FullTextAssessmentForm(forms.ModelForm):
 
     class Meta:
         model = Assessment
-        fields = ['cannot_find', 'cannot_access', 'secondary_literature',
+        fields = ['cannot_find', 'cannot_access', 'language_barrier', 'secondary_literature',
             'no_population', 'no_intervention', 'no_comparator', 'no_outcome',
             'other', 'note', 'is_completed']
 

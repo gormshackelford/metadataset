@@ -55,7 +55,7 @@
   <p>
     <span class="bold">Based on the full text, should this publication be included or excluded?</span> If you excluded this publication at Stage 1, then skip this step and go to the next publication.
   </p>
-  
+
   <h2>Citation for this full text</h2>
   <p>
     {% if publication.author_list %}
@@ -98,6 +98,9 @@
     </tr>
     <tr>
       <td colspan="2">&nbsp;</td>
+    </tr>
+    <tr>
+      <td class="select centered">{{ full_text_assessment_form.language_barrier }}</td><td>Language barrier</td>
     </tr>
     <tr>
       <td class="select centered">{{ full_text_assessment_form.secondary_literature }}</td><td>Secondary literature</td>

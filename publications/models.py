@@ -599,6 +599,7 @@ class Assessment(models.Model):
     note = models.TextField(blank=True, null=True)
     cannot_find = models.BooleanField(default=False)
     cannot_access = models.BooleanField(default=False)
+    language_barrier = models.BooleanField(default=False)
     secondary_literature = models.BooleanField(default=False)
     no_population = models.BooleanField(default=False)
     no_intervention = models.BooleanField(default=False)

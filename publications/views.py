@@ -296,6 +296,14 @@ def publications(request, subject, state='all', download='none'):
                 cannot_access=True
             )
         ).order_by('title')
+    elif (state == 'language_barrier'):
+        publications = Publication.objects.distinct().filter(
+            assessment__in=Assessment.objects.filter(
+                subject=subject,
+                user=user,
+                language_barrier=True
+            )
+        ).order_by('title')
     elif (state == 'secondary_literature'):
         publications = Publication.objects.distinct().filter(
             assessment__in=Assessment.objects.filter(
@@ -570,6 +578,7 @@ def publication(request, subject, publication_pk):
                     assessment.full_text_is_relevant = None
                     assessment.cannot_find = False
                     assessment.cannot_access = False
+                    assessment.language_barrier = False
                     assessment.secondary_literature = False
                     assessment.no_population = False
                     assessment.no_intervention = False
@@ -599,6 +608,7 @@ def publication(request, subject, publication_pk):
                     assessment.full_text_is_relevant = None
                     assessment.cannot_find = False
                     assessment.cannot_access = False
+                    assessment.language_barrier = False
                     assessment.secondary_literature = False
                     assessment.no_population = False
                     assessment.no_intervention = False
@@ -673,6 +683,7 @@ def publication(request, subject, publication_pk):
                             assessment.full_text_is_relevant = True
                             assessment.cannot_find = False
                             assessment.cannot_access = False
+                            assessment.language_barrier = False
                             assessment.secondary_literature = False
                             assessment.no_population = False
                             assessment.no_intervention = False
