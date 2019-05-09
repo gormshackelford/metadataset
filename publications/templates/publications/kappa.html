@@ -28,34 +28,55 @@
     </tr>
     <tr>
       <td class="bottom"></td>
-      <td class="bottom button"><input type="submit" name="kappa" value="Calculate Kappa" /></td>
+      <td class="bottom button"><input type="submit" name="compare" value="Compare users" /></td>
     </tr>
   </table>
 
 </form>
 
 {% if kappa %}
-  <br />
-  <br />
-  Kappa = {{ kappa }}
-{% endif %}
 
-<table>
-  <tr>
-    <td></td>
-    <td>User 1 included</td>
-    <td>User 1 excluded</td>
-  </tr>
-  <tr>
-    <td>User 2 included</td>
-    <td class="centered">{% if both_included %}{{ both_included|length }}{% endif %}</td>
-    <td class="centered">{% if only_user_2_included %}{{ only_user_2_included|length }}{% endif %}</td>
-  </tr>
-  <tr>
-    <td>User 2 excluded</td>
-    <td class="centered">{% if only_user_1_included %}{{ only_user_1_included|length }}{% endif %}</td>
-    <td class="centered">{% if both_excluded %}{{ both_excluded|length }}{% endif %}</td>
-  </tr>
-</table>
+  <h2>Kappa</h2>
+  Kappa = {{ kappa }}
+
+  <h2>Publications assessed by both users</h2>
+  {{ n }} publications were assessed by both users ({{ percent }}% of the publications for this subject).
+  <table>
+    <tr>
+      <td></td>
+      <td>User 1 included</td>
+      <td>User 1 excluded</td>
+    </tr>
+    <tr>
+      <td>User 2 included</td>
+      <td class="centered">{% if a %}{{ a }}{% endif %}</td>
+      <td class="centered">{% if b %}{{ b }}{% endif %}</td>
+    </tr>
+    <tr>
+      <td>User 2 excluded</td>
+      <td class="centered">{% if c %}{{ c }}{% endif %}</td>
+      <td class="centered">{% if d %}{{ d }}{% endif %}</td>
+    </tr>
+  </table>
+
+  {% if only_user_1_included %}
+  <h2>Publications included by User 1 but excluded by User 2</h2>
+    {% for publication in only_user_1_included %}
+      {% include 'publications/publication_list.html' %}
+    {% empty %}
+      <p>No publications</p>
+    {% endfor %}
+  {% endif %}
+
+  {% if only_user_2_included %}
+  <h2>Publications included by User 2 but excluded by User 1</h2>
+    {% for publication in only_user_2_included %}
+      {% include 'publications/publication_list.html' %}
+    {% empty %}
+      <p>No publications</p>
+    {% endfor %}
+  {% endif %}
+
+{% endif %}
 
 {% endblock %}

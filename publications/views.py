@@ -18,7 +18,7 @@ from itertools import chain
 from random import shuffle
 from .tokens import account_activation_token
 from .forms import AssessmentForm, AttributeForm, AttributeOptionForm, CoordinatesForm, DataForm, DateForm, EAVExperimentForm, EAVOutcomeForm, EAVPopulationForm, EAVPublicationForm, ExperimentForm, ExperimentDesignForm, ExperimentPopulationForm, ExperimentPopulationOutcomeForm, FullTextAssessmentForm, InterventionForm, KappaForm, OutcomeForm, ProfileForm, PublicationForm, PublicationPopulationForm, PublicationPopulationOutcomeForm, SignUpForm, UserForm, XCountryForm
-from .models import Assessment, AssessmentStatus, Attribute, Coordinates, Country, Crop, Data, Date, Design, EAV, Experiment, ExperimentDesign, ExperimentPopulation, ExperimentPopulationOutcome, Intervention, Kappa, Outcome, Publication, PublicationPopulation, PublicationPopulationOutcome, Subject, User, UserSubject, XCountry
+from .models import Assessment, AssessmentStatus, Attribute, Coordinates, Country, Crop, Data, Date, Design, EAV, Experiment, ExperimentDesign, ExperimentPopulation, ExperimentPopulationOutcome, Intervention, Outcome, Publication, PublicationPopulation, PublicationPopulationOutcome, Subject, User, UserSubject, XCountry
 from .serializers import AttributeSerializer, CountrySerializer, DataSerializer, DesignSerializer, EAVSerializer, ExperimentSerializer, ExperimentDesignSerializer, ExperimentPopulationSerializer, ExperimentPopulationOutcomeSerializer, InterventionSerializer, OutcomeSerializer, PublicationSerializer, PublicationPopulationSerializer, PublicationPopulationOutcomeSerializer, SubjectSerializer, UserSerializer
 from .decorators import group_required
 from mptt.forms import TreeNodeChoiceField
@@ -280,22 +280,20 @@ def publications(request, subject, state='all', download='none'):
                 full_text_is_relevant=False
             )
         ).order_by('title')
-    # Cannot find
     elif (state == 'cannot_find'):
         publications = Publication.objects.distinct().filter(
             assessment__in=Assessment.objects.filter(
                 subject=subject,
                 user=user,
-                cannot_find = True
+                cannot_find=True
             )
         ).order_by('title')
-    # Cannot find
     elif (state == 'cannot_access'):
         publications = Publication.objects.distinct().filter(
             assessment__in=Assessment.objects.filter(
                 subject=subject,
                 user=user,
-                cannot_access = True
+                cannot_access=True
             )
         ).order_by('title')
     elif (state == 'secondary_literature'):
@@ -303,7 +301,7 @@ def publications(request, subject, state='all', download='none'):
             assessment__in=Assessment.objects.filter(
                 subject=subject,
                 user=user,
-                secondary_literature = True
+                secondary_literature=True
             )
         ).order_by('title')
     elif (state == 'other'):
@@ -311,7 +309,7 @@ def publications(request, subject, state='all', download='none'):
             assessment__in=Assessment.objects.filter(
                 subject=subject,
                 user=user,
-                other = True
+                other=True
             )
         ).order_by('title')
     elif (state == 'no_pico'):
@@ -1721,10 +1719,6 @@ def publications_x(request, subject, intervention_pk='default', outcome_pk='defa
     user = request.user
     subject = Subject.objects.get(slug=subject)
     publications = Publication.objects.filter(subject=subject)
-
-    # Publications that have been marked as "completed"
-#    publications = publications.distinct().filter(assessment__is_completed=True)
-
     if iso_a3 != 'default':
         if iso_a3 != '-99':  # Disputed territories that are not our Countries model: Kosovo, Northern Cyprus, and Somaliland
             country = Country.objects.get(iso_alpha_3=iso_a3)
@@ -1771,10 +1765,6 @@ def kappa(request, subject):
     subject = Subject.objects.get(slug=subject)
     user_subject = get_object_or_404(UserSubject, user=user, subject=subject)  # Check if this user has permission to work on this subject.
     user_subjects = UserSubject.objects.filter(subject=subject)
-    both_included = None
-    only_user_1_included = None
-    only_user_2_included = None
-    both_excluded = None
     kappa = None
     form = KappaForm(data=data)
     form.fields['user_1'] = ModelChoiceField(queryset=User.objects.filter(usersubject__in=user_subjects))
@@ -1838,15 +1828,7 @@ def kappa(request, subject):
             c = only_user_1_included.count()
             d = both_excluded.count()
             n = publications.count()
-            if (n > 0):
-                if not a:
-                    a = 0
-                if not b:
-                    b = 0
-                if not c:
-                    c = 0
-                if not d:
-                    d = 0
+            if n > 0:
                 rm1 = a + b
                 rm2 = c + d
                 cm1 = a + c
@@ -1855,18 +1837,29 @@ def kappa(request, subject):
                 expected_agreement = ( ((cm1 * rm1) / n) + ((cm2 * rm2) / n) ) / n
                 if expected_agreement < 1:
                     kappa = (agreement - expected_agreement) / (1 - expected_agreement)
-                    kappa = round(kappa, 2)
+                    if kappa > 1:
+                        kappa = 1.0
                 else:
-                    kappa = 1
+                    kappa = 1.0
+                percent = (n / Publication.objects.filter(subject=subject).count()) * 100
 
     context = {
-        'form': form,
-        'both_included': both_included,
-        'only_user_1_included': only_user_1_included,
-        'only_user_2_included': only_user_2_included,
-        'both_excluded': both_excluded,
-        'kappa': kappa
+        'subject': subject,
+        'user_subject': user_subject,
+        'form': form
     }
+    if kappa is not None:
+        context.update({
+            'a': a,
+            'b': b,
+            'c': c,
+            'd': d,
+            'n': n,
+            'only_user_1_included': only_user_1_included,
+            'only_user_2_included': only_user_2_included,
+            'kappa': round(kappa, 2),
+            'percent': round(percent)
+        })
     return render(request, 'publications/kappa.html', context)
 
 

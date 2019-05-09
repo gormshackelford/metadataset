@@ -1,0 +1,22 @@
+<p><span class="bold">{{ publication.title|default:'[title not available]' }}</span></p>
+<p>
+  {% if publication.author_list %}
+    {{ publication.author_list|join:", "|default:'[authors not available]' }}
+  {% else %}
+    {{ publication.authors }}
+  {% endif %}
+   ({{ publication.year|default:'[year not available]' }}) <span class="italic">{{ publication.journal|default:'[journal not available]' }}</span> {{ publication.volume|default:'[volume not available]'}}, {{ publication.pages|default:'[pages not available]' }}
+</p>
+<p>
+  Search for the full text:
+    <a target="_blank" href="http://www.google.com/search?q={{ publication.google_string }}">Google</a>
+    | <a target="_blank" href="https://scholar.google.com/scholar?q={{ publication.google_string }}">Google Scholar</a>
+  {% if publication.doi != '' %}
+    | <a target="_blank" href="http://dx.doi.org/{{ publication.doi }}">DOI</a>
+  {% endif %}
+</p>
+{% if user_subject %}
+  <p><a href="{% url 'publication' subject=subject.slug publication_pk=publication.pk %}">Work on this publication</a></p>
+{% endif %}
+<br />
+<p class="hr"></p>

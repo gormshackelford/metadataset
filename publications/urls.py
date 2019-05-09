@@ -25,7 +25,7 @@ urlpatterns = [
     path('subject/<subject>/attribute/<int:attribute_pk>/', views.attribute, name='attribute'),
     path('subject/<subject>/publications/', views.publications, name='publications'),
     path('subject/<subject>/publications/<state>/', views.publications, name='publications'),
-    path('subject/<subject>/publications/<state>/<download>/', views.publications, name='publications'),
+    path('subject/<subject>/publications/<state>/download/<download>', views.publications, name='publications'),
     path('subject/<subject>/kappa/', views.kappa, name='kappa'),
 
     # Filter publications
