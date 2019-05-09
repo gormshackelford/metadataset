@@ -34,6 +34,9 @@
       <br />
       <a href="{% url 'publications' subject=subject.slug state='not_assessed' %}">Not completed</a>
       <br />
+      <a href="{% url 'kappa' subject=subject.slug %}">Kappa analysis</a>
+
+      <br />
       <br />
       <a href="{% url 'add_publication' subject=subject.slug %}">Add a title/abstract</a>
 

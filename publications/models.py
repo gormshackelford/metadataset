@@ -304,6 +304,28 @@ class UserSubject(models.Model):
 
     def __str__(self):
         return self.user.email
+        #return "{first_name} {last_name} <{email}>".format(first_name=self.user.first_name, last_name=self.user.last_name, email=self.user.email)
+
+
+class Kappa(models.Model):
+    user_1 = models.ForeignKey(UserSubject, related_name="kappa_user_1", on_delete=models.CASCADE)
+    user_2 = models.ForeignKey(UserSubject, related_name="kappa_user_2", on_delete=models.CASCADE)
+    subject = models.ForeignKey(Subject, on_delete=models.CASCADE)
+    STAGE_CHOICES = (
+        (1, "Titles/abstracts"),
+        (2, "Full texts")
+    )
+    stage = models.IntegerField(choices=STAGE_CHOICES)
+    kappa = models.FloatField()
+
+    def __str__(self):
+        return "{subject} (Stage {stage}): {user_1} vs {user_2}".format(
+            subject=self.subject, user_1=self.user_1, user_2=self.user_2,
+            stage=self.stage
+        )
+
+    class Meta:
+        unique_together = ('user_1', 'user_2', 'subject', 'stage')
 
 
 class PublicationPopulation(models.Model):

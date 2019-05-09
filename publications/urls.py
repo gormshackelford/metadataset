@@ -11,8 +11,8 @@ urlpatterns = [
 #    path('search/', include('haystack.urls')),
 #    path('search/<subject>/', include('haystack.urls')),
     path('search/<subject>/', views.MySearchView.as_view(), name='haystack_search'),
-    path('about', views.about, name='about'),
-    path('methods', views.methods, name='methods'),
+    path('about/', views.about, name='about'),
+    path('methods/', views.methods, name='methods'),
     path('signup/', views.signup, name='signup'),
     path('contact/', views.contact, name='contact'),
     path('profile/', views.profile, name='profile'),
@@ -23,9 +23,10 @@ urlpatterns = [
     path('subject/<subject>/', views.subject, name='subject'),
     path('subject/<subject>/attributes/', views.attributes, name='attributes'),
     path('subject/<subject>/attribute/<int:attribute_pk>/', views.attribute, name='attribute'),
-    path('subject/<subject>/publications', views.publications, name='publications'),
-    path('subject/<subject>/publications/<state>', views.publications, name='publications'),
-    path('subject/<subject>/publications/<state>/<download>', views.publications, name='publications'),
+    path('subject/<subject>/publications/', views.publications, name='publications'),
+    path('subject/<subject>/publications/<state>/', views.publications, name='publications'),
+    path('subject/<subject>/publications/<state>/<download>/', views.publications, name='publications'),
+    path('subject/<subject>/kappa/', views.kappa, name='kappa'),
 
     # Filter publications
     # Filter by intervention

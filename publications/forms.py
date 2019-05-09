@@ -258,3 +258,8 @@ class EAVPublicationForm(forms.ModelForm):
     class Meta:
         model = EAV
         exclude = ['experiment', 'outcome', 'population', 'note']
+
+
+class KappaForm(forms.Form):
+    user_1 = forms.ModelChoiceField(queryset=User.objects.all())
+    user_2 = forms.ModelChoiceField(queryset=User.objects.all())

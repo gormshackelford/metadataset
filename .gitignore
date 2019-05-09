@@ -15,6 +15,7 @@ metadataset/whoosh_index
 notebook.ipynb
 Notes.txt
 publications/data/
+publications/ris_to_database.py
 requirements_without_their_dependencies.txt
 web_scraping/
 venv

@@ -4,7 +4,7 @@ from django.contrib.sites.shortcuts import get_current_site
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.db import transaction
 from django.db.models import Q
-from django.forms import modelformset_factory
+from django.forms import modelformset_factory, ModelChoiceField
 from django.http import HttpResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.template import loader
@@ -17,8 +17,8 @@ from collections import Counter
 from itertools import chain
 from random import shuffle
 from .tokens import account_activation_token
-from .forms import AssessmentForm, AttributeForm, AttributeOptionForm, CoordinatesForm, DataForm, DateForm, EAVExperimentForm, EAVOutcomeForm, EAVPopulationForm, EAVPublicationForm, ExperimentForm, ExperimentDesignForm, ExperimentPopulationForm, ExperimentPopulationOutcomeForm, FullTextAssessmentForm, InterventionForm, OutcomeForm, ProfileForm, PublicationForm, PublicationPopulationForm, PublicationPopulationOutcomeForm, SignUpForm, UserForm, XCountryForm
-from .models import Assessment, AssessmentStatus, Attribute, Coordinates, Country, Crop, Data, Date, Design, EAV, Experiment, ExperimentDesign, ExperimentPopulation, ExperimentPopulationOutcome, Intervention, Outcome, Publication, PublicationPopulation, PublicationPopulationOutcome, Subject, User, UserSubject, XCountry
+from .forms import AssessmentForm, AttributeForm, AttributeOptionForm, CoordinatesForm, DataForm, DateForm, EAVExperimentForm, EAVOutcomeForm, EAVPopulationForm, EAVPublicationForm, ExperimentForm, ExperimentDesignForm, ExperimentPopulationForm, ExperimentPopulationOutcomeForm, FullTextAssessmentForm, InterventionForm, KappaForm, OutcomeForm, ProfileForm, PublicationForm, PublicationPopulationForm, PublicationPopulationOutcomeForm, SignUpForm, UserForm, XCountryForm
+from .models import Assessment, AssessmentStatus, Attribute, Coordinates, Country, Crop, Data, Date, Design, EAV, Experiment, ExperimentDesign, ExperimentPopulation, ExperimentPopulationOutcome, Intervention, Kappa, Outcome, Publication, PublicationPopulation, PublicationPopulationOutcome, Subject, User, UserSubject, XCountry
 from .serializers import AttributeSerializer, CountrySerializer, DataSerializer, DesignSerializer, EAVSerializer, ExperimentSerializer, ExperimentDesignSerializer, ExperimentPopulationSerializer, ExperimentPopulationOutcomeSerializer, InterventionSerializer, OutcomeSerializer, PublicationSerializer, PublicationPopulationSerializer, PublicationPopulationOutcomeSerializer, SubjectSerializer, UserSerializer
 from .decorators import group_required
 from mptt.forms import TreeNodeChoiceField
@@ -1763,6 +1763,111 @@ def publications_x(request, subject, intervention_pk='default', outcome_pk='defa
             status = get_status(user, subject)
             context.update(status)
     return render(request, 'publications/publications.html', context)
+
+
+def kappa(request, subject):
+    user = request.user
+    data = request.POST or None
+    subject = Subject.objects.get(slug=subject)
+    user_subject = get_object_or_404(UserSubject, user=user, subject=subject)  # Check if this user has permission to work on this subject.
+    user_subjects = UserSubject.objects.filter(subject=subject)
+    both_included = None
+    only_user_1_included = None
+    only_user_2_included = None
+    both_excluded = None
+    kappa = None
+    form = KappaForm(data=data)
+    form.fields['user_1'] = ModelChoiceField(queryset=User.objects.filter(usersubject__in=user_subjects))
+    form.fields['user_2'] = ModelChoiceField(queryset=User.objects.filter(usersubject__in=user_subjects))
+    if request.method == 'POST':
+        if form.is_valid():
+            user_1 = form.cleaned_data.get('user_1')
+            user_2 = form.cleaned_data.get('user_2')
+            users = User.objects.filter(pk=user_1.pk) | User.objects.filter(pk=user_2.pk)  # The "|" operator requires querysets, not objects, so we use "filter" here and "get" below (we cannot use "get" before we use "|".)
+            user_1 = User.objects.get(pk=user_1.pk)
+            user_2 = User.objects.get(pk=user_2.pk)
+
+
+            # Publications that user_1 assessed
+            user_1_publications = Publication.objects.filter(
+                subject=subject,
+                assessment__in=Assessment.objects.filter(user=user_1)
+            )
+            # Publications that user_2 assessed
+            user_2_publications = Publication.objects.filter(
+                subject=subject,
+                assessment__in=Assessment.objects.filter(user=user_2)
+            )
+            # Publications that both users assessed
+            publications = user_1_publications & user_2_publications
+
+
+            # Publications that user_1 included
+            user_1_included = publications.filter(
+                assessment__in=Assessment.objects.filter(user=user_1, is_relevant=True)
+            )
+            # Publications that user_2 included
+            user_2_included = publications.filter(
+                assessment__in=Assessment.objects.filter(user=user_2, is_relevant=True)
+            )
+            # Publications that both users included
+            both_included = user_1_included & user_2_included
+
+
+            # Publications that user_1 excluded
+            user_1_excluded = publications.filter(
+                assessment__in=Assessment.objects.filter(user=user_1, is_relevant=False)
+            )
+            # Publications that user_2 excluded
+            user_2_excluded = publications.filter(
+                assessment__in=Assessment.objects.filter(user=user_2, is_relevant=False)
+            )
+            # Publications that both users excluded
+            both_excluded = user_1_excluded & user_2_excluded
+
+
+            # Publications that user_1 included but user_2_excluded
+            only_user_1_included = user_1_included.exclude(pk__in=user_2_included)
+            # Publications that user_2 included but user_1_excluded
+            only_user_2_included = user_2_included.exclude(pk__in=user_1_included)
+
+
+            # Kappa analysis
+            a = both_included.count()
+            b = only_user_2_included.count()
+            c = only_user_1_included.count()
+            d = both_excluded.count()
+            n = publications.count()
+            if (n > 0):
+                if not a:
+                    a = 0
+                if not b:
+                    b = 0
+                if not c:
+                    c = 0
+                if not d:
+                    d = 0
+                rm1 = a + b
+                rm2 = c + d
+                cm1 = a + c
+                cm2 = b + d
+                agreement = (a + d) / n
+                expected_agreement = ( ((cm1 * rm1) / n) + ((cm2 * rm2) / n) ) / n
+                if expected_agreement < 1:
+                    kappa = (agreement - expected_agreement) / (1 - expected_agreement)
+                    kappa = round(kappa, 2)
+                else:
+                    kappa = 1
+
+    context = {
+        'form': form,
+        'both_included': both_included,
+        'only_user_1_included': only_user_1_included,
+        'only_user_2_included': only_user_2_included,
+        'both_excluded': both_excluded,
+        'kappa': kappa
+    }
+    return render(request, 'publications/kappa.html', context)
 
 
 def get_status(user, subject):
