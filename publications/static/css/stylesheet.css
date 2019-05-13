@@ -142,6 +142,30 @@ input.coordinates {
   width: 6em;
 }
 
+input.blue {
+  background-color: rgba(63, 127, 255, 0.33);
+}
+
+input.cyan {
+  background-color: rgba(63, 255, 255, 0.33);
+}
+
+input.green {
+  background-color: rgba(63, 255, 63, 0.33);
+}
+
+input.orange {
+  background-color: rgba(255, 127, 63, 0.33);
+}
+
+input.red {
+  background-color: rgba(255, 127, 127, 0.33);
+}
+
+input.yellow {
+  background-color: rgba(255, 255, 127, 0.33);
+}
+
 li {
   margin-top: 1.5em;
   line-height: 1.5em;

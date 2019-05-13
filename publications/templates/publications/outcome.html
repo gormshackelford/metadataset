@@ -46,33 +46,33 @@
         <td class="centered">{{ form.DELETE }}</td>
       </tr>
       <tr>
-        <td>{{ form.treatment_mean.label }}:</td>
-        <td>{{ form.treatment_mean }}</td>
+        <td>Treatment mean:</td>
+        <td>{{ form.treatment_mean|add_class:"green"  }}</td>
         <td></td>
       </tr>
       <tr>
-        <td>{{ form.control_mean.label }}:</td>
-        <td>{{ form.control_mean }}</td>
+        <td>Control mean:</td>
+        <td>{{ form.control_mean|add_class:"green" }}</td>
         <td></td>
       </tr>
       <tr>
         <td>Treatment SD:</td>
-        <td>{{ form.treatment_sd }} {{ form.treatment_sd.help_text }}</td>
+        <td>{{ form.treatment_sd|add_class:"yellow" }} {{ form.treatment_sd.help_text }}</td>
         <td></td>
       </tr>
       <tr>
         <td>Control SD:</td>
-        <td>{{ form.control_sd }} {{ form.control_sd.help_text }}</td>
+        <td>{{ form.control_sd|add_class:"yellow" }} {{ form.control_sd.help_text }}</td>
         <td></td>
       </tr>
       <tr>
         <td>Treatment N:</td>
-        <td>{{ form.treatment_n }} {{ form.treatment_n.help_text }}</td>
+        <td>{{ form.treatment_n|add_class:"red" }} {{ form.treatment_n.help_text }}</td>
         <td></td>
       </tr>
       <tr>
         <td>Control N:</td>
-        <td>{{ form.control_n }} {{ form.control_n.help_text }}</td>
+        <td>{{ form.control_n|add_class:"red" }} {{ form.control_n.help_text }}</td>
         <td></td>
       </tr>
       <tr>
@@ -107,7 +107,7 @@
       </tr>
       <tr>
         <td>Exact P-value:</td>
-        <td>{{ form.p_value }} {{ form.p_value.help_text }}</td>
+        <td>{{ form.p_value|add_class:"blue" }} {{ form.p_value.help_text }}</td>
         <td></td>
       </tr>
       <tr>
