@@ -546,6 +546,7 @@ class Data(models.Model):
     confidence = models.FloatField(blank=True, null=True, validators=[MinValueValidator(0), MaxValueValidator(100)])
     se = models.FloatField(blank=True, null=True, validators=[MinValueValidator(0)])
     variance = models.FloatField(blank=True, null=True, validators=[MinValueValidator(0)])
+    study_name = models.CharField(max_length=60, blank=True, null=True)
     note = models.CharField(max_length=255, blank=True, null=True)
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)

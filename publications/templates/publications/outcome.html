@@ -77,12 +77,12 @@
       </tr>
       <tr>
         <td>Treatment SE:</td>
-        <td>{{ form.treatment_se }} {{ form.treatment_se.help_text }}</td>
+        <td>{{ form.treatment_se|add_class:"blue" }} {{ form.treatment_se.help_text }}</td>
         <td></td>
       </tr>
       <tr>
         <td>Control SE:</td>
-        <td>{{ form.control_se }} {{ form.control_se.help_text }}</td>
+        <td>{{ form.control_se|add_class:"blue" }} {{ form.control_se.help_text }}</td>
         <td></td>
       </tr>
       <tr>
@@ -107,7 +107,7 @@
       </tr>
       <tr>
         <td>Exact P-value:</td>
-        <td>{{ form.p_value|add_class:"blue" }} {{ form.p_value.help_text }}</td>
+        <td>{{ form.p_value }} {{ form.p_value.help_text }}</td>
         <td></td>
       </tr>
       <tr>
@@ -129,6 +129,22 @@
         <td>{{ form.note.label }}:</td>
         <td>{{ form.note }}</td>
         <td></td>
+      </tr>
+
+      <tr><td class="empty" colspan="3">&nbsp;</td></tr>
+
+      <tr>
+        <td colspan="2">
+          If data points from the same publication come from different studies, then you should give them different names. If not, then you should give them exactly the same name (or leave this blank, if they are all from the same study). Random effects will be used to model the non-independence of data points with the same "study name" (e.g., random = ~ 1 | publication_name/study_name)).
+        </td>
+        <td></td>
+      </tr>
+
+      <tr><td class="empty" colspan="3">&nbsp;</td></tr>
+
+      <tr>
+        <td>{{ form.study_name.label }}:</td>
+        <td>{{ form.study_name }}</td>
       </tr>
 
       <tr><td class="empty" colspan="3">&nbsp;</td></tr>

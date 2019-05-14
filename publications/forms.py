@@ -195,6 +195,9 @@ class DataForm(forms.ModelForm):
             }),
             'unit': forms.TextInput(attrs={
                 'placeholder': 'e.g., "kg/ha"'
+            }),
+            'study_name': forms.TextInput(attrs={
+                'placeholder': 'e.g., "Study A" or "Mediterranean Basin"'
             })
         }
 
