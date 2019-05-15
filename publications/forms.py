@@ -3,7 +3,7 @@ from django.db import models
 from django.contrib.auth.forms import UserCreationForm
 from ast import literal_eval
 from mptt.forms import TreeNodeChoiceField
-from .models import Assessment, Attribute, Coordinates, Data, Date, EAV, Experiment, ExperimentDesign, ExperimentPopulation, ExperimentPopulationOutcome, Intervention, Outcome, Profile, Publication, PublicationPopulation, PublicationPopulationOutcome, User, XCountry
+from .models import Assessment, Attribute, Coordinates, Data, Date, EAV, Experiment, ExperimentDesign, ExperimentPopulation, ExperimentPopulationOutcome, Intervention, Outcome, Profile, Publication, PublicationPopulation, PublicationPopulationOutcome, Study, User, XCountry
 
 
 class SignUpForm(UserCreationForm):
@@ -150,6 +150,13 @@ class CoordinatesForm(forms.ModelForm):
         ]
 
 
+class StudyForm(forms.ModelForm):
+
+    class Meta:
+        model = Study
+        fields = ['study_id', 'study_name']
+
+
 class XCountryForm(forms.ModelForm):
 
     class Meta:
@@ -195,9 +202,6 @@ class DataForm(forms.ModelForm):
             }),
             'unit': forms.TextInput(attrs={
                 'placeholder': 'e.g., "kg/ha"'
-            }),
-            'study_name': forms.TextInput(attrs={
-                'placeholder': 'e.g., "Study A" or "Mediterranean Basin"'
             })
         }
 

@@ -13,6 +13,7 @@ urlpatterns = [
     path('search/<subject>/', views.MySearchView.as_view(), name='haystack_search'),
     path('about/', views.about, name='about'),
     path('methods/', views.methods, name='methods'),
+    path('notes/', views.notes, name='notes'),
     path('signup/', views.signup, name='signup'),
     path('contact/', views.contact, name='contact'),
     path('profile/', views.profile, name='profile'),

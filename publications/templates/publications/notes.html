@@ -1,0 +1,26 @@
+{% extends 'publications/base.html' %}
+
+{% block title %}
+  Notes | Metadataset | www.metadataset.com
+{% endblock %}
+
+{% block css %}
+  {% load staticfiles %}
+  <link href="{% static 'css/sidebar.css' %}" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+
+<h1>Notes</h1>
+
+<h2 id="study_id">Study ID</h2>
+<p>
+If the data points from one publication come from different studies of the <span class="italic">same intervention and the same outcome</span>, then you should give them different "study ID" numbers, if they are statistically independent (not pseudoreplicates). However, if they come from the same study and they are not independent (pseudoreplicates), then you should either leave this blank or else you should give the same "study ID" number to all of the data points from the same study (if there are multiple data points from multiple studies in one publication). It will be possible to use random effects to model the non-independence of data points from the same publication and the same study (e.g., "random = ~ 1 | publication_ID/study_ID").
+</p>
+
+<h2 id="study_name">Study name</h2>
+<p>
+If you enter a "study ID" number, you can also enter a name for this "study ID" (optional).
+</p>
+
+{% endblock %}

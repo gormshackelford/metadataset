@@ -116,6 +116,9 @@
         <td class="centered">{{ form.DELETE }}</td>
       </tr>
     {% endfor %}
+
+    <tr><td class="empty" colspan="3">&nbsp;</td></tr>
+
     {{ coordinates_formset.management_form }}
     {% for form in coordinates_formset %}
     <tr>
@@ -136,6 +139,9 @@
       <td></td>
     </tr>
     {% endfor %}
+
+    <tr><td class="empty" colspan="3">&nbsp;</td></tr>
+
     {{ date_formset.management_form }}
     {% for form in date_formset %}
       <tr>
@@ -156,6 +162,34 @@
         <td></td>
       </tr>
     {% endfor %}
+
+    <tr><td class="empty" colspan="3">&nbsp;</td></tr>
+
+    {{ study_formset.management_form }}
+    {% for form in study_formset %}
+      <tr>
+        <td>
+          {% for hidden_field in form.hidden_fields %}
+            {{ hidden_field }}
+          {% endfor %}
+          Study ID <a href="{% url 'notes' %}#study_id">(note)</a>:
+        </td>
+        <td>{{ form.study_id }}</td>
+        <td class="centered">{{ form.DELETE }}</td>
+      </tr>
+      <tr>
+        <td>
+          Study name <a href="{% url 'notes' %}#study_name">(note)</a>:
+        </td>
+        <td>{{ form.study_name }}</td>
+        <td></td>
+      </tr>
+    {% endfor %}
+
+    <tr><td class="empty" colspan="3">&nbsp;</td></tr>
+
+    <tr><td class="empty" colspan="3">&nbsp;</td></tr>
+
     {{ EAV_formset.management_form }}
     {% if EAV_formset.forms %}
       {% for form in EAV_formset %}
@@ -184,6 +218,9 @@
           <td class="centered">{{ form.DELETE }}</td>
         </tr>
       {% endfor %}
+
+      <tr><td class="empty" colspan="3">&nbsp;</td></tr>
+
       <tr>
         <td class="bottom"></td>
         <td class="button bottom"><input type="submit" name="save" value="Save all changes" /></td>

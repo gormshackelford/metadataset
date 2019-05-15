@@ -456,6 +456,31 @@ class Date(models.Model):
         return "{pk}".format(pk=self.pk)
 
 
+class Study(models.Model):
+    # Entity options (only one of these should be non-null per instance)
+    publication = models.ForeignKey(Publication, related_name="name_publication", blank=True, null=True, on_delete=models.CASCADE)
+    experiment = models.ForeignKey(Experiment, related_name="name_experiment", blank=True, null=True, on_delete=models.CASCADE)
+    population = models.ForeignKey(ExperimentPopulation, related_name="name_population", blank=True, null=True, on_delete=models.CASCADE)
+    outcome = models.ForeignKey(ExperimentPopulationOutcome, related_name="name_outcome", blank=True, null=True, on_delete=models.CASCADE)
+    # End of entity options
+    study_id = models.IntegerField(blank=True, null=True)
+    study_name = models.CharField(max_length=60, blank=True, null=True)
+    # Indexes: these allow for distinct() queries at multiple levels in the
+    # hierarchy, while allowing for instances to be created at only one level in
+    # the hierarchy (i.e. for only one of the "entity options" above).
+    publication_index = models.ForeignKey(Publication, related_name="name_publication_index", blank=True, null=True, on_delete=models.CASCADE)
+    experiment_index = models.ForeignKey(Experiment, related_name="name_experiment_index", blank=True, null=True, on_delete=models.CASCADE)
+    population_index = models.ForeignKey(ExperimentPopulation, related_name="name_population_index", blank=True, null=True, on_delete=models.CASCADE)
+    outcome_index = models.ForeignKey(ExperimentPopulationOutcome, related_name="name_outcome_index", blank=True, null=True, on_delete=models.CASCADE)
+    # End of indexes
+    created = models.DateTimeField(auto_now_add=True)
+    updated = models.DateTimeField(auto_now=True)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return "{pk}".format(pk=self.pk)
+
+
 class XCountry(models.Model):
     # Entity options (only one of these should be non-null per instance)
     publication = models.ForeignKey(Publication, related_name="xcountry_publication", blank=True, null=True, on_delete=models.CASCADE)
@@ -546,7 +571,6 @@ class Data(models.Model):
     confidence = models.FloatField(blank=True, null=True, validators=[MinValueValidator(0), MaxValueValidator(100)])
     se = models.FloatField(blank=True, null=True, validators=[MinValueValidator(0)])
     variance = models.FloatField(blank=True, null=True, validators=[MinValueValidator(0)])
-    study_name = models.CharField(max_length=60, blank=True, null=True)
     note = models.CharField(max_length=255, blank=True, null=True)
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
