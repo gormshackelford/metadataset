@@ -1,4 +1,4 @@
-from .models import Attribute, Country, Data, Design, EAV, Experiment, ExperimentDesign, ExperimentPopulation, ExperimentPopulationOutcome, Intervention, Outcome, Publication, PublicationPopulation, PublicationPopulationOutcome, Subject, User, XCountry
+from .models import Attribute, Country, Data, Design, EAV, Experiment, ExperimentDesign, ExperimentPopulation, ExperimentPopulationOutcome, Intervention, Outcome, Publication, PublicationPopulation, PublicationPopulationOutcome, Study, Subject, User, XCountry
 from rest_framework import serializers
 
 
@@ -128,6 +128,12 @@ class DataXCountrySerializer(serializers.HyperlinkedModelSerializer):
         fields = ('country', )
 
 
+class DataStudySerializer(serializers.HyperlinkedModelSerializer):
+    class Meta:
+        model = Study
+        fields = ('study_id', 'study_name')
+
+
 class DataExperimentDesignSerializer(serializers.HyperlinkedModelSerializer):
     design = serializers.SlugRelatedField(slug_field='design', read_only=True)
 
@@ -139,6 +145,7 @@ class DataExperimentDesignSerializer(serializers.HyperlinkedModelSerializer):
 class DataExperimentSerializer(serializers.HyperlinkedModelSerializer):
     intervention = serializers.SlugRelatedField(slug_field='intervention', read_only=True)
     EAV_experiment = DataEAVSerializer(many=True, read_only=True)
+    study_experiment = DataStudySerializer(many=True, read_only=True)
     experimentdesign_set = DataExperimentDesignSerializer(many=True, read_only=True)  # Reverse foreign-key relationship (the default is the name of the model that has a foreign key to this model + "_set", unless a "related_name" is specified in that model.
     xcountry_experiment = DataXCountrySerializer(many=True, read_only=True)
 
@@ -150,6 +157,7 @@ class DataExperimentSerializer(serializers.HyperlinkedModelSerializer):
 class DataExperimentPopulationSerializer(serializers.HyperlinkedModelSerializer):
     population = serializers.SlugRelatedField(slug_field='outcome', read_only=True)
     EAV_population = DataEAVSerializer(many=True, read_only=True)
+    study_population = DataStudySerializer(many=True, read_only=True)
     xcountry_population = DataXCountrySerializer(many=True, read_only=True)
 
     class Meta:
@@ -159,6 +167,7 @@ class DataExperimentPopulationSerializer(serializers.HyperlinkedModelSerializer)
 
 class DataExperimentPopulationOutcomeSerializer(serializers.HyperlinkedModelSerializer):
     outcome = serializers.SlugRelatedField(slug_field='outcome', read_only=True)
+    study_outcome = DataStudySerializer(many=True, read_only=True)
     EAV_outcome = DataEAVSerializer(many=True, read_only=True)
     xcountry_outcome = DataXCountrySerializer(many=True, read_only=True)
 

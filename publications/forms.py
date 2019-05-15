@@ -151,6 +151,7 @@ class CoordinatesForm(forms.ModelForm):
 
 
 class StudyForm(forms.ModelForm):
+    study_id = forms.IntegerField(min_value=1)
 
     class Meta:
         model = Study

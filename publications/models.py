@@ -458,20 +458,20 @@ class Date(models.Model):
 
 class Study(models.Model):
     # Entity options (only one of these should be non-null per instance)
-    publication = models.ForeignKey(Publication, related_name="name_publication", blank=True, null=True, on_delete=models.CASCADE)
-    experiment = models.ForeignKey(Experiment, related_name="name_experiment", blank=True, null=True, on_delete=models.CASCADE)
-    population = models.ForeignKey(ExperimentPopulation, related_name="name_population", blank=True, null=True, on_delete=models.CASCADE)
-    outcome = models.ForeignKey(ExperimentPopulationOutcome, related_name="name_outcome", blank=True, null=True, on_delete=models.CASCADE)
+    publication = models.ForeignKey(Publication, related_name="study_publication", blank=True, null=True, on_delete=models.CASCADE)
+    experiment = models.ForeignKey(Experiment, related_name="study_experiment", blank=True, null=True, on_delete=models.CASCADE)
+    population = models.ForeignKey(ExperimentPopulation, related_name="study_population", blank=True, null=True, on_delete=models.CASCADE)
+    outcome = models.ForeignKey(ExperimentPopulationOutcome, related_name="study_outcome", blank=True, null=True, on_delete=models.CASCADE)
     # End of entity options
-    study_id = models.IntegerField(blank=True, null=True)
+    study_id = models.IntegerField(blank=True, null=True, validators=[MinValueValidator(1)])
     study_name = models.CharField(max_length=60, blank=True, null=True)
     # Indexes: these allow for distinct() queries at multiple levels in the
     # hierarchy, while allowing for instances to be created at only one level in
     # the hierarchy (i.e. for only one of the "entity options" above).
-    publication_index = models.ForeignKey(Publication, related_name="name_publication_index", blank=True, null=True, on_delete=models.CASCADE)
-    experiment_index = models.ForeignKey(Experiment, related_name="name_experiment_index", blank=True, null=True, on_delete=models.CASCADE)
-    population_index = models.ForeignKey(ExperimentPopulation, related_name="name_population_index", blank=True, null=True, on_delete=models.CASCADE)
-    outcome_index = models.ForeignKey(ExperimentPopulationOutcome, related_name="name_outcome_index", blank=True, null=True, on_delete=models.CASCADE)
+    publication_index = models.ForeignKey(Publication, related_name="study_publication_index", blank=True, null=True, on_delete=models.CASCADE)
+    experiment_index = models.ForeignKey(Experiment, related_name="study_experiment_index", blank=True, null=True, on_delete=models.CASCADE)
+    population_index = models.ForeignKey(ExperimentPopulation, related_name="study_population_index", blank=True, null=True, on_delete=models.CASCADE)
+    outcome_index = models.ForeignKey(ExperimentPopulationOutcome, related_name="study_outcome_index", blank=True, null=True, on_delete=models.CASCADE)
     # End of indexes
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
