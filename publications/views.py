@@ -1874,7 +1874,7 @@ def kappa(request, subject):
                 target_proportion = percent / 100
                 if (n / total_n) >= target_proportion:
                     target_n = round(total_n * target_proportion)
-                    assessments = Assessment.objects.filter(user=user_1, publication__in=publications).order_by('-updated')
+                    assessments = Assessment.objects.filter(publication__in=publications).order_by('-updated')
                     target_assessments = list(assessments[:target_n])
                     publications = Publication.objects.filter(assessment__in=target_assessments)
                     n = publications.count()
