@@ -1837,10 +1837,11 @@ def kappa(request, subject):
     user_subject = get_object_or_404(UserSubject, user=user, subject=subject)  # Check if this user has permission to work on this subject.
     user_subjects = UserSubject.objects.filter(subject=subject)
     kappa = None
-    form = KappaForm(data=data)
-    form.fields['user_1'] = ModelChoiceField(queryset=User.objects.filter(usersubject__in=user_subjects))
-    form.fields['user_2'] = ModelChoiceField(queryset=User.objects.filter(usersubject__in=user_subjects))
+    kappa_form = KappaForm(data=data)
+    kappa_form.fields['user_1'] = ModelChoiceField(queryset=User.objects.filter(usersubject__in=user_subjects))
+    kappa_form.fields['user_2'] = ModelChoiceField(queryset=User.objects.filter(usersubject__in=user_subjects))
     if request.method == 'POST':
+        form = kappa_form
         if form.is_valid():
             user_1 = form.cleaned_data.get('user_1')
             user_2 = form.cleaned_data.get('user_2')
@@ -1848,6 +1849,10 @@ def kappa(request, subject):
             user_1 = User.objects.get(pk=user_1.pk)
             user_2 = User.objects.get(pk=user_2.pk)
 
+            percent = form.cleaned_data.get('percent')
+            percent = int(percent)
+
+            total_n = Publication.objects.filter(subject=subject).count()
 
             # Publications that user_1 assessed
             user_1_publications = Publication.objects.filter(
@@ -1861,6 +1866,18 @@ def kappa(request, subject):
             )
             # Publications that both users assessed
             publications = user_1_publications & user_2_publications
+            n = publications.count()
+
+
+            # Get a subset of these publications (based on form input).
+            if percent < 100:
+                target_proportion = percent / 100
+                if (n / total_n) >= target_proportion:
+                    target_n = round(total_n * target_proportion)
+                    assessments = Assessment.objects.filter(user=user_1, publication__in=publications).order_by('-updated')
+                    target_assessments = list(assessments[:target_n])
+                    publications = Publication.objects.filter(assessment__in=target_assessments)
+                    n = publications.count()
 
 
             # Publications that user_1 included
@@ -1898,7 +1915,6 @@ def kappa(request, subject):
             b = only_user_2_included.count()
             c = only_user_1_included.count()
             d = both_excluded.count()
-            n = publications.count()
             if n > 0:
                 rm1 = a + b
                 rm2 = c + d
@@ -1912,12 +1928,12 @@ def kappa(request, subject):
                         kappa = 1.0
                 else:
                     kappa = 1.0
-                percent = (n / Publication.objects.filter(subject=subject).count()) * 100
+                percent = (n / total_n) * 100
 
     context = {
         'subject': subject,
         'user_subject': user_subject,
-        'form': form
+        'form': kappa_form
     }
     if kappa is not None:
         context.update({
@@ -1929,6 +1945,7 @@ def kappa(request, subject):
             'only_user_1_included': only_user_1_included,
             'only_user_2_included': only_user_2_included,
             'kappa': round(kappa, 2),
+            'percent_agreement': round(agreement, 2),
             'percent': round(percent)
         })
     return render(request, 'publications/kappa.html', context)

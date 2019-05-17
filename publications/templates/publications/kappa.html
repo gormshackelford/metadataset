@@ -11,56 +11,74 @@
 {% block content %}
 
 <h1>Kappa analysis</h1>
+<p>Kappa analysis is used to test the consistency of decisions made by different people (<a href="https://doi.org/10.1177/001316446002000104" target="_blank">Cohen (1960)</a>, <a href="https://doi.org/10.11613/BM.2012.031" target="_blank">McHugh (2012)</a>). Here, we use it for decisions to "include" or "exclude" publications. Kappa ranges from -1 to 1. By convention, Kappa > 0.6 is seen as "moderate" agreement and Kappa > 0.8 is seen as "strong" agreement between two people.</p>
 
-<p>
-</p>
+{% if kappa is None %}
 
-<form method="post" action="">{% csrf_token %}
+  <form method="post" action="">{% csrf_token %}
 
-  <table>
-    <tr>
-      <td>User 1:</td>
-      <td>{{ form.user_1 }}</td>
-    </tr>
-    <tr>
-      <td>User 2:</td>
-      <td>{{ form.user_2 }}</td>
-    </tr>
-    <tr>
-      <td class="bottom"></td>
-      <td class="bottom button"><input type="submit" name="compare" value="Compare users" /></td>
-    </tr>
-  </table>
+    <table>
+      <tr>
+        <td>Person 1:</td>
+        <td>{{ form.user_1 }}</td>
+      </tr>
+      <tr>
+        <td>Person 2:</td>
+        <td>{{ form.user_2 }}</td>
+      </tr>
+      <tr>
+        <td>Publications:</td>
+        <td>{{ form.percent }} <output id="percent_output">10</output>% most recently assessed by Person 1</td>
+      </tr>
+      <tr>
+        <td class="bottom"></td>
+        <td class="bottom button"><input type="submit" name="compare" value="Calculate Kappa" /></td>
+      </tr>
+    </table>
 
-</form>
+  </form>
+
+{% endif %}
 
 {% if kappa %}
 
   <h2>Kappa</h2>
   Kappa = {{ kappa }}
 
-  <h2>Publications assessed by both users</h2>
-  {{ n }} publications were assessed by both users ({{ percent }}% of the publications for this subject).
+  <br />
+  <br />
+
+  <h2>Percent agreement</h2>
+  Percent agreement = {{ percent_agreement }}
+
+  <br />
+  <br />
+
+  <h2>Publications</h2>
+  {{ n }} publications were used for this analysis ({{ percent }}% of the publications for this subject).
   <table>
     <tr>
       <td></td>
-      <td>User 1 included</td>
-      <td>User 1 excluded</td>
+      <td>Person 1 included</td>
+      <td>Person 1 excluded</td>
     </tr>
     <tr>
-      <td>User 2 included</td>
+      <td>Person 2 included</td>
       <td class="centered">{% if a %}{{ a }}{% endif %}</td>
       <td class="centered">{% if b %}{{ b }}{% endif %}</td>
     </tr>
     <tr>
-      <td>User 2 excluded</td>
+      <td>Person 2 excluded</td>
       <td class="centered">{% if c %}{{ c }}{% endif %}</td>
       <td class="centered">{% if d %}{{ d }}{% endif %}</td>
     </tr>
   </table>
 
   {% if only_user_1_included %}
-  <h2>Publications included by User 1 but excluded by User 2</h2>
+    <br />
+    <br />
+    <h2>Publications included by Person 1 but excluded by Person 2</h2>
+    <br />
     {% for publication in only_user_1_included %}
       {% include 'publications/publication_list.html' %}
     {% empty %}
@@ -69,7 +87,10 @@
   {% endif %}
 
   {% if only_user_2_included %}
-  <h2>Publications included by User 2 but excluded by User 1</h2>
+    <br />
+    <br />
+    <h2>Publications included by Person 2 but excluded by Person 1</h2>
+    <br />
     {% for publication in only_user_2_included %}
       {% include 'publications/publication_list.html' %}
     {% empty %}
@@ -79,4 +100,13 @@
 
 {% endif %}
 
+{% endblock %}
+
+
+{% block javascript %}
+  <script type="text/javascript">
+    document.getElementById('percent').oninput = function(){
+      document.getElementById('percent_output').value = document.getElementById('percent').value;
+    }
+  </script>
 {% endblock %}

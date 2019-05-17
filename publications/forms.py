@@ -1,6 +1,7 @@
 from django import forms
 from django.db import models
 from django.contrib.auth.forms import UserCreationForm
+from django.forms.widgets import NumberInput
 from ast import literal_eval
 from mptt.forms import TreeNodeChoiceField
 from .models import Assessment, Attribute, Coordinates, Data, Date, EAV, Experiment, ExperimentDesign, ExperimentPopulation, ExperimentPopulationOutcome, Intervention, Outcome, Profile, Publication, PublicationPopulation, PublicationPopulationOutcome, Study, User, XCountry
@@ -271,3 +272,4 @@ class EAVPublicationForm(forms.ModelForm):
 class KappaForm(forms.Form):
     user_1 = forms.ModelChoiceField(queryset=User.objects.all())
     user_2 = forms.ModelChoiceField(queryset=User.objects.all())
+    percent = forms.IntegerField(widget=NumberInput(attrs={'type': 'range', 'id': 'percent', 'value': '10', 'min': '0', 'max': '100', 'step': '1'}))

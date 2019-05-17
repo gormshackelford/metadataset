@@ -1,4 +1,14 @@
-<p><span class="bold">{{ publication.title|default:'[title not available]' }}</span></p>
+<p>
+  <span class="bold">
+    {% if user_subject %}
+      <a href="{% url 'publication' subject=subject.slug publication_pk=publication.pk %}">
+    {% endif %}
+    {{ publication.title|default:'[title not available]' }}
+    {% if user_subject %}
+      </a>
+    {% endif %}
+  </span>
+</p>
 <p>
   {% if publication.author_list %}
     {{ publication.author_list|join:", "|default:'[authors not available]' }}
@@ -15,8 +25,5 @@
     | <a target="_blank" href="http://dx.doi.org/{{ publication.doi }}">DOI</a>
   {% endif %}
 </p>
-{% if user_subject %}
-  <p><a href="{% url 'publication' subject=subject.slug publication_pk=publication.pk %}">Work on this publication</a></p>
-{% endif %}
 <br />
 <p class="hr"></p>
