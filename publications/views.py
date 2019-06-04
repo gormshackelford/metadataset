@@ -548,7 +548,6 @@ def publication(request, subject, publication_pk):
         item.next_assessment = next_assessment
         item.save()
 
-    ExperimentFormSet = modelformset_factory(Experiment, form=ExperimentForm, extra=4, can_delete=True)
     # Form for this assessment
     if Assessment.objects.filter(publication=publication, user=user, subject=subject).exists():
         assessment = Assessment.objects.get(publication=publication, user=user, subject=subject)
@@ -572,7 +571,9 @@ def publication(request, subject, publication_pk):
         full_text_is_relevant = ''  # Not yet assessed
 
     # Formset for this publication
-    formset = ExperimentFormSet(data=data, queryset=Experiment.objects.filter(publication=publication), prefix="experiment_formset")
+    ExperimentFormSet = modelformset_factory(Experiment, form=ExperimentForm, extra=4, can_delete=True)
+    formset = ExperimentFormSet(data=data, queryset=Experiment.objects.filter(publication=publication, user=user), prefix="experiment_formset")
+
     if request.method == 'POST':
         if 'is_relevant' in request.POST:
             with transaction.atomic():
@@ -1397,9 +1398,13 @@ def outcome(request, subject, publication_pk, experiment_index, population_index
     # This population
     experiment_populations = ExperimentPopulation.objects.filter(experiment=experiment).order_by('pk')
     experiment_population = experiment_populations[population_index]
+    population = experiment_population.population
     # This outcome
     experiment_population_outcomes = ExperimentPopulationOutcome.objects.filter(experiment_population=experiment_population).order_by('pk')
     experiment_population_outcome = experiment_population_outcomes[outcome_index]
+    # Forms
+    experiment_population_outcome_form = ExperimentPopulationOutcomeForm(data=data, instance=experiment_population_outcome, prefix="experiment_population_outcome_form")
+    experiment_population_outcome_form.fields['outcome'] = TreeNodeChoiceField(queryset=Outcome.objects.filter(pk=population.pk).get_descendants(include_self=True), level_indicator = "---")
     # Formsets
     DataFormSet = modelformset_factory(Data, form=DataForm, extra=1, can_delete=True)
     data_formset = DataFormSet(data=data, queryset=Data.objects.filter(experiment_population_outcome=experiment_population_outcome.pk), prefix="data_formset")
@@ -1436,6 +1441,9 @@ def outcome(request, subject, publication_pk, experiment_index, population_index
             form.fields['value_as_factor'] = TreeNodeChoiceField(queryset=attribute.get_children(), level_indicator="")
     if request.method == 'POST':
         with transaction.atomic():
+            form = experiment_population_outcome_form
+            if form.is_valid():
+                form.save()
             formset = data_formset
             if formset.is_valid():
                 instances = formset.save(commit=False)
@@ -1532,6 +1540,7 @@ def outcome(request, subject, publication_pk, experiment_index, population_index
         'experiment': experiment,
         'experiment_population': experiment_population,
         'experiment_population_outcome': experiment_population_outcome,
+        'experiment_population_outcome_form': experiment_population_outcome_form,
         'experiment_index': experiment_index,
         'population_index': population_index,
         'outcome_index': outcome_index,
