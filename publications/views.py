@@ -17,7 +17,7 @@ from collections import Counter
 from itertools import chain
 from random import shuffle
 from .tokens import account_activation_token
-from .forms import AssessmentForm, AttributeForm, AttributeOptionForm, CoordinatesForm, DataForm, DateForm, EAVExperimentForm, EAVOutcomeForm, EAVPopulationForm, EAVPublicationForm, ExperimentForm, ExperimentDesignForm, ExperimentPopulationForm, ExperimentPopulationOutcomeForm, FullTextAssessmentForm, InterventionForm, KappaForm, OutcomeForm, ProfileForm, PublicationForm, PublicationPopulationForm, PublicationPopulationOutcomeForm, SignUpForm, StudyForm, UserForm, XCountryForm
+from .forms import AssessmentForm, AttributeForm, AttributeOptionForm, CoordinatesForm, DataForm, DateForm, EAVExperimentForm, EAVOutcomeForm, EAVPopulationForm, EAVPublicationForm, ExperimentForm, ExperimentDesignForm, ExperimentPopulationForm, ExperimentPopulationOutcomeForm, FullTextAssessmentForm, InterventionForm, KappaForm, OutcomeForm, ProfileForm, PublicationForm, PublicationPopulationForm, PublicationPopulationOutcomeForm, SignUpForm, StudyForm, UserForm, UserSubjectForm, XCountryForm
 from .models import Assessment, AssessmentStatus, Attribute, Coordinates, Country, Crop, Data, Date, Design, EAV, Experiment, ExperimentDesign, ExperimentPopulation, ExperimentPopulationOutcome, Intervention, Outcome, Publication, PublicationPopulation, PublicationPopulationOutcome, Study, Subject, User, UserSubject, XCountry
 from .serializers import AttributeSerializer, CountrySerializer, DataSerializer, DesignSerializer, EAVSerializer, ExperimentSerializer, ExperimentDesignSerializer, ExperimentPopulationSerializer, ExperimentPopulationOutcomeSerializer, InterventionSerializer, OutcomeSerializer, PublicationSerializer, PublicationPopulationSerializer, PublicationPopulationOutcomeSerializer, SubjectSerializer, UserSerializer
 from .decorators import group_required
@@ -548,6 +548,12 @@ def publication(request, subject, publication_pk):
         item.next_assessment = next_assessment
         item.save()
 
+    # Form for this user_subject (for Kappa analysis)
+    user_subject_form = UserSubjectForm(data=data, instance=user_subject, prefix="user_subject_form")
+    # User_for_comparison choices for the form (users that have permission to work on this subject)
+    user_subjects = UserSubject.objects.filter(subject=subject)
+    user_subject_form.fields['user_for_comparison'] = ModelChoiceField(queryset=User.objects.filter(usersubject__in=user_subjects))
+    user_subject_form.fields['user_for_comparison'].required = False
     # Form for this assessment
     if Assessment.objects.filter(publication=publication, user=user, subject=subject).exists():
         assessment = Assessment.objects.get(publication=publication, user=user, subject=subject)
@@ -720,6 +726,17 @@ def publication(request, subject, publication_pk):
                             if Assessment.objects.filter(publication=publication, user=user).exists():
                                 Assessment.objects.filter(publication=publication, user=user).delete()
                 return redirect('publication', subject=subject.slug, publication_pk=publication_pk)
+        if 'next_for_kappa' in request.POST or 'previous_for_kappa' in request.POST:
+            form = user_subject_form
+            if form.is_valid():
+                instance = form.save(commit=False)
+                instance.user = user
+                instance.subject = subject
+                instance.save()
+            if 'next_for_kappa' in request.POST:
+                return redirect('full_text_navigation', subject=subject.slug, direction='next', state='kappa', publication_pk=publication_pk)
+            if 'previous_for_kappa' in request.POST:
+                return redirect('full_text_navigation', subject=subject.slug, direction='previous', state='kappa', publication_pk=publication_pk)
     else:
         # Intervention choices for the formset (high-level choices only)
         interventions = TreeNodeChoiceField(required=False, queryset=Intervention.objects.filter(pk=intervention.pk).get_descendants(include_self=True).filter(level__lte=2).filter(level__gt=0), level_indicator = "---")
@@ -730,6 +747,7 @@ def publication(request, subject, publication_pk):
         'publication': publication,
         'assessment_form': assessment_form,
         'full_text_assessment_form': full_text_assessment_form,
+        'user_subject_form': user_subject_form,
         'experiment_formset': formset,
         'is_relevant': is_relevant,
         'full_text_is_relevant': full_text_is_relevant,
@@ -2077,9 +2095,11 @@ def get_path_to_shiny(request):
 
 
 @login_required
-def full_text_navigation(request, subject, state, publication_pk='default'):
+def full_text_navigation(request, subject, direction, state, publication_pk='default'):
     user = request.user
     subject = Subject.objects.get(slug=subject)
+    user_subject = get_object_or_404(UserSubject, user=user, subject=subject)  # Check if this user has permission to work on this subject.
+    user_subjects = UserSubject.objects.filter(subject=subject)
     # Get the publication from which to calculate "next" and "previous" (either the previous_full_text_assessment or the publication from which the request was sent).
     if (publication_pk=='default'):
         previous_full_text_assessment = AssessmentStatus.objects.get(
@@ -2099,63 +2119,54 @@ def full_text_navigation(request, subject, state, publication_pk='default'):
     publications = Publication.objects.filter(subject=subject)
     # Exclude this publication.
     publications = publications.exclude(pk=publication.pk)
-    if (state == 'next-incomplete' or state == 'previous-incomplete'):
-        # If there are publications for this subject that this user has assessed as relevant and has not yet marked as completed
+    if (state == 'all'):
+        # If there are publications for this subject that this user included at title/abstract stage (is_relevant=True)
+        if publications.filter(assessment__in=Assessment.objects.filter(
+            subject=subject, user=user, is_relevant=True
+        )).exists():
+            publications = publications.filter(assessment__in=Assessment.objects.filter(
+                subject=subject, user=user, is_relevant=True
+            ))
+    elif (state == 'not_completed'):
+        # If there are publications for this subject that this user included at title/abstract stage but has not yet marked as completed
         if publications.filter(assessment__in=Assessment.objects.filter(
             subject=subject, user=user, is_relevant=True, is_completed=False
         )).exists():
             publications = publications.filter(assessment__in=Assessment.objects.filter(
                 subject=subject, user=user, is_relevant=True, is_completed=False
             ))
-        # Else if there are publications for this subject that this user has assessed as relevant but all of them have been marked as completed
-        elif publications.filter(assessment__in=Assessment.objects.filter(
-            subject=subject, user=user, is_relevant=True
-        )).exists():
-            publications = publications.filter(assessment__in=Assessment.objects.filter(
-                subject=subject, user=user, is_relevant=True
-            ))
-        if (state == 'next-incomplete'):
-            try:
-                publication_pk = publications.filter(
-                    title__gte=publication.title  # Titles later in the alphabet
-                ).order_by('title').values_list('pk', flat=True)[0]
-            except:
-                publication_pk = publications.order_by('title').values_list('pk', flat=True)[0]
-        elif (state == 'previous-incomplete'):
-            try:
-                publication_pk = publications.filter(
-                    title__lte=publication.title  # Titles earlier in the alphabet
-                ).order_by('-title').values_list('pk', flat=True)[0]
-            except:
-                publication_pk = publications.order_by('-title').values_list('pk', flat=True)[0]
-    elif (state == 'next' or state == 'previous'):
+    elif (state == 'not_assessed'):
+        # If there are publications for this subject that this user included at title/abstract stage but has not yet assigned an intervention or excluded at full-text stage
         if publications.filter(assessment__in=Assessment.objects.filter(
-            subject=subject, user=user, is_relevant=True
+            subject=subject, user=user, is_relevant=True, is_completed=False
+        )).exclude(experiment__in=Experiment.objects.filter(user=user)).exists():
+            publications = publications.filter(assessment__in=Assessment.objects.filter(
+                subject=subject, user=user, is_relevant=True, is_completed=False
+            )).exclude(experiment__in=Experiment.objects.filter(user=user))
+    elif (state == 'kappa'):
+        # If screening full texts for Kappa analysis (publications that the user_for_comparison has already assessed at full-text stage)
+        user_for_comparison = user_subject.user_for_comparison
+        if publications.filter(assessment__in=Assessment.objects.filter(
+            subject=subject, user=user_for_comparison, full_text_is_relevant__isnull=False
         )).exists():
             publications = publications.filter(assessment__in=Assessment.objects.filter(
-                subject=subject, user=user, is_relevant=True
+                subject=subject, user=user_for_comparison, full_text_is_relevant__isnull=False
             ))
-            if (state == 'next'):
-                try:
-                    publication_pk = publications.filter(
-                        title__gte=publication.title  # Titles later in the alphabet
-                    ).order_by('title').values_list('pk', flat=True)[0]
-                except:
-                    publication_pk = publications.order_by('title').values_list('pk', flat=True)[0]
-            elif (state == 'previous'):
-                try:
-                    publication_pk = publications.filter(
-                        title__lte=publication.title  # Titles earlier in the alphabet
-                    ).order_by('-title').values_list('pk', flat=True)[0]
-                except:
-                    publication_pk = publications.order_by('-title').values_list('pk', flat=True)[0]
-    # If there are no full texts for this subject that the user has assessed as relevant
-    if not publications.filter(assessment__in=Assessment.objects.filter(
-        subject=subject, user=user, is_relevant=True
-    )).exists():
-        publication_pk = Publication.objects.filter(
-            subject=subject
-        ).order_by('title').values_list('pk', flat=True)[0]
+    # Go to the next or previous publication, in alphabetical order.
+    if (direction == 'next'):
+        try:
+            publication_pk = publications.filter(
+                title__gte=publication.title  # Titles later in the alphabet
+            ).order_by('title').values_list('pk', flat=True)[0]
+        except:
+            publication_pk = publications.order_by('title').values_list('pk', flat=True)[0]
+    elif (direction == 'previous'):
+        try:
+            publication_pk = publications.filter(
+                title__lte=publication.title  # Titles earlier in the alphabet
+            ).order_by('-title').values_list('pk', flat=True)[0]
+        except:
+            publication_pk = publications.order_by('-title').values_list('pk', flat=True)[0]
     # Update the current full_text_assessment
     assessment_status = AssessmentStatus.objects.get(subject=subject, user=user)
     assessment_status.previous_full_text_assessment = publication_pk

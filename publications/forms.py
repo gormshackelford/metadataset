@@ -4,7 +4,7 @@ from django.contrib.auth.forms import UserCreationForm
 from django.forms.widgets import NumberInput
 from ast import literal_eval
 from mptt.forms import TreeNodeChoiceField
-from .models import Assessment, Attribute, Coordinates, Data, Date, EAV, Experiment, ExperimentDesign, ExperimentPopulation, ExperimentPopulationOutcome, Intervention, Outcome, Profile, Publication, PublicationPopulation, PublicationPopulationOutcome, Study, User, XCountry
+from .models import Assessment, Attribute, Coordinates, Data, Date, EAV, Experiment, ExperimentDesign, ExperimentPopulation, ExperimentPopulationOutcome, Intervention, Outcome, Profile, Publication, PublicationPopulation, PublicationPopulationOutcome, Study, User, UserSubject, XCountry
 
 
 class SignUpForm(UserCreationForm):
@@ -28,6 +28,13 @@ class UserForm(forms.ModelForm):
     class Meta:
         model = User
         fields = ['first_name', 'last_name']
+
+
+class UserSubjectForm(forms.ModelForm):
+
+    class Meta:
+        model = UserSubject
+        fields = ['user_for_comparison']
 
 
 class ProfileForm(forms.ModelForm):

@@ -186,18 +186,32 @@
   <br />
   <p><input type="submit" name="save" value="Save or update" /></p>
 
-</form>
+  <h2>Full-text navigation</h2>
+  <p>
+    <a class="button" href="{% url 'full_text_navigation' subject=subject.slug direction='previous' state='all' publication_pk=publication.pk %}">Previous full text</a>
+    <a class="button" href="{% url 'full_text_navigation' subject=subject.slug direction='next' state='all' publication_pk=publication.pk %}">Next full text</a>
+  </p>
+  <p>Not yet assessed:</p>
+  <p>
+    <a class="button" href="{% url 'full_text_navigation' subject=subject.slug direction='previous' state='not_assessed'  publication_pk=publication.pk %}">Previous not yet assessed</a>
+    <a class="button" href="{% url 'full_text_navigation' subject=subject.slug direction='next' state='not_assessed' publication_pk=publication.pk %}">Next not yet assessed</a>
+  </p>
+  <p>Not yet completed:</p>
+  <p>
+    <a class="button" href="{% url 'full_text_navigation' subject=subject.slug direction='previous' state='not_completed'  publication_pk=publication.pk %}">Previous not yet completed</a>
+    <a class="button" href="{% url 'full_text_navigation' subject=subject.slug direction='next' state='not_completed' publication_pk=publication.pk %}">Next not yet completed</a>
+  </p>
 
-<h2>Full-text navigation</h2>
-<p>
-  <a class="button" href="{% url 'full_text_navigation' subject=subject.slug state='previous' publication_pk=publication.pk %}">Previous full text</a>
-  <a class="button" href="{% url 'full_text_navigation' subject=subject.slug state='next' publication_pk=publication.pk %}">Next full text</a>
-</p>
-<p>If you would prefer to complete this publication later, you can click "Next not yet completed" or "Previous not yet completed" to move between full texts that you have not yet completed.</p>
-<p>
-  <a class="button" href="{% url 'full_text_navigation' subject=subject.slug state='previous-incomplete'  publication_pk=publication.pk %}">Previous not yet completed</a>
-  <a class="button" href="{% url 'full_text_navigation' subject=subject.slug state='next-incomplete' publication_pk=publication.pk %}">Next not yet completed</a>
-</p>
+  <p>If you are assessing publications for Kappa analysis, select the person you are working with, and then click "Next for Kappa" or "Previous for Kappa" to work on publications that they have already assessed at full-text stage (whether or not you included/excluded these publications at title/abstract stage).</p>
+  <p>
+    Person: {{ user_subject_form.user_for_comparison }}
+  </p>
+  <p>
+    <input type="submit" name="previous_for_kappa" value="Previous for Kappa" />
+    <input type="submit" name="next_for_kappa" value="Next for Kappa" />
+  </p>
+
+</form>
 
 {% endblock %}
 

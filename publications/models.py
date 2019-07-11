@@ -301,6 +301,7 @@ class Publication(models.Model):
 class UserSubject(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     subject = models.ForeignKey(Subject, on_delete=models.CASCADE)
+    user_for_comparison = models.ForeignKey(User, related_name="user_subject_user_for_comparison", blank=True, null=True, on_delete=models.SET_NULL)
 
     def __str__(self):
         return self.user.email

@@ -41,7 +41,7 @@
       <a href="{% url 'add_publication' subject=subject.slug %}">Add a title/abstract</a>
 
       <h1>Full texts</h1>
-      <a href="{% url 'full_text_navigation' subject=subject.slug state='next-incomplete' %}">Your next full text</a> <span class="red">(start or restart here)</span>
+      <a href="{% url 'full_text_navigation' subject=subject.slug direction='next' state='incomplete' %}">Your next full text</a> <span class="red">(start or restart here)</span>
       <br />
       {{ full_texts_assessed_count }} of {{ relevant_publications_count }} completed ({{ full_texts_assessed_percent}}%)
       <br />
