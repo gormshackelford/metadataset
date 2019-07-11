@@ -1875,67 +1875,106 @@ def kappa(request, subject):
             users = User.objects.filter(pk=user_1.pk) | User.objects.filter(pk=user_2.pk)  # The "|" operator requires querysets, not objects, so we use "filter" here and "get" below (we cannot use "get" before we use "|".)
             user_1 = User.objects.get(pk=user_1.pk)
             user_2 = User.objects.get(pk=user_2.pk)
-
             percent = form.cleaned_data.get('percent')
             percent = int(percent)
 
-            total_n = Publication.objects.filter(subject=subject).count()
+            # If we are doing Kappa analysis at Stage 1 (titles/abstracts)
+            if 'stage_1' in request.POST:
+                stage = "titles/abstracts"
+                total_n = Publication.objects.filter(subject=subject).count()
+                # Publications that user_1 assessed
+                user_1_publications = Publication.objects.filter(
+                    subject=subject,
+                    assessment__in=Assessment.objects.filter(user=user_1)
+                )
+                # Publications that user_2 assessed
+                user_2_publications = Publication.objects.filter(
+                    subject=subject,
+                    assessment__in=Assessment.objects.filter(user=user_2)
+                )
+                # Publications that both users assessed
+                publications = user_1_publications & user_2_publications
+                n = publications.count()
+                # Get a subset of these publications (based on form input).
+                if percent < 100:
+                    target_proportion = percent / 100
+                    if (n / total_n) >= target_proportion:
+                        target_n = round(total_n * target_proportion)
+                        assessments = Assessment.objects.filter(user=user_1, publication__in=publications).order_by('-updated')
+                        target_assessments = list(assessments[:target_n])
+                        publications = Publication.objects.filter(assessment__in=target_assessments)
+                        n = publications.count()
+                # Publications that user_1 included
+                user_1_included = publications.filter(
+                    assessment__in=Assessment.objects.filter(user=user_1, is_relevant=True)
+                )
+                # Publications that user_2 included
+                user_2_included = publications.filter(
+                    assessment__in=Assessment.objects.filter(user=user_2, is_relevant=True)
+                )
+                # Publications that user_1 excluded
+                user_1_excluded = publications.filter(
+                    assessment__in=Assessment.objects.filter(user=user_1, is_relevant=False)
+                )
+                # Publications that user_2 excluded
+                user_2_excluded = publications.filter(
+                    assessment__in=Assessment.objects.filter(user=user_2, is_relevant=False)
+                )
+            # If we are doing Kappa analysis at Stage 2 (full texts)
+            elif 'stage_2' in request.POST:
+                stage = "full texts"
+                total_publications = Publication.objects.filter(
+                    subject = subject,
+                    assessment__in=Assessment.objects.filter(is_relevant=True)
+                ).distinct()
+                total_n = total_publications.count()
+                # Publications that user_1 assessed at Stage 2
+                user_1_publications = Publication.objects.filter(
+                    subject=subject,
+                    assessment__in=Assessment.objects.filter(user=user_1, full_text_is_relevant__isnull=False)
+                )
+                # Publications that user_2 assessed at Stage 2
+                user_2_publications = Publication.objects.filter(
+                    subject=subject,
+                    assessment__in=Assessment.objects.filter(user=user_2, full_text_is_relevant__isnull=False)
+                )
+                # Publications that both users assessed at Stage 2
+                publications = user_1_publications & user_2_publications
+                n = publications.count()
+                # Get a subset of these publications (based on form input).
+                if percent < 100:
+                    target_proportion = percent / 100
+                    if (n / total_n) >= target_proportion:
+                        target_n = round(total_n * target_proportion)
+                        assessments = Assessment.objects.filter(user=user_1, publication__in=publications).order_by('-updated')
+                        target_assessments = list(assessments[:target_n])
+                        publications = Publication.objects.filter(assessment__in=target_assessments)
+                        n = publications.count()
+                # Publications that user_1 included
+                user_1_included = publications.filter(
+                    assessment__in=Assessment.objects.filter(user=user_1, full_text_is_relevant=True)
+                )
+                # Publications that user_2 included
+                user_2_included = publications.filter(
+                    assessment__in=Assessment.objects.filter(user=user_2, full_text_is_relevant=True)
+                )
+                # Publications that user_1 excluded
+                user_1_excluded = publications.filter(
+                    assessment__in=Assessment.objects.filter(user=user_1, full_text_is_relevant=False)
+                )
+                # Publications that user_2 excluded
+                user_2_excluded = publications.filter(
+                    assessment__in=Assessment.objects.filter(user=user_2, full_text_is_relevant=False)
+                )
 
-            # Publications that user_1 assessed
-            user_1_publications = Publication.objects.filter(
-                subject=subject,
-                assessment__in=Assessment.objects.filter(user=user_1)
-            )
-            # Publications that user_2 assessed
-            user_2_publications = Publication.objects.filter(
-                subject=subject,
-                assessment__in=Assessment.objects.filter(user=user_2)
-            )
-            # Publications that both users assessed
-            publications = user_1_publications & user_2_publications
-            n = publications.count()
-
-
-            # Get a subset of these publications (based on form input).
-            if percent < 100:
-                target_proportion = percent / 100
-                if (n / total_n) >= target_proportion:
-                    target_n = round(total_n * target_proportion)
-                    assessments = Assessment.objects.filter(user=user_1, publication__in=publications).order_by('-updated')
-                    target_assessments = list(assessments[:target_n])
-                    publications = Publication.objects.filter(assessment__in=target_assessments)
-                    n = publications.count()
-
-
-            # Publications that user_1 included
-            user_1_included = publications.filter(
-                assessment__in=Assessment.objects.filter(user=user_1, is_relevant=True)
-            )
-            # Publications that user_2 included
-            user_2_included = publications.filter(
-                assessment__in=Assessment.objects.filter(user=user_2, is_relevant=True)
-            )
             # Publications that both users included
             both_included = user_1_included & user_2_included
-
-
-            # Publications that user_1 excluded
-            user_1_excluded = publications.filter(
-                assessment__in=Assessment.objects.filter(user=user_1, is_relevant=False)
-            )
-            # Publications that user_2 excluded
-            user_2_excluded = publications.filter(
-                assessment__in=Assessment.objects.filter(user=user_2, is_relevant=False)
-            )
             # Publications that both users excluded
             both_excluded = user_1_excluded & user_2_excluded
-
-
             # Publications that user_1 included but user_2_excluded
             only_user_1_included = user_1_included.exclude(pk__in=user_2_included)
             # Publications that user_2 included but user_1_excluded
             only_user_2_included = user_2_included.exclude(pk__in=user_1_included)
-
 
             # Kappa analysis
             a = both_included.count()
@@ -1964,11 +2003,13 @@ def kappa(request, subject):
     }
     if kappa is not None:
         context.update({
+            'stage': stage,
             'a': a,
             'b': b,
             'c': c,
             'd': d,
             'n': n,
+            'total_n': total_n,
             'only_user_1_included': only_user_1_included,
             'only_user_2_included': only_user_2_included,
             'kappa': round(kappa, 2),

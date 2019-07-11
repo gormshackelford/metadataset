@@ -32,7 +32,10 @@
       </tr>
       <tr>
         <td class="bottom"></td>
-        <td class="bottom button"><input type="submit" name="compare" value="Calculate Kappa" /></td>
+        <td class="bottom button">
+          <input type="submit" name="stage_1" value="Kappa for title/abstracts" />
+          <input type="submit" name="stage_2" value="Kappa for full texts" />
+        </td>
       </tr>
     </table>
 
@@ -55,7 +58,7 @@
   <br />
 
   <h2>Publications</h2>
-  {{ n }} publications were used for this analysis ({{ percent }}% of the publications for this subject).
+  {{ n }} publications were used for this analysis ({{ percent }}% of the {{ total_n }} publications at this stage ({{ stage }})).
   <table>
     <tr>
       <td></td>
