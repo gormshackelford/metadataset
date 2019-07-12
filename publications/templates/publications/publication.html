@@ -202,10 +202,15 @@
     <a class="button" href="{% url 'full_text_navigation' subject=subject.slug direction='next' state='not_completed' publication_pk=publication.pk %}">Next not yet completed</a>
   </p>
 
-  <p>If you are assessing publications for Kappa analysis, select the person you are working with, and then click "Next for Kappa" or "Previous for Kappa" to work on publications that they have already assessed at full-text stage (whether or not you included/excluded these publications at title/abstract stage).</p>
+  <p>If you are assessing full texts for Kappa analysis, select the person you are working with, and then click "Next for Kappa" or "Previous for Kappa" to work on full texts that they have already assessed (whether or not you have already included/excluded these publications at title/abstract stage).</p>
   <p>
     {{ user_subject_form.user_for_comparison }}
   </p>
+  {% if full_texts_assessed_by_both_users_count %}
+    <p>
+      You have assessed {{ full_texts_assessed_by_both_users_count }} of {{ full_texts_assessed_by_user_2_count }} full texts assessed by this person ({{ full_texts_assessed_by_both_users_percent_of_user_2 }}%). This is {{ full_texts_assessed_by_both_users_percent }}% of the {{ full_texts_count }} full texts that need to be assessed (titles/abstracts that were included by any person).
+    </p>
+  {% endif %}
   <p>
     <input type="submit" name="previous_for_kappa" value="Previous for Kappa" />
     <input type="submit" name="next_for_kappa" value="Next for Kappa" />

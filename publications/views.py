@@ -1923,6 +1923,7 @@ def kappa(request, subject):
             # If we are doing Kappa analysis at Stage 2 (full texts)
             elif 'stage_2' in request.POST:
                 stage = "full texts"
+                # Publications that any user assessed as relevant at Stage 1
                 total_publications = Publication.objects.filter(
                     subject = subject,
                     assessment__in=Assessment.objects.filter(is_relevant=True)
@@ -2072,7 +2073,7 @@ def get_status(user, subject):
         publications_assessed_percent = int(publications_assessed_count / publications_count * 100)
     else:
         publications_assessed_percent = 100
-    # Count the publications that have been assessed as relevant based on the title/abstract
+    # Count the publications that have been included at title/abstract stage.
     if Publication.objects.filter(assessment__in=Assessment.objects.filter(
         subject=subject, user=user, is_relevant=True)).exists():
         relevant_publications_count = Publication.objects.filter(
@@ -2080,18 +2081,68 @@ def get_status(user, subject):
                 subject=subject, user=user, is_relevant=True)).count()
     else:
         relevant_publications_count = 0
-    # Count the publications that have been marked as completed
+    # Count the publications that have been included or excluded at full-text stage, but not necessarily marked as completed).
     if Publication.objects.filter(assessment__in=Assessment.objects.filter(
-        subject=subject, user=user, is_completed=True)).exists():
+        subject=subject, user=user, full_text_is_relevant__isnull=False)).exists():
         full_texts_assessed_count = Publication.objects.filter(
             assessment__in=Assessment.objects.filter(
-                subject=subject, user=user, is_completed=True)).count()
+                subject=subject, user=user, full_text_is_relevant__isnull=False)).count()
     else:
         full_texts_assessed_count = 0
     if relevant_publications_count != 0:
         full_texts_assessed_percent = int(full_texts_assessed_count / relevant_publications_count * 100)
     else:
         full_texts_assessed_percent = 100
+    # Count the publications that have been marked as completed at full-text stage.
+    if Publication.objects.filter(assessment__in=Assessment.objects.filter(
+        subject=subject, user=user, is_completed=True)).exists():
+        full_texts_completed_count = Publication.objects.filter(
+            assessment__in=Assessment.objects.filter(
+                subject=subject, user=user, is_completed=True)).count()
+    else:
+        full_texts_completed_count = 0
+    if relevant_publications_count != 0:
+        full_texts_completed_percent = int(full_texts_completed_count / relevant_publications_count * 100)
+    else:
+        full_texts_completed_percent = 100
+    # Count the publications that have been included or excluded at full-text stage by this user and the user_for_comparison (for Kappa analysis).
+    full_texts_count = None
+    full_texts_assessed_by_user_2_count = None
+    full_texts_assessed_by_both_users_count = None
+    full_texts_assessed_by_both_users_percent = None
+    full_texts_assessed_by_both_users_percent_of_user_2 = None
+    user_subject = UserSubject.objects.get(user=user, subject=subject)
+    if user_subject.user_for_comparison:
+        user_1 = user
+        user_2 = user_subject.user_for_comparison
+        # Publications at Stage 2 (titles/abstracts included at Stage 1 by any user)
+        full_texts = Publication.objects.filter(
+            subject=subject,
+            assessment__in=Assessment.objects.filter(is_relevant=True)
+        ).distinct()
+        full_texts_count = full_texts.count()
+        # Publications that user_1 assessed at Stage 2
+        user_1_publications = Publication.objects.filter(
+            subject=subject,
+            assessment__in=Assessment.objects.filter(user=user_1, full_text_is_relevant__isnull=False)
+        )
+        # Publications that user_2 assessed at Stage 2
+        user_2_publications = Publication.objects.filter(
+            subject=subject,
+            assessment__in=Assessment.objects.filter(user=user_2, full_text_is_relevant__isnull=False)
+        )
+        full_texts_assessed_by_user_2_count = user_2_publications.count()
+        # Publications that both users assessed at Stage 2
+        full_texts_assessed_by_both_users = user_1_publications & user_2_publications
+        full_texts_assessed_by_both_users_count = full_texts_assessed_by_both_users.count()
+        if full_texts_count != 0:
+            full_texts_assessed_by_both_users_percent = round(full_texts_assessed_by_both_users_count / full_texts_count * 100)
+        else:
+            full_texts_assessed_by_both_users_percent = 100
+        if full_texts_assessed_by_user_2_count != 0:
+            full_texts_assessed_by_both_users_percent_of_user_2 = round(full_texts_assessed_by_both_users_count / full_texts_assessed_by_user_2_count * 100)
+        else:
+            full_texts_assessed_by_both_users_percent_of_user_2 = 100
     status = {
         'user_subject': UserSubject.objects.filter(user=user, subject=subject).exists(),
         'item': item,
@@ -2100,6 +2151,13 @@ def get_status(user, subject):
         'publications_assessed_percent': publications_assessed_percent,
         'full_texts_assessed_count': full_texts_assessed_count,
         'full_texts_assessed_percent': full_texts_assessed_percent,
+        'full_texts_completed_count': full_texts_completed_count,
+        'full_texts_completed_percent': full_texts_completed_percent,
+        'full_texts_count': full_texts_count,
+        'full_texts_assessed_by_user_2_count': full_texts_assessed_by_user_2_count,
+        'full_texts_assessed_by_both_users_count': full_texts_assessed_by_both_users_count,
+        'full_texts_assessed_by_both_users_percent': full_texts_assessed_by_both_users_percent,
+        'full_texts_assessed_by_both_users_percent_of_user_2': full_texts_assessed_by_both_users_percent_of_user_2,
         'relevant_publications_count': relevant_publications_count,
         'next_assessment': next_assessment
     }

@@ -22,7 +22,7 @@
       <h1>Titles/abstracts</h1>
       <a href="{% url 'publication' subject=subject.slug publication_pk=next_assessment %}">Your next title/abstract</a> <span class="red">(start or restart here)</span>
       <br />
-      {{ publications_assessed_count }} of {{ publications_count }} completed ({{ publications_assessed_percent }}%)
+      {{ publications_assessed_count }} of {{ publications_count }} assessed ({{ publications_assessed_percent }}%)
       <br />
       <a href="{% url 'publications' subject=subject.slug state='all' %}">Your titles/abstracts</a>
       <br />
@@ -32,7 +32,7 @@
       <a href="{% url 'publications' subject=subject.slug state='not_relevant' %}">Excluded</a>
       <a href="{% url 'publications' subject=subject.slug state='not_relevant' download='CSV' %}">(CSV)</a>
       <br />
-      <a href="{% url 'publications' subject=subject.slug state='not_assessed' %}">Not completed</a>
+      <a href="{% url 'publications' subject=subject.slug state='not_assessed' %}">Not assessed</a>
       <br />
       <a href="{% url 'kappa' subject=subject.slug %}">Kappa analysis</a>
 
@@ -43,7 +43,9 @@
       <h1>Full texts</h1>
       <a href="{% url 'full_text_navigation' subject=subject.slug direction='next' state='not_completed' %}">Your next full text</a> <span class="red">(start or restart here)</span>
       <br />
-      {{ full_texts_assessed_count }} of {{ relevant_publications_count }} completed ({{ full_texts_assessed_percent}}%)
+      {{ full_texts_assessed_count }} of {{ relevant_publications_count }} assessed ({{ full_texts_assessed_percent}}%)
+      <br />
+      {{ full_texts_completed_count }} of {{ relevant_publications_count }} completed ({{ full_texts_completed_percent}}%)
       <br />
       <a href="{% url 'publications' subject=subject.slug state='relevant' %}">Your full texts</a>
       <br />
@@ -67,7 +69,7 @@
       <br />
       <a href="{% url 'publications' subject=subject.slug state='completed' %}">Completed</a>
       <br />
-      <a href="{% url 'publications' subject=subject.slug state='not_assessed_full_texts' %}">Not completed</a>
+      <a href="{% url 'publications' subject=subject.slug state='not_assessed_full_texts' %}">Not assessed</a>
       <br />
       <a href="{% url 'kappa' subject=subject.slug %}">Kappa analysis</a>
 
