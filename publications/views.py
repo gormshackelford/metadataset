@@ -781,16 +781,16 @@ def metadata(request, subject, publication_pk):
     EAVFormSet = modelformset_factory(EAV, form=EAVPublicationForm, extra=attributes_count, can_delete=True)
     XCountryFormSet = modelformset_factory(XCountry, form=XCountryForm, extra=1, can_delete=True)
     # Formsets for this publication
-    date_formset = DateFormSet(data=data, queryset=Date.objects.filter(publication=publication), prefix="date_formset")
-    coordinates_formset = CoordinatesFormSet(data=data, queryset=Coordinates.objects.filter(publication=publication), prefix="coordinates_formset")
-    x_country_formset = XCountryFormSet(data=data, queryset=XCountry.objects.filter(publication=publication), prefix="x_country_formset")
+    date_formset = DateFormSet(data=data, queryset=Date.objects.filter(publication=publication, user=user), prefix="date_formset")
+    coordinates_formset = CoordinatesFormSet(data=data, queryset=Coordinates.objects.filter(publication=publication, user=user), prefix="coordinates_formset")
+    x_country_formset = XCountryFormSet(data=data, queryset=XCountry.objects.filter(publication=publication, user=user), prefix="x_country_formset")
     # publication_population_formset
-    publication_population_formset = PublicationPopulationFormSet(data=data, queryset=PublicationPopulation.objects.filter(publication=publication), prefix="publication_population_formset")
+    publication_population_formset = PublicationPopulationFormSet(data=data, queryset=PublicationPopulation.objects.filter(publication=publication, user=user), prefix="publication_population_formset")
     populations = TreeNodeChoiceField(queryset=Outcome.objects.filter(pk=outcome.pk).get_descendants(include_self=True).filter(level=1), level_indicator = "---")
     for form in publication_population_formset:
         form.fields['population'] = populations
     # EAV_formset
-    EAV_formset = EAVFormSet(data=data, queryset=EAV.objects.filter(publication=publication), prefix="EAV_formset")
+    EAV_formset = EAVFormSet(data=data, queryset=EAV.objects.filter(publication=publication, user=user), prefix="EAV_formset")
     for form in EAV_formset:
         # Each form can have a different attribute.
         # If the form has an instance, get the attribute for that instance.
@@ -973,7 +973,7 @@ def publication_population(request, subject, publication_pk, publication_populat
     # This publication
     publication = get_object_or_404(Publication, pk=publication_pk, subject=subject)
     # This publication_population
-    publication_populations = PublicationPopulation.objects.filter(publication=publication).order_by('pk')
+    publication_populations = PublicationPopulation.objects.filter(publication=publication, user=user).order_by('pk')
     publication_population = publication_populations[publication_population_index]
     # Formset for this publication_population
     formset = PublicationPopulationOutcomeFormSet(data=data, queryset=PublicationPopulationOutcome.objects.filter(publication_population=publication_population), prefix="publication_population_outcome_formset")
@@ -1084,7 +1084,7 @@ def experiment(request, subject, publication_pk, experiment_index):
     # This publication
     publication = get_object_or_404(Publication, pk=publication_pk, subject=subject)
     # This experiment
-    experiments = Experiment.objects.filter(publication=publication).order_by('pk')
+    experiments = Experiment.objects.filter(publication=publication, user=user).order_by('pk')
     experiment = experiments[experiment_index]
     # Forms
     experiment_form = ExperimentForm(data=data, instance=experiment, prefix="experiment_form")
@@ -1254,7 +1254,7 @@ def population(request, subject, publication_pk, experiment_index, population_in
     # This publication
     publication = get_object_or_404(Publication, pk=publication_pk, subject=subject)
     # This experiment
-    experiments = Experiment.objects.filter(publication=publication).order_by('pk')
+    experiments = Experiment.objects.filter(publication=publication, user=user).order_by('pk')
     experiment = experiments[experiment_index]
     # This population
     experiment_populations = ExperimentPopulation.objects.filter(experiment=experiment).order_by('pk')
@@ -1411,7 +1411,7 @@ def outcome(request, subject, publication_pk, experiment_index, population_index
     # This publication
     publication = get_object_or_404(Publication, pk=publication_pk, subject=subject)
     # This experiment
-    experiments = Experiment.objects.filter(publication=publication).order_by('pk')
+    experiments = Experiment.objects.filter(publication=publication, user=user).order_by('pk')
     experiment = experiments[experiment_index]
     # This population
     experiment_populations = ExperimentPopulation.objects.filter(experiment=experiment).order_by('pk')
