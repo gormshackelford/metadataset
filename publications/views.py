@@ -1952,36 +1952,58 @@ def kappa(request, subject):
                         publications = Publication.objects.filter(assessment__in=target_assessments)
                         n = publications.count()
                 # Publications that user_1 included
-                user_1_included = publications.filter(
-                    assessment__in=Assessment.objects.filter(user=user_1, full_text_is_relevant=True)
-                )
+                try:
+                    user_1_included = publications.filter(assessment__in=Assessment.objects.filter(user=user_1, full_text_is_relevant=True))
+                except:
+                    user_1_included = None
                 # Publications that user_2 included
-                user_2_included = publications.filter(
-                    assessment__in=Assessment.objects.filter(user=user_2, full_text_is_relevant=True)
-                )
+                try:
+                    user_2_included = publications.filter(assessment__in=Assessment.objects.filter(user=user_2, full_text_is_relevant=True))
+                except:
+                    user_2_included = None
                 # Publications that user_1 excluded
-                user_1_excluded = publications.filter(
-                    assessment__in=Assessment.objects.filter(user=user_1, full_text_is_relevant=False)
-                )
+                try:
+                    user_1_excluded = publications.filter(assessment__in=Assessment.objects.filter(user=user_1, full_text_is_relevant=False))
+                except:
+                    user_1_excluded = None
                 # Publications that user_2 excluded
-                user_2_excluded = publications.filter(
-                    assessment__in=Assessment.objects.filter(user=user_2, full_text_is_relevant=False)
-                )
+                try:
+                    user_2_excluded = publications.filter(assessment__in=Assessment.objects.filter(user=user_2, full_text_is_relevant=False))
+                except:
+                    user_2_excluded = None
 
             # Publications that both users included
             both_included = user_1_included & user_2_included
             # Publications that both users excluded
             both_excluded = user_1_excluded & user_2_excluded
             # Publications that user_1 included but user_2_excluded
-            only_user_1_included = user_1_included.exclude(pk__in=user_2_included)
+            try:
+                only_user_1_included = user_1_included.exclude(pk__in=user_2_included)
+            except:
+                only_user_1_included = None
             # Publications that user_2 included but user_1_excluded
-            only_user_2_included = user_2_included.exclude(pk__in=user_1_included)
+            try:
+                only_user_2_included = user_2_included.exclude(pk__in=user_1_included)
+            except:
+                only_user_2_included = None
 
             # Kappa analysis
-            a = both_included.count()
-            b = only_user_2_included.count()
-            c = only_user_1_included.count()
-            d = both_excluded.count()
+            try:
+                a = both_included.count()
+            except:
+                a = 0
+            try:
+                b = only_user_2_included.count()
+            except:
+                b = 0
+            try:
+                c = only_user_1_included.count()
+            except:
+                c = 0
+            try:
+                d = both_excluded.count()
+            except:
+                d = 0
             if n > 0:
                 rm1 = a + b
                 rm2 = c + d
