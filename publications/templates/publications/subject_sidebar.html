@@ -67,9 +67,11 @@
       <br />
       <a class="indented" href="{% url 'publications' subject=subject.slug state='other' %}">Other</a>
       <br />
-      <a href="{% url 'publications' subject=subject.slug state='completed' %}">Completed</a>
-      <br />
       <a href="{% url 'publications' subject=subject.slug state='not_assessed_full_texts' %}">Not assessed</a>
+      <br />
+      <a href="{% url 'publications' subject=subject.slug state='not_completed' %}">Not completed</a>
+      <br />
+      <a href="{% url 'publications' subject=subject.slug state='completed' %}">Completed</a>
       <br />
       <a href="{% url 'kappa' subject=subject.slug %}">Kappa analysis</a>
 

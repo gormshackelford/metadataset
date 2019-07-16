@@ -346,6 +346,16 @@ def publications(request, subject, state='all', download='none'):
                 is_completed=True
             )
         ).order_by('title')
+    # Publications that this user has not marked as completed
+    elif (state == 'not_completed'):
+        publications = Publication.objects.distinct().filter(
+            assessment__in=Assessment.objects.filter(
+                subject=subject,
+                user=user,
+                is_relevant=True,
+                is_completed=False
+            )
+        ).order_by('title')
     # Publications that this user has not yet assessed based on full text
     elif (state == 'not_assessed_full_texts'):
         publications = Publication.objects.distinct().filter(
