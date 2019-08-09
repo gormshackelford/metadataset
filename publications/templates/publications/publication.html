@@ -31,6 +31,7 @@
   <p>
     <input type="submit" name="is_relevant" value="Include" accesskey="i" />
     <input type="submit" name="is_not_relevant" value="Exclude" accesskey="o" />
+    <input type="submit" name="reset" value="Reset" />
     <a class="button" href="{% url 'publication' subject=subject.slug publication_pk=previous_pk %}">Previous title/abstract</a>
     <a class="button" href="{% url 'publication' subject=subject.slug publication_pk=next_pk %}">Next title/abstract</a>
   </p>

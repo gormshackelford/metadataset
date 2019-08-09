@@ -671,6 +671,16 @@ def publication(request, subject, publication_pk):
                     item.next_assessment = next_assessment
                     item.save()
                 return redirect('publication', subject=subject.slug, publication_pk=publication_pk)
+        if 'reset' in request.POST:
+            if publication_pk in completed_assessments:
+                completed_assessments.remove(publication_pk)
+                item.completed_assessments = completed_assessments
+            next_assessment = publication_pk
+            item.next_assessment = next_assessment
+            item.save()
+            if Assessment.objects.filter(publication=publication, user=user).exists():
+                Assessment.objects.filter(publication=publication, user=user).delete()
+            return redirect('publication', subject=subject.slug, publication_pk=publication_pk)
         if 'save' in request.POST or 'delete' in request.POST:
             with transaction.atomic():
                 # Before the formset is validated, the choices need to be redefined, or the validation will fail. This is because only a subset of all choices (high level choices in the MPTT tree) were initially shown in the dropdown (for better UI).
