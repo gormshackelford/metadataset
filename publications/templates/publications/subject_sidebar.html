@@ -1,10 +1,17 @@
 {% load metadataset_tags %}
 
 <h1>{{ subject|capfirst }}</h1>
+
 <p>
   <a href="{% url 'browse_by_intervention' subject=subject.slug state='publications' %}">Publications by intervention</a>
   <br />
   <a href="{% url 'browse_by_outcome' subject=subject.slug state='publications' %}">Publications by outcome</a>
+</p>
+
+<p>
+  <a href="{% url 'browse_by_intervention' subject=subject.slug state='data' %}">Data by intervention</a>
+  <br />
+  <a href="{% url 'browse_by_outcome' subject=subject.slug state='data' %}">Data by outcome</a>
 </p>
 
 {% if publications_count is not None %}  <!-- Load the sidebar only if publications exist for this subject. -->
@@ -12,12 +19,6 @@
   {% if user.is_authenticated %}
 
     {% if user_subject %}
-
-      <p>
-        <a href="{% url 'browse_by_intervention' subject=subject.slug state='data' %}">Data by intervention</a>
-        <br />
-        <a href="{% url 'browse_by_outcome' subject=subject.slug state='data' %}">Data by outcome</a>
-      </p>
 
       <h1>Titles/abstracts</h1>
       <a href="{% url 'publication' subject=subject.slug publication_pk=next_assessment %}">Your next title/abstract</a> <span class="red">(start or restart here)</span>

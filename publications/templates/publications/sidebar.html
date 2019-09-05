@@ -11,7 +11,7 @@
 
 {% recursetree subjects %}
   {% if node.level == 0 %}
-    {{ node.subject|capfirst }}<br />
+    <a href="{% url 'subject' subject=node.slug %}">{{ node.subject|capfirst }}</a><br />
   {% else %}
     <span class="indented"><a href="{% url 'subject' subject=node.slug %}">{{ node.subject|capfirst }}</a></span><br />
   {% endif %}

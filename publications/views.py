@@ -115,7 +115,8 @@ class DataViewSet(viewsets.ReadOnlyModelViewSet):
         subject_pk = self.request.GET.get('subject', '')
         if subject_pk is not '':
             subject = Subject.objects.get(pk=subject_pk)
-            queryset = queryset.filter(subject=subject)
+            subjects = subject.get_descendants(include_self=True)
+            queryset = queryset.filter(subject__in=subjects)
         intervention_pk = self.request.GET.get('intervention', '')
         if intervention_pk is not '':
             interventions = Intervention.objects.get(pk=intervention_pk).get_descendants(include_self=True)
@@ -1593,16 +1594,20 @@ def outcome(request, subject, publication_pk, experiment_index, population_index
     return render(request, 'publications/outcome.html', context)
 
 
-def browse_by_intervention(request, subject, state):
+def browse_by_intervention(request, subject, state, set='default'):
     user = request.user
     subject = Subject.objects.get(slug=subject)
+    subjects = subject.get_descendants(include_self=True)
     path_to_shiny = ''
     if (state == 'publications'):
         intervention = subject.intervention    # The root intervention for this subject (each subject can have its own classification of interventions)
         interventions = Intervention.objects.filter(pk=intervention.pk).get_descendants(include_self=True)
+        if (set == 'default'):
+            publications = Publication.objects.filter(subject__in=subjects)
+            interventions = interventions.distinct().filter(experiment__publication__in=publications).get_ancestors(include_self=True)
     if (state == 'data'):
         path_to_shiny = get_path_to_shiny(request)
-        data = Data.objects.filter(subject=subject)
+        data = Data.objects.filter(subject__in=subjects)
         interventions = Intervention.objects.filter(experiment__data__in=data).get_ancestors(include_self=True)
     context = {
         'subject': subject,  # Browse within this subject
@@ -1617,16 +1622,23 @@ def browse_by_intervention(request, subject, state):
     return render(request, 'publications/browse_by_intervention.html', context)
 
 
-def browse_by_outcome(request, subject, state):
+def browse_by_outcome(request, subject, state, set='default'):
     user = request.user
     subject = Subject.objects.get(slug=subject)
+    subjects = subject.get_descendants(include_self=True)
     path_to_shiny = ''
     if (state == 'publications'):
         outcome = subject.outcome  # The root outcome for this subject (each subject can have its own classification of outcomes)
         outcomes = Outcome.objects.filter(pk=outcome.pk).get_descendants(include_self=True)
+        if (set == 'default'):
+            publications = Publication.objects.filter(subject__in=subjects)
+            outcomes = outcomes.distinct().filter(
+                Q(experimentpopulationoutcome__experiment_population__experiment__publication__in=publications) |
+                Q(publicationpopulationoutcome__publication_population__publication__in=publications)
+            ).get_ancestors(include_self=True)
     if (state == 'data'):
         path_to_shiny = get_path_to_shiny(request)
-        data = Data.objects.filter(subject=subject)
+        data = Data.objects.filter(subject__in=subjects)
         outcomes = Outcome.objects.filter(experimentpopulationoutcome__data__in=data).get_ancestors(include_self=True)
     context = {
         'subject': subject,  # Browse within this subject
@@ -1644,6 +1656,7 @@ def browse_by_outcome(request, subject, state):
 def this_intervention(request, subject, state, intervention_pk, outcome_pk='default'):
     user = request.user
     subject = Subject.objects.get(slug=subject)
+    subjects = subject.get_descendants(include_self=True)
     path = ''
     path_to_shiny = ''
     this_intervention = Intervention.objects.get(pk=intervention_pk)
@@ -1653,7 +1666,7 @@ def this_intervention(request, subject, state, intervention_pk, outcome_pk='defa
         outcomes = Outcome.objects.filter(pk=outcome_pk).get_descendants(include_self=True)
     if state == 'publications':
         # Publications for this intervention (and its descendants)
-        publications = Publication.objects.filter(subject=subject)
+        publications = Publication.objects.filter(subject__in=subjects)
         publications = publications.distinct().filter(experiment__intervention__in=interventions)
         # Filter these publications by outcome
         if outcome_pk != 'default':
@@ -1696,7 +1709,7 @@ def this_intervention(request, subject, state, intervention_pk, outcome_pk='defa
         path_to_shiny = get_path_to_shiny(request)
 
         # Data for this intervention (and its descendants)
-        data = Data.objects.filter(subject=subject)
+        data = Data.objects.filter(subject__in=subjects)
         data = data.filter(experiment__intervention__in=interventions)
         # Filter these data by outcome
         if outcome_pk != 'default':
@@ -1744,6 +1757,7 @@ def this_intervention(request, subject, state, intervention_pk, outcome_pk='defa
 def this_outcome(request, subject, state, outcome_pk, intervention_pk='default'):
     user = request.user
     subject = Subject.objects.get(slug=subject)
+    subjects = subject.get_descendants(include_self=True)
     path = ''
     path_to_shiny = ''
     this_outcome = Outcome.objects.get(pk=outcome_pk)
@@ -1753,7 +1767,7 @@ def this_outcome(request, subject, state, outcome_pk, intervention_pk='default')
         publication_population_outcomes = PublicationPopulationOutcome.objects.filter(outcome__in=outcomes)
         experiment_population_outcomes = ExperimentPopulationOutcome.objects.filter(outcome__in=outcomes)
         # Publications for these records
-        publications = Publication.objects.distinct().filter(subject=subject)
+        publications = Publication.objects.distinct().filter(subject__in=subjects)
         publications = publications.distinct().filter(
                 Q(experiment__experimentpopulation__experimentpopulationoutcome__in=experiment_population_outcomes) |
                 Q(publicationpopulation__publicationpopulationoutcome__in=publication_population_outcomes)
@@ -1788,7 +1802,7 @@ def this_outcome(request, subject, state, outcome_pk, intervention_pk='default')
         path_to_shiny = get_path_to_shiny(request)
 
         # Data for this outcome (and its descendants)
-        data = Data.objects.filter(subject=subject)
+        data = Data.objects.filter(subject__in=subjects)
         data = data.filter(experiment_population_outcome__outcome__in=outcomes)
         # Filter these data by intervention
         if intervention_pk != 'default':
@@ -1836,7 +1850,8 @@ def this_outcome(request, subject, state, outcome_pk, intervention_pk='default')
 def publications_x(request, subject, intervention_pk='default', outcome_pk='default', iso_a3='default'):
     user = request.user
     subject = Subject.objects.get(slug=subject)
-    publications = Publication.objects.filter(subject=subject)
+    subjects = subject.get_descendants(include_self=True)
+    publications = Publication.objects.filter(subject__in=subjects)
     if iso_a3 != 'default':
         if iso_a3 != '-99':  # Disputed territories that are not our Countries model: Kosovo, Northern Cyprus, and Somaliland
             country = Country.objects.get(iso_alpha_3=iso_a3)

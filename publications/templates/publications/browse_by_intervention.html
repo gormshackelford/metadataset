@@ -16,8 +16,12 @@
   {% load mptt_tags %}
 
   <h1>Browse {{ state }} by intervention</h1>
+  <p>
+    <a href="{% url 'browse_by_intervention' subject=subject.slug state='publications' set='all' %}">Show all interventions</a> |
+    <a href="{% url 'browse_by_intervention' subject=subject.slug state='publications' %}">Show interventions with publications</a>
+  </p>
   <p>Click <span class="red monospace">+++</span> to expand or <span class="red monospace">---</span> to collapse each level in this classification. Classes with "n.e.c." are "not elsewhere classified".</p>
-  <a class="show_all">Expand all</a> | <a class="hide_all">Collapse all</a>
+  <p><a class="show_all">Expand all</a> | <a class="hide_all">Collapse all</a></p>
   <ul class="root">
     {% recursetree interventions %}
       <li>
