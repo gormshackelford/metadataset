@@ -74,7 +74,7 @@ class ExperimentDesignSerializer(serializers.HyperlinkedModelSerializer):
 
 class ExperimentSerializer(serializers.HyperlinkedModelSerializer):
     EAV_experiment = EAVSerializer(many=True, read_only=True)
-    xcountry_experiment_index = XCountrySerializer(many=True, read_only=True)
+    #xcountry_experiment_index = XCountrySerializer(many=True, read_only=True)
     experimentdesign_set = ExperimentDesignSerializer(many=True, read_only=True)  # Reverse foreign-key relationship (the default is the name of the model that has a foreign key to this model + "_set", unless a "related_name" is specified in that model.
     class Meta:
         model = Experiment

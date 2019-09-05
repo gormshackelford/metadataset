@@ -28,7 +28,25 @@
   <table>
 
     <tr><th colspan="3">This intervention</th></tr>
-    <tr><td colspan="3">{{ experiment_form.intervention }}</td></tr>
+    <tr><td class="top" colspan="3">We will assume that the same methods were used to test the effects of this intervention on all populations and outcomes. If different methods were used for different populations or outcomes, please create a separate intervention (on the <a href="{% url 'publication' subject=subject.slug publication_pk=publication.pk %}">previous page</a>) for each.</td></tr>
+    <tr><td class="empty" colspan="3">&nbsp;</td></tr>
+    <tr>
+      <td>Intervention:</td>
+      <td colspan="2">{{ experiment_form.intervention }}</td>
+    </tr>
+    <tr>
+      <td>Location:</td>
+      <td colspan="2">{{ experiment_form.location }}</td>
+    </tr>
+    <tr>
+      <td>Methods:</td>
+      <td colspan="2">{{ experiment_form.methods }}</td>
+    </tr>
+    <tr>
+      <td class="bottom"></td>
+      <td class="button bottom"><input type="submit" name="save" value="Save all changes" /></td>
+      <td class="bottom"></td>
+    </tr>
 
     <tr><td class="empty" colspan="3">&nbsp;</td></tr>
 
@@ -65,10 +83,10 @@
       <td class="button bottom centered"><input type="submit" name="delete" value="Delete all selected" /></td>
     </tr>
 
-    <tr><td class="empty" colspan="4">&nbsp;</td></tr>
+    <tr><td class="empty" colspan="3">&nbsp;</td></tr>
 
     <tr><th colspan="3">Experimental design for this intervention</th></tr>
-    <tr><td class="top" colspan="3">We will assume that the same experimental design was used to test the effects of this intervention on all of the populations that you selected above. If different experimental designs were used, please create a separate intervention (on the <a href="{% url 'publication' subject=subject.slug publication_pk=publication.pk %}">previous page</a>) for each experimental design.</td></tr>
+    <tr><td class="top" colspan="3">We will assume that the same experimental design was used to test the effects of this intervention on all populations and outcomes. If different experimental designs were used for different populations or outcomes, please create a separate intervention (on the <a href="{% url 'publication' subject=subject.slug publication_pk=publication.pk %}">previous page</a>) for each.</td></tr>
     <tr>
       <td colspan="2"></td>
       <td class="centered">Select</td>
@@ -185,8 +203,6 @@
         <td></td>
       </tr>
     {% endfor %}
-
-    <tr><td class="empty" colspan="3">&nbsp;</td></tr>
 
     <tr><td class="empty" colspan="3">&nbsp;</td></tr>
 

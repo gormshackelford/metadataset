@@ -333,6 +333,8 @@ class PublicationPopulationOutcome(models.Model):
 class Experiment(models.Model):
     publication = models.ForeignKey(Publication, on_delete=models.CASCADE)
     intervention = models.ForeignKey(Intervention, blank=True, null=True, on_delete=models.CASCADE)
+    location = models.CharField(max_length=255, blank=True, null=True)
+    methods = models.TextField(blank=True, null=True)
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
     user = models.ForeignKey(User, on_delete=models.CASCADE)

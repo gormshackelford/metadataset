@@ -132,6 +132,14 @@ class ExperimentForm(forms.ModelForm):
     class Meta:
         model = Experiment
         exclude = ['publication', 'user']
+        widgets = {
+            'location': forms.TextInput(attrs={
+                'placeholder': "e.g., 'along two rivers in Germany' or 'in an irrigated maize field in the Ebro River valley, Spain'"
+            }),
+            'methods': forms.Textarea(attrs={
+                'placeholder': "e.g., 'Herbicide (glyphosate) was sprayed on four treatment plots but not on four control plots. Plots were 2 x 2 meters.'"
+            })
+        }
 
 
 class ExperimentDesignForm(forms.ModelForm):
