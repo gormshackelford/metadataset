@@ -16,12 +16,19 @@
   {% load mptt_tags %}
 
   <h1>Browse {{ state }} by outcome</h1>
-  <p>
-    <a href="{% url 'browse_by_outcome' subject=subject.slug state='publications' set='all' %}">Show all outcomes</a> |
-    <a href="{% url 'browse_by_outcome' subject=subject.slug state='publications' %}">Show outcomes with publications</a>
-  </p>
   <p>Click <span class="red monospace">+++</span> to expand or <span class="red monospace">---</span> to collapse each level in this classification. Classes with "n.e.c." are "not elsewhere classified".</p>
-  <p><a class="show_all">Expand all</a> | <a class="hide_all">Collapse all</a></p>
+  <p>
+    <a class="show_all">Expand all</a> | <a class="hide_all">Collapse all</a>
+    {% if state == 'publications' %} |
+      {% if set == 'all' %}
+        Show all outcomes |
+        <a href="{% url 'browse_by_outcome' subject=subject.slug state='publications' %}">Show outcomes with publications</a>
+      {% else %}
+        <a href="{% url 'browse_by_outcome' subject=subject.slug state='publications' set='all' %}">Show all outcomes</a> |
+        Show outcomes with publications
+      {% endif %}
+    {% endif %}
+  </p>
   <ul class="root">
     {% recursetree outcomes %}
       <li>

@@ -1613,6 +1613,7 @@ def browse_by_intervention(request, subject, state, set='default'):
         'subject': subject,  # Browse within this subject
         'interventions': interventions,
         'state': state,
+        'set': set,
         'path_to_shiny': path_to_shiny
     }
     if user.is_authenticated:
@@ -1644,6 +1645,7 @@ def browse_by_outcome(request, subject, state, set='default'):
         'subject': subject,  # Browse within this subject
         'outcomes': outcomes,
         'state': state,
+        'set': set,
         'path_to_shiny': path_to_shiny
     }
     if user.is_authenticated:
