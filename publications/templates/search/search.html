@@ -14,6 +14,17 @@
   <h1>Publications</h1>
   {% for publication in page_obj.object_list %}
     <p>
+      <span class="bold">
+        {% if user_subject %}
+          <a href="{% url 'publication' subject=subject.slug publication_pk=publication.object.pk %}">
+        {% endif %}
+        {{ publication.object.title|default:'[Title not available]' }}
+        {% if user_subject %}
+          </a>
+        {% endif %}
+      </span>
+    </p>
+    <p>
       {% if publication.object.author_list %}
         {{ publication.object.author_list|join:", "|default:'[Authors not available]' }}
       {% else %}
