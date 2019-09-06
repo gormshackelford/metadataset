@@ -11,11 +11,23 @@
 </p>
 <p>
   {% if publication.author_list %}
-    {{ publication.author_list|join:", "|default:'[authors not available]' }}
+    {{ publication.author_list|join:", "|default:'[Authors not available]' }}
   {% else %}
-    {{ publication.authors }}
+    {{ publication.authors|default:'[Authors not available]' }}
   {% endif %}
-   ({{ publication.year|default:'[year not available]' }}) <span class="italic">{{ publication.journal|default:'[journal not available]' }}</span> {{ publication.volume|default:'[volume not available]'}}, {{ publication.pages|default:'[pages not available]' }}
+  {% if publication.year %}
+    ({{ publication.year }})
+  {% endif %}
+  {% if publication.journal %}
+    <span class="italic">{{ publication.journal }}</span>
+    {% if publication.volume %}
+      <span class="bold">{{ publication.volume }}</span>
+    {% endif %}
+    {% if publication.issue %}
+      ({{ publication.issue }})
+    {% endif %}
+    {{ publication.pages|default:'' }}
+  {% endif %}
 </p>
 <p>
   Search for the full text:

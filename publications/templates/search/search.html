@@ -11,27 +11,36 @@
 
 {% block content %}
 
+  <h1>Publications</h1>
   {% for publication in page_obj.object_list %}
-    <h1>{{ publication.object.title|default:'[title not available]' }}</h1>
     <p>
-      {% if publication.object.author_list %}
-        {{ publication.object.author_list|join:", "|default:'[authors not available]' }}
+      {% if publication.author_list %}
+        {{ publication.author_list|join:", "|default:'[Authors not available]' }}
       {% else %}
-        {{ publication.object.authors }}
+        {{ publication.authors|default:'[Authors not available]' }}
       {% endif %}
-       ({{ publication.object.year|default:'[year not available]' }}) <span class="italic">{{ publication.object.journal|default:'[journal not available]' }}</span> {{ publication.object.volume|default:'[volume not available]'}}, {{ publication.object.pages|default:'[pages not available]' }}
+      {% if publication.year %}
+        ({{ publication.year }})
+      {% endif %}
+      {% if publication.journal %}
+        <span class="italic">{{ publication.journal }}</span>
+        {% if publication.volume %}
+          <span class="bold">{{ publication.volume }}</span>
+        {% endif %}
+        {% if publication.issue %}
+          ({{ publication.issue }})
+        {% endif %}
+        {{ publication.pages|default:'' }}
+      {% endif %}
     </p>
     <p>
       Search for the full text:
-        <a target="_blank" href="http://www.google.com/search?q={{ publication.object.google_string }}">Google</a>
-        | <a target="_blank" href="https://scholar.google.com/scholar?q={{ publication.object.google_string }}">Google Scholar</a>
-      {% if publication.object.doi != 'NA' and publication.object.doi != '' %}
-        | <a target="_blank" href="http://dx.doi.org/{{ publication.object.doi }}">DOI</a>
+        <a target="_blank" href="http://www.google.com/search?q={{ publication.google_string }}">Google</a>
+        | <a target="_blank" href="https://scholar.google.com/scholar?q={{ publication.google_string }}">Google Scholar</a>
+      {% if publication.doi != '' %}
+        | <a target="_blank" href="http://dx.doi.org/{{ publication.doi }}">DOI</a>
       {% endif %}
     </p>
-    {% if user.is_authenticated %}
-      <a href="{% url 'publication' subject='cassava' publication_pk=publication.object.pk %}">Assess this publication</a>
-    {% endif %}
     <br />
     <p class="hr"></p>
   {% empty %}
