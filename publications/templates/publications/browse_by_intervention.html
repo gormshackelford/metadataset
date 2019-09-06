@@ -16,53 +16,58 @@
   {% load mptt_tags %}
 
   <h1>Browse {{ state }} by intervention</h1>
-  <p>Click <span class="red monospace">+++</span> to expand or <span class="red monospace">---</span> to collapse each level in this classification. Classes with "n.e.c." are "not elsewhere classified".</p>
-  <p>
-    <a class="show_all">Expand all</a> | <a class="hide_all">Collapse all</a>
-    {% if state == 'publications' %} |
-      {% if set == 'all' %}
-        Show all interventions |
-        <a href="{% url 'browse_by_intervention' subject=subject.slug state='publications' %}">Show interventions with publications</a>
-      {% else %}
-        <a href="{% url 'browse_by_intervention' subject=subject.slug state='publications' set='all' %}">Show all interventions</a> |
-        Show interventions with publications
-      {% endif %}
-    {% endif %}
-  </p>
 
-  <ul class="root">
-    {% recursetree interventions %}
-      <li>
-        {% if not node.is_leaf_node %}  <!-- Insert the toggle only if this node has children. -->
-          <span class="toggle red monospace">+++</span>
-        {% else %}  <!-- If not, insert a placeholder for the toggle, so all classes are aligned. -->
-          <span class="monospace">---</span>
-        {% endif %}
-        {% if node.code %}  <!-- If this intervention has a code, show it here. -->
-          <span class="intervention_level_{{ node.level }}">{{ node.code }}</span>
-        {% endif %}
-        {% if state == 'publications' %}
-          <a href="{% url 'this_intervention' subject=subject.slug intervention_pk=node.pk state=state %}">
-        {% elif state == 'data' %}
-          <a href="{{ path_to_shiny }}?subject={{ subject.pk }}&intervention={{ node.pk }}" target="_blank">
-        {% endif %}
-        {% if node.level == 0 %}
-          All interventions
+  {% if interventions_count > 0 %}
+    <p>Click <span class="red monospace">+++</span> to expand or <span class="red monospace">---</span> to collapse each level in this classification. Classes with "n.e.c." are "not elsewhere classified".</p>
+    <p>
+      <a class="show_all">Expand all</a> | <a class="hide_all">Collapse all</a>
+      {% if state == 'publications' %} |
+        {% if set == 'all' %}
+          Show all interventions |
+          <a href="{% url 'browse_by_intervention' subject=subject.slug state='publications' %}">Show interventions with publications</a>
         {% else %}
-          {{ node.intervention }}
+          <a href="{% url 'browse_by_intervention' subject=subject.slug state='publications' set='all' %}">Show all interventions</a> |
+          Show interventions with publications
         {% endif %}
-          </a>
-        {% if state == 'data' %}
-          <a href="{% url 'this_intervention' subject=subject.slug intervention_pk=node.pk state=state %}">(filter by outcome)</a>
-        {% endif %}
-      </li>
-      {% if not node.is_leaf_node %}
-        <ul class="children">
-          {{ children }}
-        </ul>
       {% endif %}
-    {% endrecursetree %}
-  </ul>
+    </p>
+
+    <ul class="root">
+      {% recursetree interventions %}
+        <li>
+          {% if not node.is_leaf_node %}  <!-- Insert the toggle only if this node has children. -->
+            <span class="toggle red monospace">+++</span>
+          {% else %}  <!-- If not, insert a placeholder for the toggle, so all classes are aligned. -->
+            <span class="monospace">---</span>
+          {% endif %}
+          {% if node.code %}  <!-- If this intervention has a code, show it here. -->
+            <span class="intervention_level_{{ node.level }}">{{ node.code }}</span>
+          {% endif %}
+          {% if state == 'publications' %}
+            <a href="{% url 'this_intervention' subject=subject.slug intervention_pk=node.pk state=state %}">
+          {% elif state == 'data' %}
+            <a href="{{ path_to_shiny }}?subject={{ subject.pk }}&intervention={{ node.pk }}" target="_blank">
+          {% endif %}
+          {% if node.level == 0 %}
+            All interventions
+          {% else %}
+            {{ node.intervention }}
+          {% endif %}
+            </a>
+          {% if state == 'data' %}
+            <a href="{% url 'this_intervention' subject=subject.slug intervention_pk=node.pk state=state %}">(filter by outcome)</a>
+          {% endif %}
+        </li>
+        {% if not node.is_leaf_node %}
+          <ul class="children">
+            {{ children }}
+          </ul>
+        {% endif %}
+      {% endrecursetree %}
+    </ul>
+  {% else %}
+    <p>No {{ state }}</p>
+  {% endif %}
 
 {% endblock %}
 

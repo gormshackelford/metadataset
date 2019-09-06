@@ -1615,11 +1615,13 @@ def browse_by_intervention(request, subject, state, set='default'):
         path_to_shiny = get_path_to_shiny(request)
         data = Data.objects.filter(subject__in=subjects)
         interventions = Intervention.objects.filter(experiment__data__in=data).get_ancestors(include_self=True)
+    interventions_count = interventions.count()
     context = {
         'subject': subject,  # Browse within this subject
         'interventions': interventions,
         'state': state,
         'set': set,
+        'interventions_count': interventions_count,
         'path_to_shiny': path_to_shiny
     }
     if user.is_authenticated:
@@ -1653,11 +1655,13 @@ def browse_by_outcome(request, subject, state, set='default'):
         path_to_shiny = get_path_to_shiny(request)
         data = Data.objects.filter(subject__in=subjects)
         outcomes = Outcome.objects.filter(experimentpopulationoutcome__data__in=data).get_ancestors(include_self=True)
+    outcomes_count = outcomes.count()
     context = {
         'subject': subject,  # Browse within this subject
         'outcomes': outcomes,
         'state': state,
         'set': set,
+        'outcomes_count': outcomes_count,
         'path_to_shiny': path_to_shiny
     }
     if user.is_authenticated:
