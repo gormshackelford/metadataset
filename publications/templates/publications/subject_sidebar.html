@@ -8,11 +8,25 @@
   <a href="{% url 'browse_by_outcome' subject=subject.slug state='publications' %}">Publications by outcome</a>
 </p>
 
-<p>
-  <a href="{% url 'browse_by_intervention' subject=subject.slug state='data' %}">Data by intervention</a>
-  <br />
-  <a href="{% url 'browse_by_outcome' subject=subject.slug state='data' %}">Data by outcome</a>
-</p>
+{% data_are_public subject as data_are_public %}
+{% if data_are_public %}
+  <p>
+    <a href="{% url 'browse_by_intervention' subject=subject.slug state='data' %}">Data by intervention</a>
+    <br />
+    <a href="{% url 'browse_by_outcome' subject=subject.slug state='data' %}">Data by outcome</a>
+  </p>
+{% else %}
+  {% if user.is_authenticated %}
+  {% user_subject user subject as user_subject %}
+    {% if user_subject %}
+      <p>
+        <a href="{% url 'browse_by_intervention' subject=subject.slug state='data' %}">Data by intervention</a>
+        <br />
+        <a href="{% url 'browse_by_outcome' subject=subject.slug state='data' %}">Data by outcome</a>
+      </p>
+    {% endif %}
+  {% endif %}
+{% endif %}
 
 {% if publications_count is not None %}  <!-- Load the sidebar only if publications exist for this subject. -->
 

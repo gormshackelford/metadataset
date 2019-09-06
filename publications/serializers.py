@@ -128,6 +128,12 @@ class DataXCountrySerializer(serializers.HyperlinkedModelSerializer):
         fields = ('country', )
 
 
+class DataPublicationSerializer(serializers.HyperlinkedModelSerializer):
+    class Meta:
+        model = Publication
+        fields = ('title', 'authors', 'year', 'journal', 'volume', 'issue', 'pages', 'doi')
+
+
 class DataStudySerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = Study
@@ -177,7 +183,7 @@ class DataExperimentPopulationOutcomeSerializer(serializers.HyperlinkedModelSeri
 
 
 class DataSerializer(serializers.HyperlinkedModelSerializer):
-    publication = serializers.SlugRelatedField(slug_field='title', read_only=True)
+    publication = DataPublicationSerializer(read_only=True)
     experiment = DataExperimentSerializer(read_only=True)
     experiment_population = DataExperimentPopulationSerializer(read_only=True)
     experiment_population_outcome = DataExperimentPopulationOutcomeSerializer(read_only=True)

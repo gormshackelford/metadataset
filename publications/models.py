@@ -239,6 +239,7 @@ class Subject(MPTTModel):
     slug = models.SlugField(max_length=255, blank=True)
     text = models.TextField(blank=True)
     is_public = models.BooleanField(default=False)
+    data_are_public = models.BooleanField(default=False)
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
 

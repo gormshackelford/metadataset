@@ -1597,7 +1597,13 @@ def outcome(request, subject, publication_pk, experiment_index, population_index
 def browse_by_intervention(request, subject, state, set='default'):
     user = request.user
     subject = Subject.objects.get(slug=subject)
-    subjects = subject.get_descendants(include_self=True)
+    if user.is_authenticated:
+        if UserSubject.objects.filter(user=user, subject=subject).exists():
+            subjects = subject.get_descendants(include_self=True)
+        else:
+            subjects = subject.get_descendants(include_self=True).exclude(is_public=False)
+    else:
+        subjects = subject.get_descendants(include_self=True).exclude(is_public=False)
     path_to_shiny = ''
     if (state == 'publications'):
         intervention = subject.intervention    # The root intervention for this subject (each subject can have its own classification of interventions)
@@ -1626,7 +1632,13 @@ def browse_by_intervention(request, subject, state, set='default'):
 def browse_by_outcome(request, subject, state, set='default'):
     user = request.user
     subject = Subject.objects.get(slug=subject)
-    subjects = subject.get_descendants(include_self=True)
+    if user.is_authenticated:
+        if UserSubject.objects.filter(user=user, subject=subject).exists():
+            subjects = subject.get_descendants(include_self=True)
+        else:
+            subjects = subject.get_descendants(include_self=True).exclude(is_public=False)
+    else:
+        subjects = subject.get_descendants(include_self=True).exclude(is_public=False)
     path_to_shiny = ''
     if (state == 'publications'):
         outcome = subject.outcome  # The root outcome for this subject (each subject can have its own classification of outcomes)
@@ -1658,7 +1670,13 @@ def browse_by_outcome(request, subject, state, set='default'):
 def this_intervention(request, subject, state, intervention_pk, outcome_pk='default'):
     user = request.user
     subject = Subject.objects.get(slug=subject)
-    subjects = subject.get_descendants(include_self=True)
+    if user.is_authenticated:
+        if UserSubject.objects.filter(user=user, subject=subject).exists():
+            subjects = subject.get_descendants(include_self=True)
+        else:
+            subjects = subject.get_descendants(include_self=True).exclude(is_public=False)
+    else:
+        subjects = subject.get_descendants(include_self=True).exclude(is_public=False)
     path = ''
     path_to_shiny = ''
     this_intervention = Intervention.objects.get(pk=intervention_pk)
@@ -1759,7 +1777,13 @@ def this_intervention(request, subject, state, intervention_pk, outcome_pk='defa
 def this_outcome(request, subject, state, outcome_pk, intervention_pk='default'):
     user = request.user
     subject = Subject.objects.get(slug=subject)
-    subjects = subject.get_descendants(include_self=True)
+    if user.is_authenticated:
+        if UserSubject.objects.filter(user=user, subject=subject).exists():
+            subjects = subject.get_descendants(include_self=True)
+        else:
+            subjects = subject.get_descendants(include_self=True).exclude(is_public=False)
+    else:
+        subjects = subject.get_descendants(include_self=True).exclude(is_public=False)
     path = ''
     path_to_shiny = ''
     this_outcome = Outcome.objects.get(pk=outcome_pk)
@@ -1852,7 +1876,13 @@ def this_outcome(request, subject, state, outcome_pk, intervention_pk='default')
 def publications_x(request, subject, intervention_pk='default', outcome_pk='default', iso_a3='default'):
     user = request.user
     subject = Subject.objects.get(slug=subject)
-    subjects = subject.get_descendants(include_self=True)
+    if user.is_authenticated:
+        if UserSubject.objects.filter(user=user, subject=subject).exists():
+            subjects = subject.get_descendants(include_self=True)
+        else:
+            subjects = subject.get_descendants(include_self=True).exclude(is_public=False)
+    else:
+        subjects = subject.get_descendants(include_self=True).exclude(is_public=False)
     publications = Publication.objects.filter(subject__in=subjects)
     if iso_a3 != 'default':
         if iso_a3 != '-99':  # Disputed territories that are not our Countries model: Kosovo, Northern Cyprus, and Somaliland

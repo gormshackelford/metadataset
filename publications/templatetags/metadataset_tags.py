@@ -19,6 +19,14 @@ def user_subjects(user):
     ).distinct()
     return subjects
 
+@register.simple_tag
+def user_subject(user, subject):
+    return UserSubject.objects.filter(user=user, subject=subject).exists()
+
+@register.simple_tag
+def data_are_public(subject):
+    return subject.data_are_public
+
 @register.filter(name='add_class')
 def add_class(field, class_name):
     return field.as_widget(attrs={"class": class_name})
