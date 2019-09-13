@@ -131,7 +131,7 @@ class DataXCountrySerializer(serializers.HyperlinkedModelSerializer):
 class DataPublicationSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = Publication
-        fields = ('title', 'authors', 'year', 'journal', 'volume', 'issue', 'pages', 'doi')
+        fields = ('title', 'authors', 'year', 'journal', 'volume', 'issue', 'pages', 'doi', 'citation')
 
 
 class DataStudySerializer(serializers.HyperlinkedModelSerializer):

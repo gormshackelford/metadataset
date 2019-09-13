@@ -271,6 +271,7 @@ class Publication(models.Model):
     publisher = models.CharField(max_length=510, blank=True)
     place = models.CharField(max_length=510, blank=True)
     note = models.TextField(blank=True)
+    citation = models.CharField(max_length=60, blank=True)
     subject = models.ForeignKey(Subject, on_delete=models.CASCADE, null=True)
     is_from_systematic_search = models.BooleanField(default=True)
     created = models.DateTimeField(auto_now_add=True)
