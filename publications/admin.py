@@ -4,7 +4,7 @@ from django.utils.translation import ugettext_lazy as _
 from mptt.admin import DraggableMPTTAdmin
 from reversion.admin import VersionAdmin
 from .models import Profile, User  # AbstractUser with email address as username
-from .models import Assessment, AssessmentStatus, Attribute, EAV, Coordinates, Country, Crop, Data, Date, Design, Experiment, ExperimentDesign, ExperimentPopulation, ExperimentPopulationOutcome, Intervention, Outcome, Publication, PublicationPopulation, PublicationPopulationOutcome, Subject, UserSubject, XCountry
+from .models import Analysis, Assessment, AssessmentStatus, Attribute, EAV, Coordinates, Country, Crop, Data, Date, Design, Experiment, ExperimentDesign, ExperimentPopulation, ExperimentPopulationOutcome, Intervention, Outcome, Publication, PublicationPopulation, PublicationPopulationOutcome, Subject, UserSubject, XCountry
 
 
 @admin.register(User)
@@ -40,6 +40,11 @@ admin.site.register(UserSubject)
 class PublicationAdmin(VersionAdmin):
     pass
 
+
+# Admin for models with readonly fields (created and updated)
+class AnalysisAdmin(admin.ModelAdmin):
+    readonly_fields = ('created', 'updated')
+admin.site.register(Analysis, AnalysisAdmin)
 
 # Admin for models with readonly fields (created and updated)
 class AssessmentAdmin(admin.ModelAdmin):

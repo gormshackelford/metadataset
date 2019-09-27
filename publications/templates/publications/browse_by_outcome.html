@@ -31,7 +31,7 @@
         {% endif %}
       {% endif %}
     </p>
-    
+
     <ul class="root">
       {% recursetree outcomes %}
         <li>
@@ -46,7 +46,7 @@
           {% if state == 'publications' %}
             <a href="{% url 'this_outcome' subject=subject.slug outcome_pk=node.pk state=state %}">
           {% elif state == 'data' %}
-            <a href="{{ path_to_shiny }}?subject={{ subject.pk }}&outcome={{ node.pk }}" target="_blank">
+            <a href="{{ path_to_shiny }}?subject={{ subject.pk }}&intervention={{ subject.intervention.pk }}&outcome={{ node.pk }}" target="_blank">
           {% endif %}
           {% if node.level == 0 %}
             All outcomes

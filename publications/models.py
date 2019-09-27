@@ -621,6 +621,28 @@ class EAV(models.Model):
         return self.attribute.attribute
 
 
+class Analysis(models.Model):
+    effect_size = models.FloatField(null=True, blank=True)
+    pval = models.FloatField(null=True, blank=True)
+    lb = models.FloatField(null=True, blank=True)
+    ub = models.FloatField(null=True, blank=True)
+    subject = models.ForeignKey(Subject, on_delete=models.CASCADE)
+    intervention = models.ForeignKey(Intervention, on_delete=models.CASCADE)
+    outcome = models.ForeignKey(Outcome, on_delete=models.CASCADE)
+    api_query_string = models.CharField(max_length=255)
+    shiny_bookmark = models.CharField(max_length=255)
+    user_settings = models.CharField(max_length=60)
+    there_was_an_error = models.BooleanField(default=True)
+    created = models.DateTimeField(auto_now_add=True)
+    updated = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return "Subject: {subject}; Intervention: {intervention}; Outcome: {outcome}; Query: {api_query_string}; Settings: {user_settings}; Bookmark: {shiny_bookmark}".format(subject=self.subject.pk, intervention=self.intervention.pk, outcome=self.outcome.pk, api_query_string=self.api_query_string, user_settings=self.user_settings, shiny_bookmark=self.shiny_bookmark)
+
+    class Meta:
+        verbose_name_plural = "analyses"
+
+
 class Assessment(models.Model):
     publication = models.ForeignKey(Publication, on_delete=models.CASCADE)
     is_relevant = models.BooleanField()

@@ -6,6 +6,9 @@ __pycache__
 .DS_Store
 
 bibliography.csv
+cache_analysis.py
+cache_analysis_localhost.py
+cache_data.py
 config.json
 config.py
 db.sqlite3
@@ -19,6 +22,3 @@ publications/ris_to_database.py
 requirements_without_their_dependencies.txt
 web_scraping/
 venv
-
-
-
