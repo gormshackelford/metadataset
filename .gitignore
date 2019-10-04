@@ -7,7 +7,6 @@ __pycache__
 
 bibliography.csv
 cache_analysis.py
-cache_analysis_localhost.py
 cache_data.py
 config.json
 config.py

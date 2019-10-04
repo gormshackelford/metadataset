@@ -936,7 +936,7 @@ def attributes(request, subject):
                             if instance.type == 'factor':
                                 instance.unit = 'NA for factors'
                             instance.save()
-                return redirect('attributes', subject=subject.slug)
+                    return redirect('attributes', subject=subject.slug)
     context = {
         'subject': subject,
         'formset': formset

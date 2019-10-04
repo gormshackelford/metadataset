@@ -1,6 +1,7 @@
 from django import forms
 from django.db import models
 from django.contrib.auth.forms import UserCreationForm
+from django.core.exceptions import NON_FIELD_ERRORS
 from django.forms.widgets import NumberInput
 from ast import literal_eval
 from mptt.forms import TreeNodeChoiceField
@@ -236,6 +237,19 @@ class AttributeForm(forms.ModelForm):
                 'placeholder': 'e.g., "kg/ha" (only if the data type is "Number")'
             })
         }
+        error_messages = {
+            NON_FIELD_ERRORS: {
+                'unique_together': "The names of co-variates must be unique. Please use a different name for this covariate.",
+            }
+        }
+
+    def clean_attribute(self):
+        data = self.cleaned_data['attribute']
+        restricted_attributes = ["country", "intervention", "outcome", "publication", "refresh", "subject", "user"]  # Terms that are used in the api_query_string of the Shiny app, which could cause conflicts with URL bookmarking inputs
+        for attribute in restricted_attributes:
+            if attribute.upper() == data.upper():
+                raise forms.ValidationError("This is a restricted term. Please use a different name for this covariate.")
+        return data
 
     def __init__(self, *args, **kwargs):
         super(AttributeForm, self).__init__(*args, **kwargs)

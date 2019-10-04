@@ -21,7 +21,28 @@
       <td class="centered">Select</td>
     </tr>
     {{ formset.management_form }}
+    {% if formset.errors %}
+      <span class="red">Error! Please see below.</span>
+    {% endif %}
     {% for form in formset %}
+      {% if form.errors %}
+        {% if form.non_field_errors %}
+          {% for error in form.non_field_errors %}
+            <tr>
+              <td colspan="3"><span class="red">{{ error }}</span></td>
+            </tr>
+          {% endfor %}
+        {% endif %}
+        {% for field in form %}
+          {% if field.errors %}
+            {% for error in field.errors %}
+              <tr>
+                <td colspan="3"><span class="red">{{ error }}</span></td>
+              </tr>
+            {% endfor %}
+          {% endif %}
+        {% endfor %}
+      {% endif %}
       <tr>
         <td>
           Covariate:
@@ -37,8 +58,10 @@
         <td>Data type:</td>
         <td>
           {{ form.type }}
-          {% if form.instance.type == 'factor' %}
-            <a target="_blank" href="{% url 'attribute' subject=subject.slug attribute_pk=form.instance.pk %}">Add/edit factor levels</a>
+          {% if form.instance.pk %}
+            {% if form.instance.type == 'factor' %}
+              <a target="_blank" href="{% url 'attribute' subject=subject.slug attribute_pk=form.instance.pk %}">Add/edit factor levels</a>
+            {% endif %}
           {% endif %}
         </td>
         <td></td>
