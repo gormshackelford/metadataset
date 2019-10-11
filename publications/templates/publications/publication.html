@@ -32,8 +32,8 @@
     <input type="submit" name="is_relevant" value="Include" accesskey="i" />
     <input type="submit" name="is_not_relevant" value="Exclude" accesskey="o" />
     <input type="submit" name="reset" value="Reset" />
-    <a class="button" href="{% url 'publication' subject=subject.slug publication_pk=previous_pk %}">Previous title/abstract</a>
-    <a class="button" href="{% url 'publication' subject=subject.slug publication_pk=next_pk %}">Next title/abstract</a>
+    <a class="button" href="{% url 'publication' subject=subject.slug publication_pk=previous_pk %}">&nbsp; < &nbsp;</a>
+    <a class="button" href="{% url 'publication' subject=subject.slug publication_pk=next_pk %}">&nbsp; > &nbsp;</a>
   </p>
 
   <h2>Title</h2>
@@ -187,34 +187,52 @@
   <br />
   <p><input type="submit" name="save" value="Save or update" /></p>
 
-  <h2>Full-text navigation</h2>
+  <h2>Your full texts</h2>
   <p>
-    <a class="button" href="{% url 'full_text_navigation' subject=subject.slug direction='previous' state='all' publication_pk=publication.pk %}">Previous full text</a>
-    <a class="button" href="{% url 'full_text_navigation' subject=subject.slug direction='next' state='all' publication_pk=publication.pk %}">Next full text</a>
+    {{ full_texts_assessed_count }} of {{ full_texts_count }} assessed ({{ full_texts_assessed_percent}}%)<br />
+    {{ full_texts_completed_count }} of {{ full_texts_count }} completed ({{ full_texts_completed_percent}}%)<br />
   </p>
-  <p>Not yet assessed:</p>
   <p>
-    <a class="button" href="{% url 'full_text_navigation' subject=subject.slug direction='previous' state='not_assessed'  publication_pk=publication.pk %}">Previous not yet assessed</a>
-    <a class="button" href="{% url 'full_text_navigation' subject=subject.slug direction='next' state='not_assessed' publication_pk=publication.pk %}">Next not yet assessed</a>
+    <a class="button" href="{% url 'full_text_navigation' subject=subject.slug direction='previous' state='all' users='this_user' publication_pk=publication.pk %}">&nbsp; < &nbsp;</a>
+    <a class="button" href="{% url 'full_text_navigation' subject=subject.slug direction='next' state='all' users='this_user' publication_pk=publication.pk %}">&nbsp; > &nbsp;</a>&nbsp;&nbsp; <a href="{% url 'publications' subject=subject.slug users='this_user' state='relevant' %}">Your full texts</a>
   </p>
-  <p>Not yet completed:</p>
   <p>
-    <a class="button" href="{% url 'full_text_navigation' subject=subject.slug direction='previous' state='not_completed'  publication_pk=publication.pk %}">Previous not yet completed</a>
-    <a class="button" href="{% url 'full_text_navigation' subject=subject.slug direction='next' state='not_completed' publication_pk=publication.pk %}">Next not yet completed</a>
+    <a class="button" href="{% url 'full_text_navigation' subject=subject.slug direction='previous' state='not_assessed' users='this_user' publication_pk=publication.pk %}">&nbsp; < &nbsp;</a>
+    <a class="button" href="{% url 'full_text_navigation' subject=subject.slug direction='next' state='not_assessed' users='this_user' publication_pk=publication.pk %}">&nbsp; > &nbsp;</a>&nbsp;&nbsp; <a href="{% url 'publications' subject=subject.slug users='this_user' state='not_assessed_full_texts' %}">Your full texts (not assessed)</a>
+  </p>
+  <p>
+    <a class="button" href="{% url 'full_text_navigation' subject=subject.slug direction='previous' state='not_completed' users='this_user' publication_pk=publication.pk %}">&nbsp; < &nbsp;</a>
+    <a class="button" href="{% url 'full_text_navigation' subject=subject.slug direction='next' state='not_completed' users='this_user' publication_pk=publication.pk %}">&nbsp; > &nbsp;</a>&nbsp;&nbsp; <a href="{% url 'publications' subject=subject.slug users='this_user' state='not_completed' %}">Your full texts (not completed)</a>
   </p>
 
-  <p>If you are assessing full texts for Kappa analysis, select the person you are working with, and then click "Next for Kappa" or "Previous for Kappa" to work on full texts that they have already assessed (whether or not you have already included/excluded these publications at title/abstract stage).</p>
+  <h2>Full texts for Kappa analysis</h2>
+  <p>Select the person with whom you want to work, and then use these navigation buttons to work on full texts that have already been assessed by that person.</p>
   <p>
-    {{ user_subject_form.user_for_comparison }}
+    <input type="submit" name="previous_for_kappa" value="&nbsp; < &nbsp;" />
+    <input type="submit" name="next_for_kappa" value="&nbsp; > &nbsp;" />&nbsp;&nbsp; Full texts assessed by {{ user_subject_form.user_for_comparison }}
   </p>
   {% if full_texts_assessed_by_both_users_count %}
     <p>
-      You have assessed {{ full_texts_assessed_by_both_users_count }} of {{ full_texts_assessed_by_user_2_count }} full texts assessed by this person ({{ full_texts_assessed_by_both_users_percent_of_user_2 }}%). This is {{ full_texts_assessed_by_both_users_percent }}% of the {{ full_texts_count }} full texts that need to be assessed (titles/abstracts that were included by any person).
+      You have assessed {{ full_texts_assessed_by_both_users_count }} of {{ full_texts_assessed_by_user_2_count }} full texts assessed by this person ({{ full_texts_assessed_by_both_users_percent_of_user_2 }}%). This is {{ full_texts_assessed_by_both_users_percent }}% of the {{ all_full_texts_count }} full texts that need to be assessed (titles/abstracts that were included by any person).
     </p>
   {% endif %}
+
+  <h2>All full texts</h2>
   <p>
-    <input type="submit" name="previous_for_kappa" value="Previous for Kappa" />
-    <input type="submit" name="next_for_kappa" value="Next for Kappa" />
+    {{ all_full_texts_assessed_count }} of {{ all_full_texts_count }} assessed ({{ all_full_texts_assessed_percent}}%)<br />
+    {{ all_full_texts_completed_count }} of {{ all_full_texts_count }} completed ({{ all_full_texts_completed_percent}}%)<br />
+  </p>
+  <p>
+    <a class="button" href="{% url 'full_text_navigation' subject=subject.slug direction='previous' state='all' users='all_users' publication_pk=publication.pk %}">&nbsp; < &nbsp;</a>
+    <a class="button" href="{% url 'full_text_navigation' subject=subject.slug direction='next' state='all' users='all_users' publication_pk=publication.pk %}">&nbsp; > &nbsp;</a>&nbsp;&nbsp; <a href="{% url 'publications' subject=subject.slug users='all_users' state='relevant' %}">All full texts</a>
+  </p>
+  <p>
+    <a class="button" href="{% url 'full_text_navigation' subject=subject.slug direction='previous' state='not_assessed' users='all_users' publication_pk=publication.pk %}">&nbsp; < &nbsp;</a>
+    <a class="button" href="{% url 'full_text_navigation' subject=subject.slug direction='next' state='not_assessed' users='all_users' publication_pk=publication.pk %}">&nbsp; > &nbsp;</a>&nbsp;&nbsp; <a href="{% url 'publications' subject=subject.slug users='all_users' state='not_assessed_full_texts' %}">All full texts (not assessed)</a>
+  </p>
+  <p>
+    <a class="button" href="{% url 'full_text_navigation' subject=subject.slug direction='previous' state='not_completed' users='all_users' publication_pk=publication.pk %}">&nbsp; < &nbsp;</a>
+    <a class="button" href="{% url 'full_text_navigation' subject=subject.slug direction='next' state='not_completed' users='all_users' publication_pk=publication.pk %}">&nbsp; > &nbsp;</a>&nbsp;&nbsp; <a href="{% url 'publications' subject=subject.slug users='all_users' state='not_completed' %}">All full texts (not completed)</a>
   </p>
 
 </form>

@@ -26,7 +26,9 @@ urlpatterns = [
     path('subject/<subject>/attribute/<int:attribute_pk>/', views.attribute, name='attribute'),
     path('subject/<subject>/publications/', views.publications, name='publications'),
     path('subject/<subject>/publications/<state>/', views.publications, name='publications'),
-    path('subject/<subject>/publications/<state>/download/<download>', views.publications, name='publications'),
+    path('subject/<subject>/publications/<state>/download/<download>/', views.publications, name='publications'),
+    path('subject/<subject>/publications/<state>/users/<users>/', views.publications, name='publications'),
+    path('subject/<subject>/publications/<state>/users/<users>/download/<download>/', views.publications, name='publications'),
     path('subject/<subject>/kappa/', views.kappa, name='kappa'),
 
     # Filter publications
@@ -64,8 +66,8 @@ urlpatterns = [
     path('subject/<subject>/publication/<int:publication_pk>/intervention/<int:experiment_index>/', views.experiment, name='experiment'),
     path('subject/<subject>/publication/<int:publication_pk>/intervention/<int:experiment_index>/population/<int:population_index>/', views.population, name='population'),
     path('subject/<subject>/publication/<int:publication_pk>/intervention/<int:experiment_index>/population/<int:population_index>/outcome/<int:outcome_index>/', views.outcome, name='outcome'),
-    path('subject/<subject>/full-text-navigation/<direction>/<state>/', views.full_text_navigation, name='full_text_navigation'),
-    path('subject/<subject>/full-text-navigation/<direction>/<state>/<publication_pk>/', views.full_text_navigation, name='full_text_navigation'),
+    path('subject/<subject>/full-text-navigation/<direction>/<state>/<users>/', views.full_text_navigation, name='full_text_navigation'),
+    path('subject/<subject>/full-text-navigation/<direction>/<state>/<users>/<publication_pk>/', views.full_text_navigation, name='full_text_navigation'),
 ]
 
 if settings.DEBUG:

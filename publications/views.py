@@ -228,15 +228,20 @@ def subject(request, subject):
     }
     # Get data for the sidebar.
     if user.is_authenticated:
-        if Publication.objects.filter(subject=subject).exists():
-            status = get_status(user, subject)
-            context.update(status)
+        if UserSubject.objects.filter(user=user, subject=subject).exists():
+            if Publication.objects.filter(subject=subject).exists():
+                status = get_status(user, subject)
+                context.update(status)
     return render(request, 'publications/subject.html', context)
 
 
-def publications(request, subject, state='all', download='none'):
+def publications(request, subject, state='all', users='all_users', download='none'):
     user = request.user
     subject = Subject.objects.get(slug=subject)
+    if (users=='this_user'):
+        users = User.objects.filter(pk=user.pk)
+    else:
+        users = User.objects.filter(usersubject__subject=subject)
     # All publications
     if (state == 'all'):
         publications = Publication.objects.filter(subject=subject).order_by('title')
@@ -245,7 +250,7 @@ def publications(request, subject, state='all', download='none'):
         publications = Publication.objects.distinct().filter(
             assessment__in=Assessment.objects.filter(
                 subject=subject,
-                user=user,
+                user__in=users,
                 is_relevant=True
             )
         ).order_by('title')
@@ -254,7 +259,7 @@ def publications(request, subject, state='all', download='none'):
         publications = Publication.objects.distinct().filter(
             assessment__in=Assessment.objects.filter(
                 subject=subject,
-                user=user,
+                user__in=users,
                 is_relevant=False
             )
         ).order_by('title')
@@ -263,7 +268,7 @@ def publications(request, subject, state='all', download='none'):
         publications = Publication.objects.distinct().filter(subject=subject).exclude(
             assessment__in=Assessment.objects.filter(
                 subject=subject,
-                user=user
+                user__in=users
             )
         ).order_by('title')
     # Publications that this user has assessed as relevant based on full text
@@ -271,7 +276,7 @@ def publications(request, subject, state='all', download='none'):
         publications = Publication.objects.distinct().filter(
             assessment__in=Assessment.objects.filter(
                 subject=subject,
-                user=user,
+                user__in=users,
                 is_relevant=True,  # is_relevant based on title/abstract
                 full_text_is_relevant=True
             )
@@ -281,7 +286,7 @@ def publications(request, subject, state='all', download='none'):
         publications = Publication.objects.distinct().filter(
             assessment__in=Assessment.objects.filter(
                 subject=subject,
-                user=user,
+                user__in=users,
                 is_relevant=True,  # is_relevant based on title/abstract
                 full_text_is_relevant=False
             )
@@ -290,7 +295,7 @@ def publications(request, subject, state='all', download='none'):
         publications = Publication.objects.distinct().filter(
             assessment__in=Assessment.objects.filter(
                 subject=subject,
-                user=user,
+                user__in=users,
                 cannot_find=True
             )
         ).order_by('title')
@@ -298,7 +303,7 @@ def publications(request, subject, state='all', download='none'):
         publications = Publication.objects.distinct().filter(
             assessment__in=Assessment.objects.filter(
                 subject=subject,
-                user=user,
+                user__in=users,
                 cannot_access=True
             )
         ).order_by('title')
@@ -306,7 +311,7 @@ def publications(request, subject, state='all', download='none'):
         publications = Publication.objects.distinct().filter(
             assessment__in=Assessment.objects.filter(
                 subject=subject,
-                user=user,
+                user__in=users,
                 language_barrier=True
             )
         ).order_by('title')
@@ -314,7 +319,7 @@ def publications(request, subject, state='all', download='none'):
         publications = Publication.objects.distinct().filter(
             assessment__in=Assessment.objects.filter(
                 subject=subject,
-                user=user,
+                user__in=users,
                 secondary_literature=True
             )
         ).order_by('title')
@@ -322,7 +327,7 @@ def publications(request, subject, state='all', download='none'):
         publications = Publication.objects.distinct().filter(
             assessment__in=Assessment.objects.filter(
                 subject=subject,
-                user=user,
+                user__in=users,
                 other=True
             )
         ).order_by('title')
@@ -330,7 +335,7 @@ def publications(request, subject, state='all', download='none'):
         publications = Publication.objects.distinct().filter(
             assessment__in=Assessment.objects.filter(
                 subject=subject,
-                user=user
+                user__in=users
             ).filter(
                 Q(no_population=True) |
                 Q(no_intervention=True) |
@@ -343,7 +348,7 @@ def publications(request, subject, state='all', download='none'):
         publications = Publication.objects.distinct().filter(
             assessment__in=Assessment.objects.filter(
                 subject=subject,
-                user=user,
+                user__in=users,
                 is_completed=True
             )
         ).order_by('title')
@@ -352,21 +357,35 @@ def publications(request, subject, state='all', download='none'):
         publications = Publication.objects.distinct().filter(
             assessment__in=Assessment.objects.filter(
                 subject=subject,
-                user=user,
+                user__in=users,
                 is_relevant=True,
                 is_completed=False
             )
         ).order_by('title')
-    # Publications that this user has not yet assessed based on full text
+        if (users.count() > 1):
+            # Exclude publications that have been marked as completed by at least one person (even if they have not been marked as completed by other people).
+            publications = publications.exclude(
+                assessment__in=Assessment.objects.filter(
+                    is_completed=True
+                )
+            )
+    # Publications that have not yet been assessed at full-text stage
     elif (state == 'not_assessed_full_texts'):
         publications = Publication.objects.distinct().filter(
             assessment__in=Assessment.objects.filter(
                 subject=subject,
-                user=user,
+                user__in=users,
                 is_relevant=True,  # is_relevant based on title/abstract
                 full_text_is_relevant=None
             )
-        ).order_by('title')
+        )
+        if (users.count() > 1):
+            # Exclude publications that have been assessed by at least one person (even if they have not been assessed by other people).
+            publications = publications.exclude(
+                assessment__in=Assessment.objects.filter(
+                    Q(full_text_is_relevant=True) | Q(full_text_is_relevant=False)
+                )
+            ).order_by('title')
     # If the request is to download the publications, rather than viewing them online
     if download == 'CSV':
         # Create the HttpResponse object with the appropriate CSV header.
@@ -755,9 +774,9 @@ def publication(request, subject, publication_pk):
                 instance.subject = subject
                 instance.save()
             if 'next_for_kappa' in request.POST:
-                return redirect('full_text_navigation', subject=subject.slug, direction='next', state='kappa', publication_pk=publication_pk)
+                return redirect('full_text_navigation', subject=subject.slug, direction='next', state='kappa', users='this_user', publication_pk=publication_pk)
             if 'previous_for_kappa' in request.POST:
-                return redirect('full_text_navigation', subject=subject.slug, direction='previous', state='kappa', publication_pk=publication_pk)
+                return redirect('full_text_navigation', subject=subject.slug, direction='previous', state='kappa', users='this_user', publication_pk=publication_pk)
     else:
         # Intervention choices for the formset (high-level choices only)
         interventions = TreeNodeChoiceField(required=False, queryset=Intervention.objects.filter(pk=intervention.pk).get_descendants(include_self=True).filter(level__lte=2).filter(level__gt=0), level_indicator = "---")
@@ -2120,141 +2139,219 @@ def get_status(user, subject):
     is created for each user (for each subject), and it is saved in the database.
     """
 
-    # If an assessment_order has been created for this user and subject, get it from the database.
-    if AssessmentStatus.objects.filter(user=user, subject=subject).exists():
-        item = AssessmentStatus.objects.get(user=user, subject=subject)
-        assessment_order = literal_eval(item.assessment_order)
-        next_assessment = item.next_assessment
-        completed_assessments = literal_eval(item.completed_assessments)
+    if UserSubject.objects.filter(user=user, subject=subject).exists():  # If the user has permission to work on this subject
 
-        # If new publications have been added to the database, then randomly append their pks to the end of assessment_order.
-        max_assessment_pks = max(assessment_order)
-        pks = Publication.objects.filter(subject=subject).values_list('pk', flat=True)
-        max_pks = max(pks)
+        # If an assessment_order has been created for this user and subject, get it from the database.
+        if AssessmentStatus.objects.filter(user=user, subject=subject).exists():
+            item = AssessmentStatus.objects.get(user=user, subject=subject)
+            assessment_order = literal_eval(item.assessment_order)
+            next_assessment = item.next_assessment
+            completed_assessments = literal_eval(item.completed_assessments)
 
-        if max_assessment_pks < max_pks:
-            new_publications = list(pks)
-            new_publications = list(set(new_publications) - set(assessment_order))
-            shuffle(new_publications)
-            assessment_order = assessment_order + new_publications
-            item.assessment_order = assessment_order
+            # If new publications have been added to the database, then randomly append their pks to the end of assessment_order.
+            max_assessment_pks = max(assessment_order)
+            pks = Publication.objects.filter(subject=subject).values_list('pk', flat=True)
+            max_pks = max(pks)
+
+            if max_assessment_pks < max_pks:
+                new_publications = list(pks)
+                new_publications = list(set(new_publications) - set(assessment_order))
+                shuffle(new_publications)
+                assessment_order = assessment_order + new_publications
+                item.assessment_order = assessment_order
+                item.save()
+
+            #TODO: If old publications have been deleted from the database (this should not happen in production), then delete their pks from assessment_order.
+
+        # If an assessment_order has not been created for this user and subject, create it and save it in the database.
+        else:
+            pks = Publication.objects.filter(subject=subject).values_list('pk', flat=True)
+            assessment_order = list(pks)
+            shuffle(assessment_order)
+            next_assessment = assessment_order[0]
+            previous_full_text_assessment = -1
+            completed_assessments = []
+            item = AssessmentStatus(
+                subject=subject,
+                user=user,
+                assessment_order=assessment_order,
+                next_assessment=next_assessment,
+                previous_full_text_assessment=previous_full_text_assessment,
+                completed_assessments=completed_assessments
+            )
             item.save()
+        item = AssessmentStatus.objects.get(user=user, subject=subject)
+        publications_count = len(assessment_order)
+        publications_assessed_count = len(completed_assessments)
+        if publications_count != 0:
+            publications_assessed_percent = int(publications_assessed_count / publications_count * 100)
+        else:
+            publications_assessed_percent = 100
 
-        #TODO: If old publications have been deleted from the database (this should not happen in production), then delete their pks from assessment_order.
+        # Count the publications that have been included at title/abstract stage ("full texts") by this user.
+        if Publication.objects.filter(
+            assessment__in=Assessment.objects.filter(
+                subject=subject, user=user, is_relevant=True
+            )
+        ).exists():
+            full_texts = Publication.objects.filter(
+                assessment__in=Assessment.objects.filter(
+                    subject=subject, user=user, is_relevant=True
+                )
+            )
+            full_texts_count = full_texts.values_list('pk', flat=True).count()
+        else:
+            full_texts_count = 0
 
-    # If an assessment_order has not been created for this user and subject, create it and save it in the database.
-    else:
-        pks = Publication.objects.filter(subject=subject).values_list('pk', flat=True)
-        assessment_order = list(pks)
-        shuffle(assessment_order)
-        next_assessment = assessment_order[0]
-        previous_full_text_assessment = -1
-        completed_assessments = []
-        item = AssessmentStatus(
-            subject=subject,
-            user=user,
-            assessment_order=assessment_order,
-            next_assessment=next_assessment,
-            previous_full_text_assessment=previous_full_text_assessment,
-            completed_assessments=completed_assessments
-        )
-        item.save()
-    item = AssessmentStatus.objects.get(user=user, subject=subject)
-    publications_count = len(assessment_order)
-    publications_assessed_count = len(completed_assessments)
-    if publications_count != 0:
-        publications_assessed_percent = int(publications_assessed_count / publications_count * 100)
-    else:
-        publications_assessed_percent = 100
-    # Count the publications that have been included at title/abstract stage.
-    if Publication.objects.filter(assessment__in=Assessment.objects.filter(
-        subject=subject, user=user, is_relevant=True)).exists():
-        relevant_publications_count = Publication.objects.filter(
-            assessment__in=Assessment.objects.filter(
-                subject=subject, user=user, is_relevant=True)).count()
-    else:
-        relevant_publications_count = 0
-    # Count the publications that have been included or excluded at full-text stage, but not necessarily marked as completed).
-    if Publication.objects.filter(assessment__in=Assessment.objects.filter(
-        subject=subject, user=user, full_text_is_relevant__isnull=False)).exists():
-        full_texts_assessed_count = Publication.objects.filter(
-            assessment__in=Assessment.objects.filter(
-                subject=subject, user=user, full_text_is_relevant__isnull=False)).count()
-    else:
-        full_texts_assessed_count = 0
-    if relevant_publications_count != 0:
-        full_texts_assessed_percent = int(full_texts_assessed_count / relevant_publications_count * 100)
-    else:
-        full_texts_assessed_percent = 100
-    # Count the publications that have been marked as completed at full-text stage.
-    if Publication.objects.filter(assessment__in=Assessment.objects.filter(
-        subject=subject, user=user, is_completed=True)).exists():
-        full_texts_completed_count = Publication.objects.filter(
-            assessment__in=Assessment.objects.filter(
-                subject=subject, user=user, is_completed=True)).count()
-    else:
-        full_texts_completed_count = 0
-    if relevant_publications_count != 0:
-        full_texts_completed_percent = int(full_texts_completed_count / relevant_publications_count * 100)
-    else:
-        full_texts_completed_percent = 100
-    # Count the publications that have been included or excluded at full-text stage by this user and the user_for_comparison (for Kappa analysis).
-    full_texts_count = None
-    full_texts_assessed_by_user_2_count = None
-    full_texts_assessed_by_both_users_count = None
-    full_texts_assessed_by_both_users_percent = None
-    full_texts_assessed_by_both_users_percent_of_user_2 = None
-    user_subject = UserSubject.objects.get(user=user, subject=subject)
-    if user_subject.user_for_comparison:
-        user_1 = user
-        user_2 = user_subject.user_for_comparison
-        # Publications at Stage 2 (titles/abstracts included at Stage 1 by any user)
-        full_texts = Publication.objects.filter(
+        # Count the publications that have been included at title/abstract stage ("full texts") by any user.
+        if (Publication.objects.filter(
             subject=subject,
             assessment__in=Assessment.objects.filter(is_relevant=True)
-        ).distinct()
-        full_texts_count = full_texts.count()
-        # Publications that user_1 assessed at Stage 2
-        user_1_publications = Publication.objects.filter(
-            subject=subject,
-            assessment__in=Assessment.objects.filter(user=user_1, full_text_is_relevant__isnull=False)
-        )
-        # Publications that user_2 assessed at Stage 2
-        user_2_publications = Publication.objects.filter(
-            subject=subject,
-            assessment__in=Assessment.objects.filter(user=user_2, full_text_is_relevant__isnull=False)
-        )
-        full_texts_assessed_by_user_2_count = user_2_publications.count()
-        # Publications that both users assessed at Stage 2
-        full_texts_assessed_by_both_users = user_1_publications & user_2_publications
-        full_texts_assessed_by_both_users_count = full_texts_assessed_by_both_users.count()
+        ).distinct().exists()):
+            all_full_texts = Publication.objects.filter(
+                subject=subject,
+                assessment__in=Assessment.objects.filter(is_relevant=True)
+            ).distinct()
+            all_full_texts_count = all_full_texts.values_list('pk', flat=True).count()
+        else:
+            all_full_texts_count = 0
+
+        # Count the publications that have been included or excluded at full-text stage, but not necessarily marked as completed), by this user.
+        if Publication.objects.filter(
+            assessment__in=Assessment.objects.filter(
+                subject=subject, user=user, full_text_is_relevant__isnull=False
+            )
+        ).exists():
+            full_texts_assessed = Publication.objects.filter(
+                assessment__in=Assessment.objects.filter(
+                    subject=subject, user=user, full_text_is_relevant__isnull=False
+                )
+            )
+            full_texts_assessed_count = full_texts_assessed.values_list('pk', flat=True).count()
+        else:
+            full_texts_assessed_count = 0
         if full_texts_count != 0:
-            full_texts_assessed_by_both_users_percent = round(full_texts_assessed_by_both_users_count / full_texts_count * 100)
+            full_texts_assessed_percent = int(full_texts_assessed_count / full_texts_count * 100)
         else:
-            full_texts_assessed_by_both_users_percent = 100
-        if full_texts_assessed_by_user_2_count != 0:
-            full_texts_assessed_by_both_users_percent_of_user_2 = round(full_texts_assessed_by_both_users_count / full_texts_assessed_by_user_2_count * 100)
+            full_texts_assessed_percent = 100
+
+        # Count the publications that have been included or excluded at full-text stage, but not necessarily marked as completed), by any user.
+        if Publication.objects.filter(
+            assessment__in=Assessment.objects.filter(
+                subject=subject, full_text_is_relevant__isnull=False
+            )
+        ).exists():
+            all_full_texts_assessed = Publication.objects.filter(
+                assessment__in=Assessment.objects.filter(
+                    subject=subject, full_text_is_relevant__isnull=False
+                )
+            ).distinct()
+            all_full_texts_assessed_count = all_full_texts_assessed.values_list('pk', flat=True).count()
         else:
-            full_texts_assessed_by_both_users_percent_of_user_2 = 100
-    status = {
-        'user_subject': UserSubject.objects.filter(user=user, subject=subject).exists(),
-        'item': item,
-        'publications_count': publications_count,
-        'publications_assessed_count': publications_assessed_count,
-        'publications_assessed_percent': publications_assessed_percent,
-        'full_texts_assessed_count': full_texts_assessed_count,
-        'full_texts_assessed_percent': full_texts_assessed_percent,
-        'full_texts_completed_count': full_texts_completed_count,
-        'full_texts_completed_percent': full_texts_completed_percent,
-        'full_texts_count': full_texts_count,
-        'full_texts_assessed_by_user_2_count': full_texts_assessed_by_user_2_count,
-        'full_texts_assessed_by_both_users_count': full_texts_assessed_by_both_users_count,
-        'full_texts_assessed_by_both_users_percent': full_texts_assessed_by_both_users_percent,
-        'full_texts_assessed_by_both_users_percent_of_user_2': full_texts_assessed_by_both_users_percent_of_user_2,
-        'relevant_publications_count': relevant_publications_count,
-        'next_assessment': next_assessment
-    }
-    return(status)
+            all_full_texts_assessed_count = 0
+        if all_full_texts_count != 0:
+            all_full_texts_assessed_percent = int(all_full_texts_assessed_count / all_full_texts_count * 100)
+        else:
+            all_full_texts_assessed_percent = 100
+
+        # Count the publications that have been marked as completed at full-text stage by this user.
+        if Publication.objects.filter(
+            assessment__in=Assessment.objects.filter(
+                subject=subject, user=user, is_completed=True
+            )
+        ).exists():
+            full_texts_completed = Publication.objects.filter(
+                assessment__in=Assessment.objects.filter(
+                    subject=subject, user=user, is_completed=True
+                )
+            )
+            full_texts_completed_count = full_texts_completed.values_list('pk', flat=True).count()
+        else:
+            full_texts_completed_count = 0
+        if full_texts_count != 0:
+            full_texts_completed_percent = int(full_texts_completed_count / full_texts_count * 100)
+        else:
+            full_texts_completed_percent = 100
+
+        # Count the publications that have been marked as completed at full-text stage by any user.
+        if Publication.objects.filter(
+            assessment__in=Assessment.objects.filter(
+                subject=subject, is_completed=True
+            )
+        ).exists():
+            all_full_texts_completed = Publication.objects.filter(
+                assessment__in=Assessment.objects.filter(
+                    subject=subject, is_completed=True
+                )
+            ).distinct()
+            all_full_texts_completed_count = all_full_texts_completed.values_list('pk', flat=True).count()
+        else:
+            all_full_texts_completed_count = 0
+        if all_full_texts_count != 0:
+            all_full_texts_completed_percent = int(all_full_texts_completed_count / all_full_texts_count * 100)
+        else:
+            full_texts_completed_percent = 100
+
+        # Count the publications that have been included or excluded at full-text stage by this user and the user_for_comparison (for Kappa analysis).
+        full_texts_assessed_by_user_2_count = None
+        full_texts_assessed_by_both_users_count = None
+        full_texts_assessed_by_both_users_percent = None
+        full_texts_assessed_by_both_users_percent_of_user_2 = None
+        user_subject = UserSubject.objects.get(user=user, subject=subject)
+        if user_subject.user_for_comparison:
+            user_1 = user
+            user_2 = user_subject.user_for_comparison
+            # Publications that user_1 assessed at Stage 2
+            user_1_publications = Publication.objects.filter(
+                subject=subject,
+                assessment__in=Assessment.objects.filter(
+                    user=user_1, full_text_is_relevant__isnull=False
+                )
+            )
+            # Publications that user_2 assessed at Stage 2
+            user_2_publications = Publication.objects.filter(
+                subject=subject,
+                assessment__in=Assessment.objects.filter(
+                    user=user_2, full_text_is_relevant__isnull=False
+                )
+            )
+            full_texts_assessed_by_user_2_count = user_2_publications.values_list('pk', flat=True).count()
+            # Publications that both users assessed at Stage 2
+            full_texts_assessed_by_both_users = user_1_publications & user_2_publications
+            full_texts_assessed_by_both_users_count = full_texts_assessed_by_both_users.values_list('pk', flat=True).count()
+            if all_full_texts_count != 0:
+                full_texts_assessed_by_both_users_percent = round(full_texts_assessed_by_both_users_count / all_full_texts_count * 100)
+            else:
+                full_texts_assessed_by_both_users_percent = 100
+            if full_texts_assessed_by_user_2_count != 0:
+                full_texts_assessed_by_both_users_percent_of_user_2 = round(full_texts_assessed_by_both_users_count / full_texts_assessed_by_user_2_count * 100)
+            else:
+                full_texts_assessed_by_both_users_percent_of_user_2 = 100
+        status = {
+            'user_subject': UserSubject.objects.filter(user=user, subject=subject).exists(),
+            'item': item,
+            'publications_count': publications_count,
+            'publications_assessed_count': publications_assessed_count,
+            'publications_assessed_percent': publications_assessed_percent,
+            'full_texts_count': full_texts_count,  # "relevant publications" (at title/abstract stage) = "full texts" (publications that need to be screened at full-text stage)
+            'full_texts_assessed_count': full_texts_assessed_count,
+            'full_texts_assessed_percent': full_texts_assessed_percent,
+            'full_texts_completed_count': full_texts_completed_count,
+            'full_texts_completed_percent': full_texts_completed_percent,
+            'all_full_texts_assessed_count': all_full_texts_assessed_count,
+            'all_full_texts_assessed_percent': all_full_texts_assessed_percent,
+            'all_full_texts_completed_count': all_full_texts_completed_count,
+            'all_full_texts_completed_percent': all_full_texts_completed_percent,
+            'all_full_texts_count': all_full_texts_count,
+            'full_texts_assessed_by_user_2_count': full_texts_assessed_by_user_2_count,
+            'full_texts_assessed_by_both_users_count': full_texts_assessed_by_both_users_count,
+            'full_texts_assessed_by_both_users_percent': full_texts_assessed_by_both_users_percent,
+            'full_texts_assessed_by_both_users_percent_of_user_2': full_texts_assessed_by_both_users_percent_of_user_2,
+            'next_assessment': next_assessment
+        }
+        return(status)
+    else:  # If the user does not have permission to work on this subject
+        return()
 
 
 # This method is needed (as are the lists of completed_assessments), because
@@ -2287,11 +2384,15 @@ def get_path_to_shiny(request):
 
 
 @login_required
-def full_text_navigation(request, subject, direction, state, publication_pk='default'):
+def full_text_navigation(request, subject, direction, state, users, publication_pk='default'):
     user = request.user
     subject = Subject.objects.get(slug=subject)
     user_subject = get_object_or_404(UserSubject, user=user, subject=subject)  # Check if this user has permission to work on this subject.
     user_subjects = UserSubject.objects.filter(subject=subject)
+    if (users=='this_user'):
+        users = User.objects.filter(pk=user.pk)
+    else:
+        users = User.objects.filter(usersubject__subject=subject)
     # Get the publication from which to calculate "next" and "previous" (either the previous_full_text_assessment or the publication from which the request was sent).
     if (publication_pk=='default'):
         previous_full_text_assessment = AssessmentStatus.objects.get(
@@ -2312,29 +2413,29 @@ def full_text_navigation(request, subject, direction, state, publication_pk='def
     # Exclude this publication.
     publications = publications.exclude(pk=publication.pk)
     if (state == 'all'):
-        # If there are publications for this subject that this user included at title/abstract stage (is_relevant=True)
+        # Publications for this subject that were included at title/abstract stage (is_relevant=True)
         if publications.filter(assessment__in=Assessment.objects.filter(
-            subject=subject, user=user, is_relevant=True
+            subject=subject, user__in=users, is_relevant=True
         )).exists():
             publications = publications.filter(assessment__in=Assessment.objects.filter(
-                subject=subject, user=user, is_relevant=True
+                subject=subject, user__in=users, is_relevant=True
             ))
     elif (state == 'not_completed'):
-        # If there are publications for this subject that this user included at title/abstract stage but has not yet marked as completed
+        # Publications for this subject that were included at title/abstract stage but have not yet been marked as completed
         if publications.filter(assessment__in=Assessment.objects.filter(
-            subject=subject, user=user, is_relevant=True, is_completed=False
+            subject=subject, user__in=users, is_relevant=True, is_completed=False
         )).exists():
             publications = publications.filter(assessment__in=Assessment.objects.filter(
-                subject=subject, user=user, is_relevant=True, is_completed=False
+                subject=subject, user__in=users, is_relevant=True, is_completed=False
             ))
     elif (state == 'not_assessed'):
-        # If there are publications for this subject that this user included at title/abstract stage but has not yet assigned an intervention or excluded at full-text stage
+        # Publications for this subject that were included at title/abstract stage but have not yet been assigned an intervention or excluded at full-text stage
         if publications.filter(assessment__in=Assessment.objects.filter(
-            subject=subject, user=user, is_relevant=True, is_completed=False
-        )).exclude(experiment__in=Experiment.objects.filter(user=user)).exists():
+            subject=subject, user__in=users, is_relevant=True, is_completed=False
+        )).exclude(experiment__in=Experiment.objects.filter(user__in=users)).exists():
             publications = publications.filter(assessment__in=Assessment.objects.filter(
-                subject=subject, user=user, is_relevant=True, is_completed=False
-            )).exclude(experiment__in=Experiment.objects.filter(user=user))
+                subject=subject, user__in=users, is_relevant=True, is_completed=False
+            )).exclude(experiment__in=Experiment.objects.filter(user__in=users))
     elif (state == 'kappa'):
         # If screening full texts for Kappa analysis (publications that the user_for_comparison has already assessed at full-text stage)
         user_for_comparison = user_subject.user_for_comparison

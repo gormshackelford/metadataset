@@ -39,15 +39,15 @@
       <br />
       {{ publications_assessed_count }} of {{ publications_count }} assessed ({{ publications_assessed_percent }}%)
       <br />
-      <a href="{% url 'publications' subject=subject.slug state='all' %}">Your titles/abstracts</a>
+      <a href="{% url 'publications' subject=subject.slug users='this_user' state='all' %}">Your titles/abstracts</a>
       <br />
-      <a href="{% url 'publications' subject=subject.slug state='relevant' %}">Included</a>
-      <a href="{% url 'publications' subject=subject.slug state='relevant' download='CSV' %}">(CSV)</a>
+      <a href="{% url 'publications' subject=subject.slug users='this_user' state='relevant' %}">Included</a>
+      <a href="{% url 'publications' subject=subject.slug users='this_user' state='relevant' download='CSV' %}">(CSV)</a>
       <br />
-      <a href="{% url 'publications' subject=subject.slug state='not_relevant' %}">Excluded</a>
-      <a href="{% url 'publications' subject=subject.slug state='not_relevant' download='CSV' %}">(CSV)</a>
+      <a href="{% url 'publications' subject=subject.slug users='this_user' state='not_relevant' %}">Excluded</a>
+      <a href="{% url 'publications' subject=subject.slug users='this_user' state='not_relevant' download='CSV' %}">(CSV)</a>
       <br />
-      <a href="{% url 'publications' subject=subject.slug state='not_assessed' %}">Not assessed</a>
+      <a href="{% url 'publications' subject=subject.slug users='this_user' state='not_assessed' %}">Not assessed</a>
       <br />
       <a href="{% url 'kappa' subject=subject.slug %}">Kappa analysis</a>
 
@@ -56,37 +56,37 @@
       <a href="{% url 'add_publication' subject=subject.slug %}">Add a title/abstract</a>
 
       <h1>Full texts</h1>
-      <a href="{% url 'full_text_navigation' subject=subject.slug direction='next' state='not_completed' %}">Your next full text</a> <span class="red">(start or restart here)</span>
+      <a href="{% url 'full_text_navigation' subject=subject.slug direction='next' users='this_user' state='not_completed' %}">Your next full text</a> <span class="red">(start or restart here)</span>
       <br />
-      {{ full_texts_assessed_count }} of {{ relevant_publications_count }} assessed ({{ full_texts_assessed_percent}}%)
+      {{ full_texts_assessed_count }} of {{ full_texts_count }} assessed ({{ full_texts_assessed_percent}}%)
       <br />
-      {{ full_texts_completed_count }} of {{ relevant_publications_count }} completed ({{ full_texts_completed_percent}}%)
+      {{ full_texts_completed_count }} of {{ full_texts_count }} completed ({{ full_texts_completed_percent}}%)
       <br />
-      <a href="{% url 'publications' subject=subject.slug state='relevant' %}">Your full texts</a>
+      <a href="{% url 'publications' subject=subject.slug users='this_user' state='relevant' %}">Your full texts</a>
       <br />
-      <a href="{% url 'publications' subject=subject.slug state='relevant_full_texts' %}">Included</a>
-      <a href="{% url 'publications' subject=subject.slug state='relevant_full_texts' download='CSV' %}">(CSV)</a>
+      <a href="{% url 'publications' subject=subject.slug users='this_user' state='relevant_full_texts' %}">Included</a>
+      <a href="{% url 'publications' subject=subject.slug users='this_user' state='relevant_full_texts' download='CSV' %}">(CSV)</a>
       <br />
-      <a href="{% url 'publications' subject=subject.slug state='not_relevant_full_texts' %}">Excluded</a>
-      <a href="{% url 'publications' subject=subject.slug state='not_relevant_full_texts' download='CSV' %}">(CSV)</a>
+      <a href="{% url 'publications' subject=subject.slug users='this_user' state='not_relevant_full_texts' %}">Excluded</a>
+      <a href="{% url 'publications' subject=subject.slug users='this_user' state='not_relevant_full_texts' download='CSV' %}">(CSV)</a>
       <br />
-      <a class="indented" href="{% url 'publications' subject=subject.slug state='cannot_find' %}">Cannot find</a>
+      <a class="indented" href="{% url 'publications' subject=subject.slug users='this_user' state='cannot_find' %}">Cannot find</a>
       <br />
-      <a class="indented" href="{% url 'publications' subject=subject.slug state='cannot_access' %}">Cannot access</a>
+      <a class="indented" href="{% url 'publications' subject=subject.slug users='this_user' state='cannot_access' %}">Cannot access</a>
       <br />
-      <a class="indented" href="{% url 'publications' subject=subject.slug state='language_barrier' %}">Language barrier</a>
+      <a class="indented" href="{% url 'publications' subject=subject.slug users='this_user' state='language_barrier' %}">Language barrier</a>
       <br />
-      <a class="indented" href="{% url 'publications' subject=subject.slug state='secondary_literature' %}">Secondary literature</a>
+      <a class="indented" href="{% url 'publications' subject=subject.slug users='this_user' state='secondary_literature' %}">Secondary literature</a>
       <br />
-      <a class="indented" href="{% url 'publications' subject=subject.slug state='no_pico' %}">No relevant PICO component</a>
+      <a class="indented" href="{% url 'publications' subject=subject.slug users='this_user' state='no_pico' %}">No relevant PICO component</a>
       <br />
-      <a class="indented" href="{% url 'publications' subject=subject.slug state='other' %}">Other</a>
+      <a class="indented" href="{% url 'publications' subject=subject.slug users='this_user' state='other' %}">Other</a>
       <br />
-      <a href="{% url 'publications' subject=subject.slug state='not_assessed_full_texts' %}">Not assessed</a>
+      <a href="{% url 'publications' subject=subject.slug users='this_user' state='not_assessed_full_texts' %}">Not assessed</a>
       <br />
-      <a href="{% url 'publications' subject=subject.slug state='not_completed' %}">Not completed</a>
+      <a href="{% url 'publications' subject=subject.slug users='this_user' state='not_completed' %}">Not completed</a>
       <br />
-      <a href="{% url 'publications' subject=subject.slug state='completed' %}">Completed</a>
+      <a href="{% url 'publications' subject=subject.slug users='this_user' state='completed' %}">Completed</a>
       <br />
       <a href="{% url 'kappa' subject=subject.slug %}">Kappa analysis</a>
 
