@@ -1966,7 +1966,6 @@ def kappa(request, subject):
             user_1 = User.objects.get(pk=user_1.pk)
             user_2 = User.objects.get(pk=user_2.pk)
             percent = form.cleaned_data.get('percent')
-            percent = int(percent)
 
             # If we are doing Kappa analysis at Stage 1 (titles/abstracts)
             if 'stage_1' in request.POST:
@@ -2127,7 +2126,7 @@ def kappa(request, subject):
             'only_user_2_included': only_user_2_included,
             'kappa': round(kappa, 2),
             'percent_agreement': round(agreement, 2),
-            'percent': round(percent)
+            'percent': round(percent, 2)
         })
     return render(request, 'publications/kappa.html', context)
 

@@ -317,4 +317,4 @@ class EAVPublicationForm(forms.ModelForm):
 class KappaForm(forms.Form):
     user_1 = forms.ModelChoiceField(queryset=User.objects.all())
     user_2 = forms.ModelChoiceField(queryset=User.objects.all())
-    percent = forms.IntegerField(widget=NumberInput(attrs={'type': 'range', 'id': 'percent', 'value': '10', 'min': '0', 'max': '100', 'step': '1'}))
+    percent = forms.FloatField(widget=NumberInput(attrs={'type': 'range', 'id': 'percent', 'value': '10', 'min': '0', 'max': '100', 'step': '0.5'}))
