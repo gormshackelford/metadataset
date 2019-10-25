@@ -26,11 +26,7 @@ services:
     command: python manage.py runserver 0.0.0.0:8000
     volumes:
       - db_dump:/usr/src/metadataset/db_dump
-      - ./metadataset:/usr/src/metadataset/metadataset
-      - ./publications:/usr/src/metadataset/publications
-      - ./config.json:/usr/src/metadataset/config.json
-      - ./config.py:/usr/src/metadataset/config.py
-      - ./manage.py:/usr/src/metadataset/manage.py
+      - .:/usr/src/metadataset
     ports:
       - 8000:8000
     networks:
