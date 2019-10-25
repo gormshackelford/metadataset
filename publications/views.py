@@ -26,7 +26,6 @@ from haystack.generic_views import SearchView
 from haystack.forms import SearchForm
 from haystack.query import SearchQuerySet
 from rest_framework import viewsets
-from django_filters import rest_framework as filters
 import reversion
 import csv
 import json

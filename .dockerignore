@@ -1,10 +1,4 @@
-
-*.pyc
-*~
-__pycache__
-/static
-.DS_Store
-
+.git
 .env
 bibliography.csv
 cache_analysis.py

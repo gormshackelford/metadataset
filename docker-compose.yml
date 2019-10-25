@@ -1,0 +1,66 @@
+version: '2'
+
+services:
+
+  nginx-proxy:
+    restart: always
+    image: jwilder/nginx-proxy
+    ports:
+      - 80:80
+      - 443:443
+    volumes:
+      - /etc/nginx/vhost.d
+      - /usr/share/nginx/html
+      - /var/run/docker.sock:/tmp/docker.sock:ro
+      - /etc/nginx/certs
+    networks:
+      - nginx-proxy-net
+
+  metadataset:
+    build:
+      context: .
+      args:
+        - AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID
+        - AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY
+    restart: always
+    command: python manage.py runserver 0.0.0.0:8000
+    volumes:
+      - db_dump:/usr/src/metadataset/db_dump
+      - ./metadataset:/usr/src/metadataset/metadataset
+      - ./publications:/usr/src/metadataset/publications
+      - ./config.json:/usr/src/metadataset/config.json
+      - ./config.py:/usr/src/metadataset/config.py
+      - ./manage.py:/usr/src/metadataset/manage.py
+    ports:
+      - 8000:8000
+    networks:
+      - nginx-proxy-net
+    environment:
+      - VIRTUAL_PORT=8000
+    depends_on:
+      - metadataset-db
+
+  metadataset-db:
+    image: mysql:5.7
+    restart: always
+    ports:
+      - 3306:3306
+    networks:
+      - nginx-proxy-net
+    environment:
+      - MYSQL_DATABASE=$MYSQL_DATABASE
+      - MYSQL_USER=$MYSQL_USER
+      - MYSQL_PASSWORD=$MYSQL_PASSWORD
+      - MYSQL_ROOT_PASSWORD=$MYSQL_ROOT_PASSWORD
+    volumes:
+      - db_data:/var/lib/mysql
+      - db_dump:/db_dump
+
+volumes:
+  db_data:
+  db_dump:
+
+networks:
+  nginx-proxy-net:
+    external:
+      name: nginx-proxy-net

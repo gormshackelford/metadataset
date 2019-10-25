@@ -34,7 +34,7 @@ with open(config_file, 'r') as f:
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/2.0/howto/deployment/checklist/
 
-ALLOWED_HOSTS = ['127.0.0.1', 'www.metadataset.com']
+ALLOWED_HOSTS = ['127.0.0.1', 'www.metadataset.com', 'dev.metadataset.com']
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = config['SECRET_KEY']
