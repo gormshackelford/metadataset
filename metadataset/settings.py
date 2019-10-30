@@ -87,16 +87,16 @@ TEMPLATES = [
 WSGI_APPLICATION = 'metadataset.wsgi.application'
 
 if DEBUG:
-   INTERNAL_IPS = ('127.0.0.1', 'localhost')
-   MIDDLEWARE += (
+    INTERNAL_IPS = ('127.0.0.1', 'localhost')
+    MIDDLEWARE += (
        'debug_toolbar.middleware.DebugToolbarMiddleware',
-   )
+    )
 
-   INSTALLED_APPS += (
+    INSTALLED_APPS += (
        'debug_toolbar',
-   )
+    )
 
-   DEBUG_TOOLBAR_PANELS = [
+    DEBUG_TOOLBAR_PANELS = [
        'debug_toolbar.panels.versions.VersionsPanel',
        'debug_toolbar.panels.timer.TimerPanel',
        'debug_toolbar.panels.settings.SettingsPanel',
@@ -109,14 +109,18 @@ if DEBUG:
        'debug_toolbar.panels.signals.SignalsPanel',
        'debug_toolbar.panels.logging.LoggingPanel',
        'debug_toolbar.panels.redirects.RedirectsPanel',
-   ]
+    ]
 
-   DEBUG_TOOLBAR_CONFIG = {
+    def show_toolbar(request):
+        return True
+
+    DEBUG_TOOLBAR_CONFIG = {
        'INTERCEPT_REDIRECTS': False,
-   }
+       'SHOW_TOOLBAR_CALLBACK': show_toolbar,
+    }
 
-   # For deleting large numbers of uploaded RIS files when testing
-   DATA_UPLOAD_MAX_NUMBER_FIELDS = 50000
+    # For deleting large numbers of uploaded RIS files when testing
+    DATA_UPLOAD_MAX_NUMBER_FIELDS = 50000
 
 
 # Database

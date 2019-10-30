@@ -2,6 +2,18 @@ version: '2'
 
 services:
 
+  letsencrypt-nginx-proxy-companion:
+    restart: always
+    image: jrcs/letsencrypt-nginx-proxy-companion
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    volumes_from:
+      - nginx-proxy
+    networks:
+      - nginx-proxy-net
+    depends_on:
+      - nginx-proxy
+
   nginx-proxy:
     restart: always
     image: jwilder/nginx-proxy
@@ -37,7 +49,8 @@ services:
       - nginx-proxy-net
     environment:
       - VIRTUAL_PORT=8000
-      - VIRTUAL_HOST=127.0.0.1
+      - VIRTUAL_HOST=dev.metadataset.com
+      - LETSENCRYPT_HOST=dev.metadataset.com
     depends_on:
       - metadataset-db
 
