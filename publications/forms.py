@@ -245,9 +245,9 @@ class AttributeForm(forms.ModelForm):
 
     def clean_attribute(self):
         data = self.cleaned_data['attribute']
-        restricted_attributes = [
+        reserved_attributes = [
             # Terms that are used in the api_query_string of the Shiny app, which could cause conflicts with URL bookmarking inputs
-            "country", "intervention", "outcome", "publication", "refresh", "subject", "user",
+            "bookmark", "country", "intervention", "outcome", "publication", "refresh", "subject", "user",
             # Terms that are used as column names in the Shiny app, which could cause conflicts
             "citation", "population", "comparison", "study_id", "study_name",
             "note", "treatment_mean", "treatment_sd", "treatment_n", "treatment_se",
@@ -262,9 +262,9 @@ class AttributeForm(forms.ModelForm):
             "p_from_significance", "selected_p", "z_from_p", "selected_z",
             "v_from_z", "selected_v", "study", "es_and_v", "selected_v_mads"
         ]
-        for attribute in restricted_attributes:
+        for attribute in reserved_attributes:
             if attribute.upper() == data.upper():
-                raise forms.ValidationError("This is a restricted term. Please use a different name for this covariate.")
+                raise forms.ValidationError("This name is reserved. Please use a different name.")
         return data
 
     def __init__(self, *args, **kwargs):

@@ -2374,10 +2374,10 @@ def get_next_assessment(publication_pk, next_pk, assessment_order, completed_ass
 def get_path_to_shiny(request):
     current_site = get_current_site(request)
     domain = current_site.domain
-    if domain == "www.metadataset.com":
+    if domain == "dev.metadataset.com":
         path_to_shiny = "http://shiny.metadataset.com/meta-analysis/"
     else:
-        path_to_shiny = "http://127.0.0.1:3838/"
+        path_to_shiny = "http://metadataset.shinyapps.io/meta-analysis/"
     return(path_to_shiny)
 
 
