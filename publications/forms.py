@@ -317,4 +317,7 @@ class EAVPublicationForm(forms.ModelForm):
 class KappaForm(forms.Form):
     user_1 = forms.ModelChoiceField(queryset=User.objects.all())
     user_2 = forms.ModelChoiceField(queryset=User.objects.all())
-    percent = forms.FloatField(widget=NumberInput(attrs={'type': 'range', 'id': 'percent', 'value': '10', 'min': '0', 'max': '100', 'step': '0.5'}))
+    percent = forms.FloatField(widget=NumberInput(attrs={'id': 'percent', 'value': '10', 'min': '0', 'max': '100', 'step': '0.5'}))
+    number = forms.IntegerField(widget=NumberInput(attrs={'id': 'number', 'value': '10', 'min': '0'}))
+    intervention = TreeNodeChoiceField(queryset=Intervention.objects.all().get_descendants(include_self=True), level_indicator = "---")
+    outcome = TreeNodeChoiceField(queryset=Outcome.objects.all().get_descendants(include_self=True), level_indicator = "---")
