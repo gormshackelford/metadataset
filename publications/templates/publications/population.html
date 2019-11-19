@@ -23,7 +23,7 @@
   </span>
 </p>
 
-<form method="post" action="">{% csrf_token %}
+<form method="post" action="" enctype="multipart/form-data">{% csrf_token %}
 
   <table>
 
@@ -59,7 +59,7 @@
     {% endfor %}
 
     <tr><td class="empty" colspan="3">&nbsp;</td></tr>
-  
+
     <tr>
       <td class="bottom"></td>
       <td class="button bottom"><input type="submit" name="save" value="Save all changes" /></td>
@@ -213,8 +213,29 @@
         <td class="top bottom" colspan="3"><a target="_blank" href="{% url 'attributes' subject=subject.slug %}">Add/edit covariates</a></td>
     </tr>
 
-  </table>
+    <tr><td class="empty" colspan="3">&nbsp;</td></tr>
 
-</form>
+    <tr><th colspan="3">Upload outcomes and data</th></tr>
+    <tr>
+      <td class="top bottom" colspan="3">
+        You can also upload outcomes and data from a file (Microsoft Excel format). Click "Download XLSX template" for a blank template. When you upload this template, it will create one new outcome on this page for each row that you add to the template. If you add data and/or covariates to that row, it will also create one new data point for that outcome. However, if there are covariates that are shared by all outcomes on this page, then they should be selected on this page, not added to the template.
+      </td>
+    </tr>
+    <tr><td class="empty" colspan="3">&nbsp;</td></tr>
+    <tr>
+      <td>File for upload:</td>
+      <td>{{ data_upload_form.data_upload_file }}</td>
+      <td></td>
+    </tr>
+    <tr>
+      <td class="bottom"></td>
+      <td class="button bottom">
+          <input type="submit" name="upload" value="Upload XLSX" />
+          <input type="submit" name="download" value="Download XLSX template" />
+      </td>
+      <td></td>
+    </tr>
+
+  </table>
 
 {% endblock %}

@@ -321,3 +321,6 @@ class KappaForm(forms.Form):
     number = forms.IntegerField(widget=NumberInput(attrs={'id': 'number', 'value': '10', 'min': '0'}))
     intervention = TreeNodeChoiceField(queryset=Intervention.objects.all().get_descendants(include_self=True), level_indicator = "---")
     outcome = TreeNodeChoiceField(queryset=Outcome.objects.all().get_descendants(include_self=True), level_indicator = "---")
+
+class DataUploadForm(forms.Form):
+    data_upload_file = forms.FileField(required=False)

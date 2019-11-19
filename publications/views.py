@@ -17,10 +17,14 @@ from collections import Counter
 from itertools import chain
 from random import shuffle
 from .tokens import account_activation_token
-from .forms import AssessmentForm, AttributeForm, AttributeOptionForm, CoordinatesForm, DataForm, DateForm, EAVExperimentForm, EAVOutcomeForm, EAVPopulationForm, EAVPublicationForm, ExperimentForm, ExperimentDesignForm, ExperimentPopulationForm, ExperimentPopulationOutcomeForm, FullTextAssessmentForm, InterventionForm, KappaForm, OutcomeForm, ProfileForm, PublicationForm, PublicationPopulationForm, PublicationPopulationOutcomeForm, SignUpForm, StudyForm, UserForm, UserSubjectForm, XCountryForm
+from .forms import AssessmentForm, AttributeForm, AttributeOptionForm, CoordinatesForm, DataForm, DataUploadForm, DateForm, EAVExperimentForm, EAVOutcomeForm, EAVPopulationForm, EAVPublicationForm, ExperimentForm, ExperimentDesignForm, ExperimentPopulationForm, ExperimentPopulationOutcomeForm, FullTextAssessmentForm, InterventionForm, KappaForm, OutcomeForm, ProfileForm, PublicationForm, PublicationPopulationForm, PublicationPopulationOutcomeForm, SignUpForm, StudyForm, UserForm, UserSubjectForm, XCountryForm
 from .models import Assessment, AssessmentStatus, Attribute, Coordinates, Country, Crop, Data, Date, Design, EAV, Experiment, ExperimentDesign, ExperimentPopulation, ExperimentPopulationOutcome, Intervention, Outcome, Publication, PublicationPopulation, PublicationPopulationOutcome, Study, Subject, User, UserSubject, XCountry
 from .serializers import AttributeSerializer, CountrySerializer, DataSerializer, DesignSerializer, EAVSerializer, ExperimentSerializer, ExperimentDesignSerializer, ExperimentPopulationSerializer, ExperimentPopulationOutcomeSerializer, InterventionSerializer, OutcomeSerializer, PublicationSerializer, PublicationPopulationSerializer, PublicationPopulationOutcomeSerializer, SubjectSerializer, UserSerializer
 from .decorators import group_required
+from openpyxl import Workbook, load_workbook
+from openpyxl.utils.cell import get_column_letter
+from openpyxl.worksheet.datavalidation import DataValidation
+from tempfile import NamedTemporaryFile
 from mptt.forms import TreeNodeChoiceField
 from haystack.generic_views import SearchView
 from haystack.forms import SearchForm
@@ -1298,6 +1302,7 @@ def population(request, subject, publication_pk, experiment_index, population_in
     # This population
     experiment_populations = ExperimentPopulation.objects.filter(experiment=experiment).order_by('pk')
     experiment_population = experiment_populations[population_index]
+    data_upload_form = DataUploadForm(request.POST, request.FILES)
     # Formsets
     ExperimentPopulationOutcomeFormSet = modelformset_factory(ExperimentPopulationOutcome, form=ExperimentPopulationOutcomeForm, extra=4, can_delete=True)
     experiment_population_outcome_formset = ExperimentPopulationOutcomeFormSet(data=data, queryset=ExperimentPopulationOutcome.objects.filter(experiment_population=experiment_population), prefix="experiment_population_outcome_formset")
@@ -1335,89 +1340,258 @@ def population(request, subject, publication_pk, experiment_index, population_in
         else:  # If factor options have been defined (which is not possible if the data type is a number)
             form.fields['value_as_number'].disabled = True
             form.fields['value_as_factor'] = TreeNodeChoiceField(queryset=attribute.get_children(), level_indicator="")
+
     if request.method == 'POST':
-        with transaction.atomic():
-            formset = experiment_population_outcome_formset
-            if formset.is_valid():
-                instances = formset.save(commit=False)
-                if 'delete' in request.POST:
-                    for obj in formset.deleted_objects:
-                        obj.delete()
-                else:
-                    for instance in instances:
-                        instance.experiment_population = experiment_population
-                        instance.save()
-            formset = x_country_formset
-            if formset.is_valid():
-                instances = formset.save(commit=False)
-                if 'delete' in request.POST:
-                    for obj in formset.deleted_objects:
-                        obj.delete()
-                else:
-                    for instance in instances:
-                        instance.population = experiment_population
-                        instance.user = user
-                        instance.publication_index = publication
-                        instance.experiment_index = experiment
-                        instance.population_index = experiment_population
-                        instance.save()
-            formset = coordinates_formset
-            if formset.is_valid():
-                instances = formset.save(commit=False)
-                if 'delete' in request.POST:
-                    for obj in formset.deleted_objects:
-                        obj.delete()
-                else:
-                    for instance in instances:
-                        instance.population = experiment_population
-                        instance.user = user
-                        instance.publication_index = publication
-                        instance.experiment_index = experiment
-                        instance.population_index = experiment_population
-                        instance.save()
-            formset = date_formset
-            if formset.is_valid():
-                instances = formset.save(commit=False)
-                if 'delete' in request.POST:
-                    for obj in formset.deleted_objects:
-                        obj.delete()
-                else:
-                    for instance in instances:
-                        instance.population = experiment_population
-                        instance.user = user
-                        instance.publication_index = publication
-                        instance.experiment_index = experiment
-                        instance.population_index = experiment_population
-                        instance.save()
-            formset = study_formset
-            if formset.is_valid():
-                instances = formset.save(commit=False)
-                if 'delete' in request.POST:
-                    for obj in formset.deleted_objects:
-                        obj.delete()
-                else:
-                    for instance in instances:
-                        instance.population = experiment_population
-                        instance.user = user
-                        instance.publication_index = publication
-                        instance.experiment_index = experiment
-                        instance.population_index = experiment_population
-                        instance.save()
-            formset = EAV_formset
-            if formset.is_valid():
-                instances = formset.save(commit=False)
-                if 'delete' in request.POST:
-                    for obj in formset.deleted_objects:
-                        obj.delete()
-                else:
-                    for instance in instances:
-                        instance.population = experiment_population
-                        instance.user = user
-                        instance.publication_index = publication
-                        instance.experiment_index = experiment
-                        instance.population_index = experiment_population
-                        instance.save()
-            return redirect('population', subject=subject.slug, publication_pk=publication_pk, experiment_index=experiment_index, population_index=population_index)
+
+        if 'save' in request.POST or 'delete' in request.POST:
+            with transaction.atomic():
+                formset = experiment_population_outcome_formset
+                if formset.is_valid():
+                    instances = formset.save(commit=False)
+                    if 'delete' in request.POST:
+                        for obj in formset.deleted_objects:
+                            obj.delete()
+                    else:
+                        for instance in instances:
+                            instance.experiment_population = experiment_population
+                            instance.save()
+                formset = x_country_formset
+                if formset.is_valid():
+                    instances = formset.save(commit=False)
+                    if 'delete' in request.POST:
+                        for obj in formset.deleted_objects:
+                            obj.delete()
+                    else:
+                        for instance in instances:
+                            instance.population = experiment_population
+                            instance.user = user
+                            instance.publication_index = publication
+                            instance.experiment_index = experiment
+                            instance.population_index = experiment_population
+                            instance.save()
+                formset = coordinates_formset
+                if formset.is_valid():
+                    instances = formset.save(commit=False)
+                    if 'delete' in request.POST:
+                        for obj in formset.deleted_objects:
+                            obj.delete()
+                    else:
+                        for instance in instances:
+                            instance.population = experiment_population
+                            instance.user = user
+                            instance.publication_index = publication
+                            instance.experiment_index = experiment
+                            instance.population_index = experiment_population
+                            instance.save()
+                formset = date_formset
+                if formset.is_valid():
+                    instances = formset.save(commit=False)
+                    if 'delete' in request.POST:
+                        for obj in formset.deleted_objects:
+                            obj.delete()
+                    else:
+                        for instance in instances:
+                            instance.population = experiment_population
+                            instance.user = user
+                            instance.publication_index = publication
+                            instance.experiment_index = experiment
+                            instance.population_index = experiment_population
+                            instance.save()
+                formset = study_formset
+                if formset.is_valid():
+                    instances = formset.save(commit=False)
+                    if 'delete' in request.POST:
+                        for obj in formset.deleted_objects:
+                            obj.delete()
+                    else:
+                        for instance in instances:
+                            instance.population = experiment_population
+                            instance.user = user
+                            instance.publication_index = publication
+                            instance.experiment_index = experiment
+                            instance.population_index = experiment_population
+                            instance.save()
+                formset = EAV_formset
+                if formset.is_valid():
+                    instances = formset.save(commit=False)
+                    if 'delete' in request.POST:
+                        for obj in formset.deleted_objects:
+                            obj.delete()
+                    else:
+                        for instance in instances:
+                            instance.population = experiment_population
+                            instance.user = user
+                            instance.publication_index = publication
+                            instance.experiment_index = experiment
+                            instance.population_index = experiment_population
+                            instance.save()
+
+        if 'upload' in request.POST:
+            attributes = Attribute.objects.get(pk=subject.attribute.pk).get_children()
+            outcomes = Outcome.objects.get(pk=subject.outcome.pk).get_descendants(include_self=True)
+            form = data_upload_form
+            if form.is_valid():
+                file = form.cleaned_data.get('data_upload_file')
+                wb = load_workbook(file)
+                ws = wb["Data"]
+                col_names = ws[1]
+                with transaction.atomic():
+                    for row in ws.iter_rows(min_row=2):
+                        if row[0].value:
+                            for cell in row:
+                                if cell.value:
+                                    attribute = col_names[cell.column - 1].value
+                                    print(attribute)
+                                    print(cell.value)
+                                    if attribute == "outcome":
+                                        outcome = cell.value
+                                        outcome = outcomes.filter(outcome=outcome).order_by('-level')[0]
+                                        experiment_population_outcome = ExperimentPopulationOutcome(
+                                            experiment_population = experiment_population,
+                                            outcome = outcome
+                                        )
+                                        experiment_population_outcome.save()
+                                        data = Data(
+                                            subject=subject,
+                                            publication=publication,
+                                            experiment=experiment,
+                                            experiment_population=experiment_population,
+                                            experiment_population_outcome=experiment_population_outcome
+                                        )
+                                    if attribute in attributes.values_list('attribute', flat=True):
+                                        attribute = Attribute.objects.get(attribute=attribute)
+                                        eav = EAV(
+                                            attribute = attribute,
+                                            user = user,
+                                            outcome = experiment_population_outcome,
+                                            publication_index = publication,
+                                            experiment_index = experiment,
+                                            population_index = experiment_population,
+                                            outcome_index = experiment_population_outcome
+                                        )
+                                        if attribute.type == "factor":
+                                            value = attribute.get_children().get(attribute=cell.value)
+                                            eav.value_as_factor = value
+                                        elif attribute.type == "number":
+                                            eav.value_as_number = cell.value
+                                        eav.save()
+                                    else:
+                                        setattr(data, attribute, cell.value)
+                            data.save()
+
+        elif 'download' in request.POST:
+            wb = Workbook()
+            ws_1 = wb.active
+            ws_1.title = "Data"
+            ws_2 = wb.create_sheet("Options")
+            # Columns
+            col_names = ['outcome', 'treatment_mean', 'control_mean', 'treatment_sd', 'control_sd', 'treatment_n', 'control_n', 'treatment_se', 'control_se', 'unit', 'lsd', 'is_significant', 'approximate_p_value', 'p_value', 'z_value', 'n', 'correlation_coefficient', 'note']
+            integer_cols = ['treatment_n', 'control_n', 'n']
+            decimal_cols = ['treatment_mean', 'control_mean', 'treatment_sd', 'control_sd', 'treatment_se', 'control_se', 'lsd', 'p_value', 'z_value', 'correlation_coefficient']
+            attribute = subject.attribute
+            attributes = Attribute.objects.get(pk=subject.attribute.pk).get_children().order_by('attribute')
+            for attribute in attributes.values_list('attribute', flat=True):
+                col_names.append(attribute)
+            col_names_dict = {}
+            i = 1
+            for name in col_names:
+                col_names_dict[name] = i
+                ws_1.cell(row=1, column=i).value = str(name)
+                i += 1
+
+            dv = DataValidation(type="whole")
+            dv.error ='Please enter a whole number.'
+            ws_1.add_data_validation(dv)
+            for col in integer_cols:
+                column_number = col_names_dict[col]
+                column_letter = get_column_letter(column_number)
+                dv.add("{column_letter}2:{column_letter}101".format(column_letter=column_letter))
+
+            dv = DataValidation(type="decimal")
+            dv.error ='Please enter a number.'
+            ws_1.add_data_validation(dv)
+            for col in decimal_cols:
+                column_number = col_names_dict[col]
+                column_letter = get_column_letter(column_number)
+                dv.add("{column_letter}2:{column_letter}101".format(column_letter=column_letter))
+
+            # outcome options
+            outcomes = Outcome.objects.filter(pk=experiment_population.population.pk).get_descendants(include_self=True)
+            i = 1
+            column_number = col_names_dict["outcome"]
+            column_letter = get_column_letter(column_number)
+            for outcome in outcomes.values_list('outcome', flat=True):
+                ws_2.cell(row=i, column=column_number).value = outcome
+                i += 1
+            dv = DataValidation(type="list", formula1="=Options!{column_letter}:{column_letter}".format(column_letter=column_letter))
+            dv.error ='Please select an option from the menu.'
+            ws_1.add_data_validation(dv)
+            dv.add("{column_letter}2:{column_letter}101".format(column_letter=column_letter))
+
+            # approximate_p_value options
+            column_number = col_names_dict["approximate_p_value"]
+            column_letter = get_column_letter(column_number)
+            options = [
+                "< 0.0001",
+                "< 0.001",
+                "< 0.01",
+                "< 0.05",
+                "< 0.1",
+                "> 0.05",
+                "> 0.1",
+            ]
+            i = 1
+            for option in options:
+                ws_2.cell(row=i, column=column_number).value = option
+                i += 1
+            dv = DataValidation(type="list", formula1='=Options!{column_letter}:{column_letter}'.format(column_letter=column_letter))
+            ws_1.add_data_validation(dv)
+            dv.add("{column_letter}2:{column_letter}101".format(column_letter=column_letter))
+
+            # is_significant options
+            column_number = col_names_dict["is_significant"]
+            column_letter = get_column_letter(column_number)
+            options = [
+                "False",
+                "True"
+            ]
+            i = 1
+            for option in options:
+                ws_2.cell(row=i, column=column_number).value = option
+                i += 1
+            dv = DataValidation(type="list", formula1="=Options!{column_letter}:{column_letter}".format(column_letter=column_letter))
+            ws_1.add_data_validation(dv)
+            dv.add("{column_letter}2:{column_letter}101".format(column_letter=column_letter))
+
+            # Attribute options
+            for attribute in attributes:
+                column_number = col_names_dict[attribute.attribute]
+                column_letter = get_column_letter(column_number)
+                if attribute.get_children().exists():
+                    options = attribute.get_children().values_list('attribute', flat=True)
+                    i = 1
+                    for option in options:
+                        ws_2.cell(row=i, column=column_number).value = option
+                        i += 1
+                    dv = DataValidation(type="list", formula1="=Options!{column_letter}:{column_letter}".format(column_letter=column_letter))
+                    dv.error ='Please select an option from the menu.'
+                    ws_1.add_data_validation(dv)
+                    dv.add("{column_letter}2:{column_letter}101".format(column_letter=column_letter))
+                elif attribute.type == "number":
+                    dv = DataValidation(type="decimal")
+                    dv.error ='Please enter a number.'
+                    ws_1.add_data_validation(dv)
+                    dv.add("{column_letter}2:{column_letter}101".format(column_letter=column_letter))
+
+            # Create a temporary file for the response
+            with NamedTemporaryFile() as tmp:
+                wb.save(tmp.name)
+                response = HttpResponse(content=tmp, content_type='application/vnd.ms-excel')
+                response['Content-Disposition'] = 'attachment; filename=data_upload_template.xlsx'
+                return response
+            return response
+        return redirect('population', subject=subject.slug, publication_pk=publication_pk, experiment_index=experiment_index, population_index=population_index)
+
     context = {
         'subject': subject,
         'publication': publication,
@@ -1430,7 +1604,8 @@ def population(request, subject, publication_pk, experiment_index, population_in
         'date_formset': date_formset,
         'study_formset': study_formset,
         'EAV_formset': EAV_formset,
-        'x_country_formset': x_country_formset
+        'x_country_formset': x_country_formset,
+        'data_upload_form': data_upload_form
     }
     return render(request, 'publications/population.html', context)
 
