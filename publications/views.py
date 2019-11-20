@@ -1437,12 +1437,10 @@ def population(request, subject, publication_pk, experiment_index, population_in
                 col_names = ws[1]
                 with transaction.atomic():
                     for row in ws.iter_rows(min_row=2):
-                        if row[0].value:
+                        if row[0].value:  # If this row has an outcome
                             for cell in row:
                                 if cell.value:
                                     attribute = col_names[cell.column - 1].value
-                                    print(attribute)
-                                    print(cell.value)
                                     if attribute == "outcome":
                                         outcome = cell.value
                                         outcome = outcomes.filter(outcome=outcome).order_by('-level')[0]
@@ -1452,11 +1450,11 @@ def population(request, subject, publication_pk, experiment_index, population_in
                                         )
                                         experiment_population_outcome.save()
                                         data = Data(
-                                            subject=subject,
-                                            publication=publication,
-                                            experiment=experiment,
-                                            experiment_population=experiment_population,
-                                            experiment_population_outcome=experiment_population_outcome
+                                            subject = subject,
+                                            publication = publication,
+                                            experiment = experiment,
+                                            experiment_population = experiment_population,
+                                            experiment_population_outcome = experiment_population_outcome
                                         )
                                     if attribute in attributes.values_list('attribute', flat=True):
                                         attribute = Attribute.objects.get(attribute=attribute)
@@ -1475,9 +1473,55 @@ def population(request, subject, publication_pk, experiment_index, population_in
                                         elif attribute.type == "number":
                                             eav.value_as_number = cell.value
                                         eav.save()
-                                    else:
+                                    else:   # If attribute not in attributes
                                         setattr(data, attribute, cell.value)
-                            data.save()
+                            if data.treatment_mean == None:  # For the purposes of this file upload, a row must include a treatment_mean.
+                                pass
+                            else:
+                                data.save()
+                        else:  # If this row does not have an outcome, create a new data points using the previous outcome.
+                            data = Data(
+                                subject = subject,
+                                publication = publication,
+                                experiment = experiment,
+                                experiment_population = experiment_population,
+                                experiment_population_outcome = experiment_population_outcome
+                            )
+                            for cell in row:
+                                if cell.value:
+                                    attribute = col_names[cell.column - 1].value
+                                    if attribute in attributes.values_list('attribute', flat=True):
+                                        attribute = Attribute.objects.get(attribute=attribute)
+                                        if attribute.type == "factor":
+                                            value = attribute.get_children().get(attribute=cell.value)
+                                            eav, created = EAV.objects.get_or_create(
+                                                value_as_factor = value,
+                                                attribute = attribute,
+                                                user = user,
+                                                outcome = experiment_population_outcome,
+                                                publication_index = publication,
+                                                experiment_index = experiment,
+                                                population_index = experiment_population,
+                                                outcome_index = experiment_population_outcome
+                                            )
+                                        elif attribute.type == "number":
+                                            eav, created = EAV.objects.get_or_create(
+                                                value_as_number = cell.value,
+                                                attribute = attribute,
+                                                user = user,
+                                                outcome = experiment_population_outcome,
+                                                publication_index = publication,
+                                                experiment_index = experiment,
+                                                population_index = experiment_population,
+                                                outcome_index = experiment_population_outcome
+                                            )
+                                        eav.save()
+                                    else:  # If attribute not in attributes
+                                        setattr(data, attribute, cell.value)
+                            if data.treatment_mean == None:  # For the purposes of this file upload, a row must include a treatment_mean.
+                                pass
+                            else:
+                                data.save()
 
         elif 'download' in request.POST:
             wb = Workbook()
@@ -1485,7 +1529,7 @@ def population(request, subject, publication_pk, experiment_index, population_in
             ws_1.title = "Data"
             ws_2 = wb.create_sheet("Options")
             # Columns
-            col_names = ['outcome', 'treatment_mean', 'control_mean', 'treatment_sd', 'control_sd', 'treatment_n', 'control_n', 'treatment_se', 'control_se', 'unit', 'lsd', 'is_significant', 'approximate_p_value', 'p_value', 'z_value', 'n', 'correlation_coefficient', 'note']
+            col_names = ['outcome', 'comparison', 'treatment_mean', 'control_mean', 'treatment_sd', 'control_sd', 'treatment_n', 'control_n', 'treatment_se', 'control_se', 'unit', 'lsd', 'is_significant', 'approximate_p_value', 'p_value', 'z_value', 'n', 'correlation_coefficient', 'note']
             integer_cols = ['treatment_n', 'control_n', 'n']
             decimal_cols = ['treatment_mean', 'control_mean', 'treatment_sd', 'control_sd', 'treatment_se', 'control_se', 'lsd', 'p_value', 'z_value', 'correlation_coefficient']
             attribute = subject.attribute
