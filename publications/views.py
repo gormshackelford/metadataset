@@ -1340,6 +1340,25 @@ def population(request, subject, publication_pk, experiment_index, population_in
         else:  # If factor options have been defined (which is not possible if the data type is a number)
             form.fields['value_as_number'].disabled = True
             form.fields['value_as_factor'] = TreeNodeChoiceField(queryset=attribute.get_children(), level_indicator="")
+    # Columns for file upload template
+    col_names = ['outcome', 'comparison', 'treatment_mean', 'control_mean', 'treatment_sd', 'control_sd', 'treatment_n', 'control_n', 'treatment_se', 'control_se', 'unit', 'lsd', 'is_significant', 'approximate_p_value', 'p_value', 'z_value', 'n', 'correlation_coefficient', 'note', 'country']
+    study_cols = ['study_id', 'study_name']
+    coordinates_cols = ['latitude_degrees', 'latitude_minutes', 'latitude_seconds', 'latitude_direction', 'longitude_degrees', 'longitude_minutes', 'longitude_seconds', 'longitude_direction']
+    date_cols = ['start_year', 'start_month', 'start_day', 'end_year', 'end_month', 'end_day']
+    col_names = col_names + coordinates_cols
+    col_names = col_names + date_cols
+    col_names = col_names + study_cols
+    integer_cols = ['treatment_n', 'control_n', 'n', 'study_id', 'start_year', 'end_year']
+    decimal_cols = ['treatment_mean', 'control_mean', 'treatment_sd', 'control_sd', 'treatment_se', 'control_se', 'lsd', 'p_value', 'z_value', 'correlation_coefficient']
+    minutes_seconds_cols = ['latitude_minutes', 'latitude_seconds', 'longitude_minutes', 'longitude_seconds']
+    year_cols = ['start_year', 'end_year']
+    month_cols = ['start_month', 'end_month']
+    day_cols = ['start_day', 'end_day']
+    attribute = subject.attribute
+    attributes = Attribute.objects.get(pk=subject.attribute.pk).get_children().order_by('attribute')
+    for attribute in attributes.values_list('attribute', flat=True):
+        col_names.append(attribute)
+    col_names_dict = {}
 
     if request.method == 'POST':
 
@@ -1449,6 +1468,7 @@ def population(request, subject, publication_pk, experiment_index, population_in
                                             outcome = outcome
                                         )
                                         experiment_population_outcome.save()
+                                        # For models with data from multiple cells, create instances to be saved later.
                                         data = Data(
                                             subject = subject,
                                             publication = publication,
@@ -1456,7 +1476,44 @@ def population(request, subject, publication_pk, experiment_index, population_in
                                             experiment_population = experiment_population,
                                             experiment_population_outcome = experiment_population_outcome
                                         )
-                                    if attribute in attributes.values_list('attribute', flat=True):
+                                        coordinates = Coordinates(
+                                            user = user,
+                                            outcome = experiment_population_outcome,
+                                            publication_index = publication,
+                                            experiment_index = experiment,
+                                            population_index = experiment_population,
+                                            outcome_index = experiment_population_outcome
+                                        )
+                                        date = Date(
+                                            user = user,
+                                            outcome = experiment_population_outcome,
+                                            publication_index = publication,
+                                            experiment_index = experiment,
+                                            population_index = experiment_population,
+                                            outcome_index = experiment_population_outcome
+                                        )
+                                        study = Study(
+                                            user = user,
+                                            outcome = experiment_population_outcome,
+                                            publication_index = publication,
+                                            experiment_index = experiment,
+                                            population_index = experiment_population,
+                                            outcome_index = experiment_population_outcome
+                                        )
+                                    elif attribute == "country":
+                                        country = cell.value
+                                        country = Country.objects.get(country=country)
+                                        x_country = XCountry(
+                                            country = country,
+                                            user = user,
+                                            outcome = experiment_population_outcome,
+                                            publication_index = publication,
+                                            experiment_index = experiment,
+                                            population_index = experiment_population,
+                                            outcome_index = experiment_population_outcome
+                                        )
+                                        x_country.save()
+                                    elif attribute in attributes.values_list('attribute', flat=True):
                                         attribute = Attribute.objects.get(attribute=attribute)
                                         eav = EAV(
                                             attribute = attribute,
@@ -1473,13 +1530,37 @@ def population(request, subject, publication_pk, experiment_index, population_in
                                         elif attribute.type == "number":
                                             eav.value_as_number = cell.value
                                         eav.save()
-                                    else:   # If attribute not in attributes
+                                    # For models with data from multiple cells
+                                    elif attribute in coordinates_cols:
+                                        setattr(coordinates, attribute, cell.value)
+                                    elif attribute in date_cols:
+                                        setattr(date, attribute, cell.value)
+                                    elif attribute in study_cols:
+                                        setattr(study, attribute, cell.value)
+                                    else:
                                         setattr(data, attribute, cell.value)
-                            if data.treatment_mean == None:  # For the purposes of this file upload, a row must include a treatment_mean.
+                            # For models with data from multiple cells, save the model instance only if data has been entered.
+                            # If data has been entered for the Data instance (i.e. treatment_mean), save the instance.
+                            if data.treatment_mean == None:
                                 pass
                             else:
                                 data.save()
-                        else:  # If this row does not have an outcome, create a new data points using the previous outcome.
+                            # If data has been entered for the Study instance, save it.
+                            if study.study_name == None and study.study_id == None:
+                                pass
+                            else:
+                                study.save()
+                            # If data has been entered for the Coordinates instance, save it.
+                            if coordinates.latitude_degrees == None and coordinates.latitude_minutes == None and coordinates.latitude_seconds == None and coordinates.longitude_degrees == None and coordinates.longitude_minutes == None and coordinates.longitude_seconds == None:
+                                pass
+                            else:
+                                coordinates.save()
+                            # If data has been entered for the Date instance, save it.
+                            if date.start_year == None and date.start_month == None and date.start_day == None:
+                                pass
+                            else:
+                                date.save()
+                        else:  # If this row does not have an outcome, create a new data point for the previous outcome (but do not create new covariates, since all data points for one outcome must have the same covariates).
                             data = Data(
                                 subject = subject,
                                 publication = publication,
@@ -1490,35 +1571,10 @@ def population(request, subject, publication_pk, experiment_index, population_in
                             for cell in row:
                                 if cell.value:
                                     attribute = col_names[cell.column - 1].value
-                                    if attribute in attributes.values_list('attribute', flat=True):
-                                        attribute = Attribute.objects.get(attribute=attribute)
-                                        if attribute.type == "factor":
-                                            value = attribute.get_children().get(attribute=cell.value)
-                                            eav, created = EAV.objects.get_or_create(
-                                                value_as_factor = value,
-                                                attribute = attribute,
-                                                user = user,
-                                                outcome = experiment_population_outcome,
-                                                publication_index = publication,
-                                                experiment_index = experiment,
-                                                population_index = experiment_population,
-                                                outcome_index = experiment_population_outcome
-                                            )
-                                        elif attribute.type == "number":
-                                            eav, created = EAV.objects.get_or_create(
-                                                value_as_number = cell.value,
-                                                attribute = attribute,
-                                                user = user,
-                                                outcome = experiment_population_outcome,
-                                                publication_index = publication,
-                                                experiment_index = experiment,
-                                                population_index = experiment_population,
-                                                outcome_index = experiment_population_outcome
-                                            )
-                                        eav.save()
-                                    else:  # If attribute not in attributes
+                                    if attribute not in attributes.values_list('attribute', flat=True):
                                         setattr(data, attribute, cell.value)
-                            if data.treatment_mean == None:  # For the purposes of this file upload, a row must include a treatment_mean.
+                            # If data has been entered for the Data instance (i.e. treatment_mean), save the instance.
+                            if data.treatment_mean == None:
                                 pass
                             else:
                                 data.save()
@@ -1528,36 +1584,72 @@ def population(request, subject, publication_pk, experiment_index, population_in
             ws_1 = wb.active
             ws_1.title = "Data"
             ws_2 = wb.create_sheet("Options")
-            # Columns
-            col_names = ['outcome', 'comparison', 'treatment_mean', 'control_mean', 'treatment_sd', 'control_sd', 'treatment_n', 'control_n', 'treatment_se', 'control_se', 'unit', 'lsd', 'is_significant', 'approximate_p_value', 'p_value', 'z_value', 'n', 'correlation_coefficient', 'note']
-            integer_cols = ['treatment_n', 'control_n', 'n']
-            decimal_cols = ['treatment_mean', 'control_mean', 'treatment_sd', 'control_sd', 'treatment_se', 'control_se', 'lsd', 'p_value', 'z_value', 'correlation_coefficient']
-            attribute = subject.attribute
-            attributes = Attribute.objects.get(pk=subject.attribute.pk).get_children().order_by('attribute')
-            for attribute in attributes.values_list('attribute', flat=True):
-                col_names.append(attribute)
-            col_names_dict = {}
             i = 1
             for name in col_names:
                 col_names_dict[name] = i
                 ws_1.cell(row=1, column=i).value = str(name)
                 i += 1
 
-            dv = DataValidation(type="whole")
-            dv.error ='Please enter a whole number.'
+            # Data validation for integers
+            dv = DataValidation(type="whole", operator="greaterThan", formula1=0)
+            dv.error ='Please enter an integer.'
             ws_1.add_data_validation(dv)
             for col in integer_cols:
                 column_number = col_names_dict[col]
                 column_letter = get_column_letter(column_number)
-                dv.add("{column_letter}2:{column_letter}101".format(column_letter=column_letter))
+                dv.add("{column_letter}2:{column_letter}201".format(column_letter=column_letter))
 
+            # Data validation for decimals
             dv = DataValidation(type="decimal")
             dv.error ='Please enter a number.'
             ws_1.add_data_validation(dv)
             for col in decimal_cols:
                 column_number = col_names_dict[col]
                 column_letter = get_column_letter(column_number)
-                dv.add("{column_letter}2:{column_letter}101".format(column_letter=column_letter))
+                dv.add("{column_letter}2:{column_letter}201".format(column_letter=column_letter))
+
+            # Data validation for minutes and seconds (0-60)
+            dv = DataValidation(type="decimal", operator="between", formula1=0, formula2=60)
+            dv.error ='Please enter a number between 0 and 60.'
+            ws_1.add_data_validation(dv)
+            for col in minutes_seconds_cols:
+                column_number = col_names_dict[col]
+                column_letter = get_column_letter(column_number)
+                dv.add("{column_letter}2:{column_letter}201".format(column_letter=column_letter))
+
+            # Data validation for latitude degrees (0-90)
+            dv = DataValidation(type="decimal", operator="between", formula1=0, formula2=90)
+            dv.error ='Please enter a number between 0 and 90.'
+            ws_1.add_data_validation(dv)
+            column_number = col_names_dict["latitude_degrees"]
+            column_letter = get_column_letter(column_number)
+            dv.add("{column_letter}2:{column_letter}201".format(column_letter=column_letter))
+
+            # Data validation for longitude degrees (0-180)
+            dv = DataValidation(type="decimal", operator="between", formula1=0, formula2=180)
+            dv.error ='Please enter a number between 0 and 180.'
+            ws_1.add_data_validation(dv)
+            column_number = col_names_dict["longitude_degrees"]
+            column_letter = get_column_letter(column_number)
+            dv.add("{column_letter}2:{column_letter}201".format(column_letter=column_letter))
+
+            # Data validation for month (1-12)
+            dv = DataValidation(type="whole", operator="between", formula1=1, formula2=12)
+            dv.error ='Please enter an integer between 1 and 12.'
+            ws_1.add_data_validation(dv)
+            for col in month_cols:
+                column_number = col_names_dict[col]
+                column_letter = get_column_letter(column_number)
+                dv.add("{column_letter}2:{column_letter}201".format(column_letter=column_letter))
+
+            # Data validation for day (1-31)
+            dv = DataValidation(type="whole", operator="between", formula1=1, formula2=31)
+            dv.error ='Please enter an integer between 1 and 31.'
+            ws_1.add_data_validation(dv)
+            for col in day_cols:
+                column_number = col_names_dict[col]
+                column_letter = get_column_letter(column_number)
+                dv.add("{column_letter}2:{column_letter}201".format(column_letter=column_letter))
 
             # outcome options
             outcomes = Outcome.objects.filter(pk=experiment_population.population.pk).get_descendants(include_self=True)
@@ -1570,7 +1662,20 @@ def population(request, subject, publication_pk, experiment_index, population_in
             dv = DataValidation(type="list", formula1="=Options!{column_letter}:{column_letter}".format(column_letter=column_letter))
             dv.error ='Please select an option from the menu.'
             ws_1.add_data_validation(dv)
-            dv.add("{column_letter}2:{column_letter}101".format(column_letter=column_letter))
+            dv.add("{column_letter}2:{column_letter}201".format(column_letter=column_letter))
+
+            # country options
+            countries = Country.objects.all()
+            i = 1
+            column_number = col_names_dict["country"]
+            column_letter = get_column_letter(column_number)
+            for country in countries.values_list('country', flat=True):
+                ws_2.cell(row=i, column=column_number).value = country
+                i += 1
+            dv = DataValidation(type="list", formula1="=Options!{column_letter}:{column_letter}".format(column_letter=column_letter))
+            dv.error ='Please select an option from the menu.'
+            ws_1.add_data_validation(dv)
+            dv.add("{column_letter}2:{column_letter}201".format(column_letter=column_letter))
 
             # approximate_p_value options
             column_number = col_names_dict["approximate_p_value"]
@@ -1590,7 +1695,7 @@ def population(request, subject, publication_pk, experiment_index, population_in
                 i += 1
             dv = DataValidation(type="list", formula1='=Options!{column_letter}:{column_letter}'.format(column_letter=column_letter))
             ws_1.add_data_validation(dv)
-            dv.add("{column_letter}2:{column_letter}101".format(column_letter=column_letter))
+            dv.add("{column_letter}2:{column_letter}201".format(column_letter=column_letter))
 
             # is_significant options
             column_number = col_names_dict["is_significant"]
@@ -1605,7 +1710,37 @@ def population(request, subject, publication_pk, experiment_index, population_in
                 i += 1
             dv = DataValidation(type="list", formula1="=Options!{column_letter}:{column_letter}".format(column_letter=column_letter))
             ws_1.add_data_validation(dv)
-            dv.add("{column_letter}2:{column_letter}101".format(column_letter=column_letter))
+            dv.add("{column_letter}2:{column_letter}201".format(column_letter=column_letter))
+
+            # latitude_direction options
+            column_number = col_names_dict["latitude_direction"]
+            column_letter = get_column_letter(column_number)
+            options = [
+                "N",
+                "S"
+            ]
+            i = 1
+            for option in options:
+                ws_2.cell(row=i, column=column_number).value = option
+                i += 1
+            dv = DataValidation(type="list", formula1="=Options!{column_letter}:{column_letter}".format(column_letter=column_letter))
+            ws_1.add_data_validation(dv)
+            dv.add("{column_letter}2:{column_letter}201".format(column_letter=column_letter))
+
+            # longitude_direction options
+            column_number = col_names_dict["longitude_direction"]
+            column_letter = get_column_letter(column_number)
+            options = [
+                "E",
+                "W"
+            ]
+            i = 1
+            for option in options:
+                ws_2.cell(row=i, column=column_number).value = option
+                i += 1
+            dv = DataValidation(type="list", formula1="=Options!{column_letter}:{column_letter}".format(column_letter=column_letter))
+            ws_1.add_data_validation(dv)
+            dv.add("{column_letter}2:{column_letter}201".format(column_letter=column_letter))
 
             # Attribute options
             for attribute in attributes:
@@ -1620,12 +1755,12 @@ def population(request, subject, publication_pk, experiment_index, population_in
                     dv = DataValidation(type="list", formula1="=Options!{column_letter}:{column_letter}".format(column_letter=column_letter))
                     dv.error ='Please select an option from the menu.'
                     ws_1.add_data_validation(dv)
-                    dv.add("{column_letter}2:{column_letter}101".format(column_letter=column_letter))
+                    dv.add("{column_letter}2:{column_letter}201".format(column_letter=column_letter))
                 elif attribute.type == "number":
                     dv = DataValidation(type="decimal")
                     dv.error ='Please enter a number.'
                     ws_1.add_data_validation(dv)
-                    dv.add("{column_letter}2:{column_letter}101".format(column_letter=column_letter))
+                    dv.add("{column_letter}2:{column_letter}201".format(column_letter=column_letter))
 
             # Create a temporary file for the response
             with NamedTemporaryFile() as tmp:
