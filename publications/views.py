@@ -1349,7 +1349,7 @@ def population(request, subject, publication_pk, experiment_index, population_in
     col_names = col_names + date_cols
     col_names = col_names + study_cols
     integer_cols = ['treatment_n', 'control_n', 'n', 'study_id', 'start_year', 'end_year']
-    decimal_cols = ['treatment_mean', 'control_mean', 'treatment_sd', 'control_sd', 'treatment_se', 'control_se', 'lsd', 'p_value', 'z_value', 'correlation_coefficient']
+    decimal_cols = ['treatment_mean', 'control_mean', 'treatment_sd', 'control_sd', 'treatment_se', 'control_se', 'lsd', 'z_value']
     minutes_seconds_cols = ['latitude_minutes', 'latitude_seconds', 'longitude_minutes', 'longitude_seconds']
     year_cols = ['start_year', 'end_year']
     month_cols = ['start_month', 'end_month']
@@ -1590,7 +1590,7 @@ def population(request, subject, publication_pk, experiment_index, population_in
                 ws_1.cell(row=1, column=i).value = str(name)
                 i += 1
 
-            # Data validation for integers
+            # XLSX data validation for integers
             dv = DataValidation(type="whole", operator="greaterThan", formula1=0)
             dv.error ='Please enter an integer.'
             ws_1.add_data_validation(dv)
@@ -1599,7 +1599,7 @@ def population(request, subject, publication_pk, experiment_index, population_in
                 column_letter = get_column_letter(column_number)
                 dv.add("{column_letter}2:{column_letter}201".format(column_letter=column_letter))
 
-            # Data validation for decimals
+            # XLSX data validation for decimals
             dv = DataValidation(type="decimal")
             dv.error ='Please enter a number.'
             ws_1.add_data_validation(dv)
@@ -1608,7 +1608,23 @@ def population(request, subject, publication_pk, experiment_index, population_in
                 column_letter = get_column_letter(column_number)
                 dv.add("{column_letter}2:{column_letter}201".format(column_letter=column_letter))
 
-            # Data validation for minutes and seconds (0-60)
+            # XLSX data validation for p_value (0 <= p_value <= 1)
+            dv = DataValidation(type="decimal", operator="between", formula1=0, formula2=1)
+            dv.error ='Please enter a number between 0 and 1.'
+            ws_1.add_data_validation(dv)
+            column_number = col_names_dict["p_value"]
+            column_letter = get_column_letter(column_number)
+            dv.add("{column_letter}2:{column_letter}201".format(column_letter=column_letter))
+
+            # XLSX data validation for correlation_coefficient (-1 <= correlation_coefficient <= 1)
+            dv = DataValidation(type="decimal", operator="between", formula1=-1, formula2=1)
+            dv.error ='Please enter a number between -1 and 1.'
+            ws_1.add_data_validation(dv)
+            column_number = col_names_dict["correlation_coefficient"]
+            column_letter = get_column_letter(column_number)
+            dv.add("{column_letter}2:{column_letter}201".format(column_letter=column_letter))
+
+            # XLSX data validation for minutes and seconds (0-60)
             dv = DataValidation(type="decimal", operator="between", formula1=0, formula2=60)
             dv.error ='Please enter a number between 0 and 60.'
             ws_1.add_data_validation(dv)
@@ -1617,7 +1633,7 @@ def population(request, subject, publication_pk, experiment_index, population_in
                 column_letter = get_column_letter(column_number)
                 dv.add("{column_letter}2:{column_letter}201".format(column_letter=column_letter))
 
-            # Data validation for latitude degrees (0-90)
+            # XLSX data validation for latitude_degrees (0-90)
             dv = DataValidation(type="decimal", operator="between", formula1=0, formula2=90)
             dv.error ='Please enter a number between 0 and 90.'
             ws_1.add_data_validation(dv)
@@ -1625,7 +1641,7 @@ def population(request, subject, publication_pk, experiment_index, population_in
             column_letter = get_column_letter(column_number)
             dv.add("{column_letter}2:{column_letter}201".format(column_letter=column_letter))
 
-            # Data validation for longitude degrees (0-180)
+            # XLSX data validation for longitude_degrees (0-180)
             dv = DataValidation(type="decimal", operator="between", formula1=0, formula2=180)
             dv.error ='Please enter a number between 0 and 180.'
             ws_1.add_data_validation(dv)
@@ -1633,7 +1649,7 @@ def population(request, subject, publication_pk, experiment_index, population_in
             column_letter = get_column_letter(column_number)
             dv.add("{column_letter}2:{column_letter}201".format(column_letter=column_letter))
 
-            # Data validation for month (1-12)
+            # XLSX data validation for month (1-12)
             dv = DataValidation(type="whole", operator="between", formula1=1, formula2=12)
             dv.error ='Please enter an integer between 1 and 12.'
             ws_1.add_data_validation(dv)
@@ -1642,7 +1658,7 @@ def population(request, subject, publication_pk, experiment_index, population_in
                 column_letter = get_column_letter(column_number)
                 dv.add("{column_letter}2:{column_letter}201".format(column_letter=column_letter))
 
-            # Data validation for day (1-31)
+            # XLSX data validation for day (1-31)
             dv = DataValidation(type="whole", operator="between", formula1=1, formula2=31)
             dv.error ='Please enter an integer between 1 and 31.'
             ws_1.add_data_validation(dv)
@@ -1651,33 +1667,35 @@ def population(request, subject, publication_pk, experiment_index, population_in
                 column_letter = get_column_letter(column_number)
                 dv.add("{column_letter}2:{column_letter}201".format(column_letter=column_letter))
 
-            # outcome options
+            # XLSX options for outcome
             outcomes = Outcome.objects.filter(pk=experiment_population.population.pk).get_descendants(include_self=True)
-            i = 1
             column_number = col_names_dict["outcome"]
             column_letter = get_column_letter(column_number)
-            for outcome in outcomes.values_list('outcome', flat=True):
-                ws_2.cell(row=i, column=column_number).value = outcome
+            options = outcomes.values_list('outcome', flat=True)
+            i = 1
+            for option in options:
+                ws_2.cell(row=i, column=column_number).value = option
                 i += 1
-            dv = DataValidation(type="list", formula1="=Options!{column_letter}:{column_letter}".format(column_letter=column_letter))
+            dv = DataValidation(type="list", formula1="=Options!{column_letter}$1:{column_letter}${max_row}".format(column_letter=column_letter, max_row=len(options)))
             dv.error ='Please select an option from the menu.'
             ws_1.add_data_validation(dv)
             dv.add("{column_letter}2:{column_letter}201".format(column_letter=column_letter))
 
-            # country options
+            # XLSX options for country
             countries = Country.objects.all()
-            i = 1
             column_number = col_names_dict["country"]
             column_letter = get_column_letter(column_number)
-            for country in countries.values_list('country', flat=True):
-                ws_2.cell(row=i, column=column_number).value = country
+            options = countries.values_list('country', flat=True)
+            i = 1
+            for option in options:
+                ws_2.cell(row=i, column=column_number).value = option
                 i += 1
-            dv = DataValidation(type="list", formula1="=Options!{column_letter}:{column_letter}".format(column_letter=column_letter))
+            dv = DataValidation(type="list", formula1="=Options!{column_letter}$1:{column_letter}${max_row}".format(column_letter=column_letter, max_row=len(options)))
             dv.error ='Please select an option from the menu.'
             ws_1.add_data_validation(dv)
             dv.add("{column_letter}2:{column_letter}201".format(column_letter=column_letter))
 
-            # approximate_p_value options
+            # XLSX options for approximate_p_value
             column_number = col_names_dict["approximate_p_value"]
             column_letter = get_column_letter(column_number)
             options = [
@@ -1693,11 +1711,11 @@ def population(request, subject, publication_pk, experiment_index, population_in
             for option in options:
                 ws_2.cell(row=i, column=column_number).value = option
                 i += 1
-            dv = DataValidation(type="list", formula1='=Options!{column_letter}:{column_letter}'.format(column_letter=column_letter))
+            dv = DataValidation(type="list", formula1="=Options!{column_letter}$1:{column_letter}${max_row}".format(column_letter=column_letter, max_row=len(options)))
             ws_1.add_data_validation(dv)
             dv.add("{column_letter}2:{column_letter}201".format(column_letter=column_letter))
 
-            # is_significant options
+            # XLSX options for is_significant
             column_number = col_names_dict["is_significant"]
             column_letter = get_column_letter(column_number)
             options = [
@@ -1708,11 +1726,11 @@ def population(request, subject, publication_pk, experiment_index, population_in
             for option in options:
                 ws_2.cell(row=i, column=column_number).value = option
                 i += 1
-            dv = DataValidation(type="list", formula1="=Options!{column_letter}:{column_letter}".format(column_letter=column_letter))
+            dv = DataValidation(type="list", formula1="=Options!{column_letter}$1:{column_letter}${max_row}".format(column_letter=column_letter, max_row=len(options)))
             ws_1.add_data_validation(dv)
             dv.add("{column_letter}2:{column_letter}201".format(column_letter=column_letter))
 
-            # latitude_direction options
+            # XLSX options for latitude_direction
             column_number = col_names_dict["latitude_direction"]
             column_letter = get_column_letter(column_number)
             options = [
@@ -1723,11 +1741,11 @@ def population(request, subject, publication_pk, experiment_index, population_in
             for option in options:
                 ws_2.cell(row=i, column=column_number).value = option
                 i += 1
-            dv = DataValidation(type="list", formula1="=Options!{column_letter}:{column_letter}".format(column_letter=column_letter))
+            dv = DataValidation(type="list", formula1="=Options!{column_letter}$1:{column_letter}${max_row}".format(column_letter=column_letter, max_row=len(options)))
             ws_1.add_data_validation(dv)
             dv.add("{column_letter}2:{column_letter}201".format(column_letter=column_letter))
 
-            # longitude_direction options
+            # XLSX options for longitude_direction
             column_number = col_names_dict["longitude_direction"]
             column_letter = get_column_letter(column_number)
             options = [
@@ -1738,11 +1756,11 @@ def population(request, subject, publication_pk, experiment_index, population_in
             for option in options:
                 ws_2.cell(row=i, column=column_number).value = option
                 i += 1
-            dv = DataValidation(type="list", formula1="=Options!{column_letter}:{column_letter}".format(column_letter=column_letter))
+            dv = DataValidation(type="list", formula1="=Options!{column_letter}$1:{column_letter}${max_row}".format(column_letter=column_letter, max_row=len(options)))
             ws_1.add_data_validation(dv)
             dv.add("{column_letter}2:{column_letter}201".format(column_letter=column_letter))
 
-            # Attribute options
+            # XLSX options for user-defined attributes
             for attribute in attributes:
                 column_number = col_names_dict[attribute.attribute]
                 column_letter = get_column_letter(column_number)
@@ -1752,7 +1770,7 @@ def population(request, subject, publication_pk, experiment_index, population_in
                     for option in options:
                         ws_2.cell(row=i, column=column_number).value = option
                         i += 1
-                    dv = DataValidation(type="list", formula1="=Options!{column_letter}:{column_letter}".format(column_letter=column_letter))
+                    dv = DataValidation(type="list", formula1="=Options!{column_letter}$1:{column_letter}${max_row}".format(column_letter=column_letter, max_row=len(options)))
                     dv.error ='Please select an option from the menu.'
                     ws_1.add_data_validation(dv)
                     dv.add("{column_letter}2:{column_letter}201".format(column_letter=column_letter))
