@@ -1540,8 +1540,8 @@ def population(request, subject, publication_pk, experiment_index, population_in
                                     else:
                                         setattr(data, attribute, cell.value)
                             # For models with data from multiple cells, save the model instance only if data has been entered.
-                            # If data has been entered for the Data instance (i.e. treatment_mean), save the instance.
-                            if data.treatment_mean == None:
+                            # If data has been entered for the Data instance, save the instance (here we require both treatment_mean and control_mean, but this constraint is not enforced by the Data model, in case there are publications that report an effect size but not a treatment mean and control mean).
+                            if data.treatment_mean == None or data.control_mean == None:
                                 pass
                             else:
                                 data.save()
@@ -1573,11 +1573,20 @@ def population(request, subject, publication_pk, experiment_index, population_in
                                     attribute = col_names[cell.column - 1].value
                                     if attribute not in attributes.values_list('attribute', flat=True):
                                         setattr(data, attribute, cell.value)
-                            # If data has been entered for the Data instance (i.e. treatment_mean), save the instance.
-                            if data.treatment_mean == None:
+                            # If data has been entered for the Data instance, save the instance (here we require both treatment_mean and control_mean, but this constraint is not enforced by the Data model, in case there are publications that report an effect size but not a treatment mean and control mean).
+                            if data.treatment_mean == None or data.control_mean == None:
                                 pass
                             else:
                                 data.save()
+                        # If no data were entered for this outcome, delete this outcome.
+                        if not Data.objects.filter(
+                            subject = subject,
+                            publication = publication,
+                            experiment = experiment,
+                            experiment_population = experiment_population,
+                            experiment_population_outcome = experiment_population_outcome
+                        ).exists():
+                            experiment_population_outcome.delete()
 
         elif 'download' in request.POST:
             wb = Workbook()
