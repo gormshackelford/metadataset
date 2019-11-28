@@ -1341,15 +1341,15 @@ def population(request, subject, publication_pk, experiment_index, population_in
             form.fields['value_as_number'].disabled = True
             form.fields['value_as_factor'] = TreeNodeChoiceField(queryset=attribute.get_children(), level_indicator="")
     # Columns for file upload template
-    col_names = ['outcome', 'comparison', 'treatment_mean', 'control_mean', 'treatment_sd', 'control_sd', 'treatment_n', 'control_n', 'treatment_se', 'control_se', 'unit', 'lsd', 'is_significant', 'approximate_p_value', 'p_value', 'z_value', 'n', 'correlation_coefficient', 'note', 'country']
+    col_names = ['outcome', 'comparison', 'treatment_mean', 'control_mean', 'treatment_sd', 'control_sd', 'treatment_n', 'control_n', 'treatment_se', 'control_se', 'treatment_mean_before', 'control_mean_before', 'treatment_sd_before', 'control_sd_before', 'treatment_n_before', 'control_n_before', 'treatment_se_before', 'control_se_before', 'unit', 'lsd', 'is_significant', 'approximate_p_value', 'p_value', 'z_value', 'n', 'correlation_coefficient', 'note', 'country']
     study_cols = ['study_id', 'study_name']
     coordinates_cols = ['latitude_degrees', 'latitude_minutes', 'latitude_seconds', 'latitude_direction', 'longitude_degrees', 'longitude_minutes', 'longitude_seconds', 'longitude_direction']
     date_cols = ['start_year', 'start_month', 'start_day', 'end_year', 'end_month', 'end_day']
     col_names = col_names + coordinates_cols
     col_names = col_names + date_cols
     col_names = col_names + study_cols
-    integer_cols = ['treatment_n', 'control_n', 'n', 'study_id', 'start_year', 'end_year']
-    decimal_cols = ['treatment_mean', 'control_mean', 'treatment_sd', 'control_sd', 'treatment_se', 'control_se', 'lsd', 'z_value']
+    integer_cols = ['treatment_n', 'control_n', 'treatment_n_before', 'control_n_before', 'n', 'study_id', 'start_year', 'end_year']
+    decimal_cols = ['treatment_mean', 'control_mean', 'treatment_sd', 'control_sd', 'treatment_se', 'control_se', 'treatment_mean_before', 'control_mean_before', 'treatment_sd_before', 'control_sd_before', 'treatment_se_before', 'control_se_before', 'lsd', 'z_value']
     minutes_seconds_cols = ['latitude_minutes', 'latitude_seconds', 'longitude_minutes', 'longitude_seconds']
     year_cols = ['start_year', 'end_year']
     month_cols = ['start_month', 'end_month']
@@ -1571,7 +1571,7 @@ def population(request, subject, publication_pk, experiment_index, population_in
                                 experiment_population_outcome = experiment_population_outcome
                             )
                             for cell in row:
-                                if cell.value:
+                                if (cell.value is not None or cell.value == 0):
                                     attribute = col_names[cell.column - 1].value
                                     if attribute not in attributes.values_list('attribute', flat=True):
                                         setattr(data, attribute, cell.value)

@@ -91,6 +91,46 @@
         <td></td>
       </tr>
       <tr>
+        <td>Treatment mean (before):</td>
+        <td>{{ form.treatment_mean_before|add_class:"green"  }}</td>
+        <td></td>
+      </tr>
+      <tr>
+        <td>Control mean (before):</td>
+        <td>{{ form.control_mean_before|add_class:"green" }}</td>
+        <td></td>
+      </tr>
+      <tr>
+        <td>Treatment SD (before):</td>
+        <td>{{ form.treatment_sd_before|add_class:"yellow" }} {{ form.treatment_sd_before.help_text }}</td>
+        <td></td>
+      </tr>
+      <tr>
+        <td>Control SD (before):</td>
+        <td>{{ form.control_sd_before|add_class:"yellow" }} {{ form.control_sd_before.help_text }}</td>
+        <td></td>
+      </tr>
+      <tr>
+        <td>Treatment N (before):</td>
+        <td>{{ form.treatment_n_before|add_class:"red" }} {{ form.treatment_n_before.help_text }}</td>
+        <td></td>
+      </tr>
+      <tr>
+        <td>Control N (before):</td>
+        <td>{{ form.control_n_before|add_class:"red" }} {{ form.control_n_before.help_text }}</td>
+        <td></td>
+      </tr>
+      <tr>
+        <td>Treatment SE (before):</td>
+        <td>{{ form.treatment_se_before|add_class:"blue" }} {{ form.treatment_se_before.help_text }}</td>
+        <td></td>
+      </tr>
+      <tr>
+        <td>Control SE (before):</td>
+        <td>{{ form.control_se_before|add_class:"blue" }} {{ form.control_se_before.help_text }}</td>
+        <td></td>
+      </tr>
+      <tr>
         <td>LSD:</td>
         <td>{{ form.lsd }} {{ form.lsd.help_text }}</td>
         <td></td>

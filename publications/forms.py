@@ -203,6 +203,12 @@ class DataForm(forms.ModelForm):
     control_n = forms.IntegerField(min_value=0, required=False, help_text="Number of replicates for the control")
     treatment_se = forms.FloatField(min_value=0, required=False, help_text="Standard error of the treatment mean")
     control_se = forms.FloatField(min_value=0, required=False, help_text="Standard error of the control mean")
+    treatment_sd_before = forms.FloatField(min_value=0, required=False, help_text="Standard deviation of the treatment mean (before)")
+    control_sd_before = forms.FloatField(min_value=0, required=False, help_text="Standard deviation of the control mean (before)")
+    treatment_n_before = forms.IntegerField(min_value=0, required=False, help_text="Number of replicates for the treatment (before)")
+    control_n_before = forms.IntegerField(min_value=0, required=False, help_text="Number of replicates for the control (before)")
+    treatment_se_before = forms.FloatField(min_value=0, required=False, help_text="Standard error of the treatment mean (before)")
+    control_se_before = forms.FloatField(min_value=0, required=False, help_text="Standard error of the control mean (before)")
     n = forms.IntegerField(min_value=0, required=False, help_text="Number of replicates (only if treatment N and control N are unavailable)")
     lsd = forms.FloatField(min_value=0, required=False, help_text="Least significant difference between the means")
     p_value = forms.FloatField(min_value=0, max_value=1.0, required=False)
@@ -222,6 +228,13 @@ class DataForm(forms.ModelForm):
                 'placeholder': 'e.g., "kg/ha"'
             })
         }
+
+    def clean(self):
+        treatment_mean = self.cleaned_data['treatment_mean']
+        control_mean = self.cleaned_data['control_mean']
+        effect_size = self.cleaned_data['effect_size']
+        if (treatment_mean is None or control_mean is None) and effect_size is None:
+            raise forms.ValidationError("Please enter a treatment mean and a control mean")
 
 
 class AttributeForm(forms.ModelForm):
