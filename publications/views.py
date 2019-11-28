@@ -1458,7 +1458,7 @@ def population(request, subject, publication_pk, experiment_index, population_in
                     for row in ws.iter_rows(min_row=2):
                         if row[0].value:  # If this row has an outcome
                             for cell in row:
-                                if cell.value:
+                                if (cell.value is not None or cell.value == 0):
                                     attribute = col_names[cell.column - 1].value
                                     if attribute == "outcome":
                                         outcome = cell.value
@@ -1532,6 +1532,8 @@ def population(request, subject, publication_pk, experiment_index, population_in
                                         eav.save()
                                     # For models with data from multiple cells
                                     elif attribute in coordinates_cols:
+                                        if attribute == "latitude_direction" or attribute == "longitude_direction":
+                                            cell.value = cell.value.upper()
                                         setattr(coordinates, attribute, cell.value)
                                     elif attribute in date_cols:
                                         setattr(date, attribute, cell.value)
