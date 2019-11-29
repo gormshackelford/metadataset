@@ -35,6 +35,7 @@
     <tr><th colspan="3">Outcomes for this population</th></tr>
     <tr><td class="top" colspan="3">When you select and save an outcome, a link will appear for that outcome. Click that link to enter metadata for that outcome.</td></tr>
     <tr><td colspan="2"></td><td class="centered">Select</td></tr>
+    <tr><td colspan="2"></td><td class="centered"><input type="checkbox" class="experiment_population_outcome_formset_checkbox" onClick="toggle(this, this.className)"></td></tr>
 
     {{ experiment_population_outcome_formset.management_form }}
     {% for form in experiment_population_outcome_formset %}
@@ -54,7 +55,7 @@
             {{ form.outcome }}
           {% endif %}
         </td>
-        <td class="centered">{{ form.DELETE }}</td>
+        <td class="centered">{{ form.DELETE|add_class:'experiment_population_outcome_formset_checkbox' }}</td>
       </tr>
     {% endfor %}
 
@@ -237,5 +238,18 @@
     </tr>
 
   </table>
+
+{% endblock %}
+
+{% block javascript %}
+
+  <script type="text/javascript" >
+    function toggle(select_all_checkbox, select_all_checkbox_class) {
+        checkboxes = document.getElementsByClassName(select_all_checkbox_class);
+        for (var i = 0, n = checkboxes.length; i < n; i++) {
+            checkboxes[i].checked = select_all_checkbox.checked;
+        }
+    }
+  </script>
 
 {% endblock %}
