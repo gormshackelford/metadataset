@@ -128,7 +128,16 @@ class OutcomeForm(forms.ModelForm):
         fields = ['outcome']
 
 
-class ExperimentForm(forms.ModelForm):
+# ExperimentForm1 excludes methods and location and is used for publication.html, whereas ExperimentForm2 includes methods and location and is used for experiment.html.
+class ExperimentForm1(forms.ModelForm):
+
+    class Meta:
+        model = Experiment
+        exclude = ['location', 'methods', 'publication', 'user']
+
+
+# ExperimentForm1 excludes methods and location and is used for publication.html, whereas ExperimentForm2 includes methods and location and is used for experiment.html.
+class ExperimentForm2(forms.ModelForm):
 
     class Meta:
         model = Experiment

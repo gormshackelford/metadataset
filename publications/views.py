@@ -17,7 +17,7 @@ from collections import Counter
 from itertools import chain
 from random import shuffle
 from .tokens import account_activation_token
-from .forms import AssessmentForm, AttributeForm, AttributeOptionForm, CoordinatesForm, DataForm, DataUploadForm, DateForm, EAVExperimentForm, EAVOutcomeForm, EAVPopulationForm, EAVPublicationForm, ExperimentForm, ExperimentDesignForm, ExperimentPopulationForm, ExperimentPopulationOutcomeForm, FullTextAssessmentForm, InterventionForm, KappaForm, OutcomeForm, ProfileForm, PublicationForm, PublicationPopulationForm, PublicationPopulationOutcomeForm, SignUpForm, StudyForm, UserForm, UserSubjectForm, XCountryForm
+from .forms import AssessmentForm, AttributeForm, AttributeOptionForm, CoordinatesForm, DataForm, DataUploadForm, DateForm, EAVExperimentForm, EAVOutcomeForm, EAVPopulationForm, EAVPublicationForm, ExperimentForm1, ExperimentForm2, ExperimentDesignForm, ExperimentPopulationForm, ExperimentPopulationOutcomeForm, FullTextAssessmentForm, InterventionForm, KappaForm, OutcomeForm, ProfileForm, PublicationForm, PublicationPopulationForm, PublicationPopulationOutcomeForm, SignUpForm, StudyForm, UserForm, UserSubjectForm, XCountryForm
 from .models import Assessment, AssessmentStatus, Attribute, Coordinates, Country, Crop, Data, Date, Design, EAV, Experiment, ExperimentDesign, ExperimentPopulation, ExperimentPopulationOutcome, Intervention, Outcome, Publication, PublicationPopulation, PublicationPopulationOutcome, Study, Subject, User, UserSubject, XCountry
 from .serializers import AttributeSerializer, CountrySerializer, DataSerializer, DesignSerializer, EAVSerializer, ExperimentSerializer, ExperimentDesignSerializer, ExperimentPopulationSerializer, ExperimentPopulationOutcomeSerializer, InterventionSerializer, OutcomeSerializer, PublicationSerializer, PublicationPopulationSerializer, PublicationPopulationOutcomeSerializer, SubjectSerializer, UserSerializer
 from .decorators import group_required
@@ -610,7 +610,7 @@ def publication(request, subject, publication_pk):
         full_text_is_relevant = ''  # Not yet assessed
 
     # Formset for this publication
-    ExperimentFormSet = modelformset_factory(Experiment, form=ExperimentForm, extra=4, can_delete=True)
+    ExperimentFormSet = modelformset_factory(Experiment, form=ExperimentForm1, extra=4, can_delete=True)
     formset = ExperimentFormSet(data=data, queryset=Experiment.objects.filter(publication=publication, user=user), prefix="experiment_formset")
 
     if request.method == 'POST':
@@ -1130,7 +1130,7 @@ def experiment(request, subject, publication_pk, experiment_index):
     experiments = Experiment.objects.filter(publication=publication, user=user).order_by('pk')
     experiment = experiments[experiment_index]
     # Forms
-    experiment_form = ExperimentForm(data=data, instance=experiment, prefix="experiment_form")
+    experiment_form = ExperimentForm2(data=data, instance=experiment, prefix="experiment_form")
     experiment_form.fields['intervention'] = TreeNodeChoiceField(queryset=Intervention.objects.filter(pk=intervention.pk).get_descendants(include_self=True), level_indicator = "---")
     # Formsets
     ExperimentDesignFormSet = modelformset_factory(ExperimentDesign, form=ExperimentDesignForm, extra=5, max_num=5, can_delete=True)
