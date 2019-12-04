@@ -11,12 +11,17 @@
 
 {% block content %}
 
-<h1>Meta-analysis of open data</h1>
+<h1>Dynamic meta-analysis</h1>
 <p>
-  Metadataset is a collection of open data from scientific publications. These publications are about the management of agricultural and natural resources (e.g., crops, soil, water, and wildlife). The data are extracted from scientific publications, transformed into standardized effect sizes, labelled with standardized metadata, and synthesized using meta-analysis.
+  Metadataset is a collection of open data from scientific publications. These
+  publications are about the management of agricultural and natural resources
+  (e.g., crops, soil, water, and wildlife). The data are extracted from
+  scientific publications, standardized, and summarized using
+  <a href="{% url 'about' %}">dynamic meta-analysis</a>.
 </p>
 <p>
-  This is <span class="red">work in progress</span>. Please <a href="{% url 'signup' %}">sign up</a> if you would like to get updates.
+  This is <span class="red">work in progress</span>. Please
+  <a href="{% url 'signup' %}">sign up</a> if you would like to get updates.
 </p>
 
 {% endblock %}
