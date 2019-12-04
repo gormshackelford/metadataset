@@ -13,17 +13,48 @@
 
 <h1>Global evidence, local relevance</h1>
 <p>
-  TBA
+  How should evidence be used to make decisions, if the evidence is synthesized
+  at a global scale, across many different contexts, but the decisions are made
+  at a local scale, in a context that differs from the global average? This
+  website enables users to find results that are relevant to their decisions. We
+  call this process a "dynamic meta-analysis".
 </p>
 
-<h1>Living reviews</h1>
+<h1>Dynamic meta-analysis</h1>
 <p>
-  TBA
+  Dynamic meta-analysis is our method of improving the transferability of
+  evidence to a specific context. This website provides two methods for this:
+  (1) filtering, in which studies can be excluded from a meta-analysis if they
+  are dissimilar to that context ("subgroup analysis"), and (2) weighting, in
+  which studies can be given a lower weight if they are dissimilar to that
+  context ("recalibration") (please see <a target="_blank"
+  href="https://doi.org/10.1002/jrsm.1320">Kneale et al. (2019)</a> for
+  information on transferability and recalibration).
+</p>
+<p>
+  To see how a dynamic meta-analysis works, we suggest that you try
+  <a target="_blank" href="https://metadataset.shinyapps.io/meta-analysis/?subject=6&intervention=91&outcome=4">
+  this analysis</a> of data on cover crops (try filtering studies in which the
+  "cover crop type" is either "legume" or "brassica").
+</p>
+<p>
+  Please note that this is a <span class="red">work in progress</span>.
+
+<h1>Contact us</h1>
+<p>
+  Please feel free to <a href="{% url 'contact' %}">contact us</a> if you have
+  any questions or suggestions, or if you would like to collaborate with us. We
+  are based in the <a target="_blank" href="http://www.conservationevidence.com">
+  Conservation Evidence</a> group at the University of Cambridge.
 </p>
 
 <h1>Acknowledgements</h1>
 <p>
-  We thank the <a href="http://www.leventisfoundation.org">Leventis Foundation</a> and the David and Claudia Harding Foundation for funding our work.
+  We thank the <a target="_blank" href="http://www.leventisfoundation.org">
+    Leventis Foundation</a> and the David and Claudia Harding Foundation for
+    funding our work. Our work is part of <a target="_blank"
+    href="http://www.biorisc.com">BioRISC</a> (the Biosecurity Research
+    Initiative at St Catharine's College, Cambridge).
 </p>
 
 {% endblock %}
