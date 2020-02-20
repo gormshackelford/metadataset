@@ -303,6 +303,7 @@ class Publication(models.Model):
 class UserSubject(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     subject = models.ForeignKey(Subject, on_delete=models.CASCADE)
+    can_edit_attributes = models.BooleanField(default=True)
     user_for_comparison = models.ForeignKey(User, related_name="user_subject_user_for_comparison", blank=True, null=True, on_delete=models.SET_NULL)
 
     def __str__(self):
@@ -629,6 +630,7 @@ class EAV(models.Model):
         return self.attribute.attribute
 
 
+#TODO: Build an interface for saving the results of analyses from the Shiny app, which will use this model.
 class Analysis(models.Model):
     effect_size = models.FloatField(null=True, blank=True)
     pval = models.FloatField(null=True, blank=True)

@@ -153,17 +153,9 @@
       </tr>
     {% endif %}
 
-    <tr><td class="empty" colspan="3">&nbsp;</td></tr>
-
-    <tr><th colspan="3">Subject-specific covariates</th></tr>
-    <tr>
-      <td class="top bottom" colspan="3">
-        As well as generic covariates (countries, coordinates, and dates), you can also enter subject-specific covariates. For example, you could enter the elevations or soil types of study sites. Subject-specific covariates will appear with the generic covariates, above, if they have been defined.
-      </td>
-    </tr>
-    <tr>
-        <td class="top bottom" colspan="3"><a target="_blank" href="{% url 'attributes' subject=subject.slug %}">Add/edit covariates</a></td>
-    </tr>
+    {% if user_can_edit_attributes %}
+      {% include 'publications/can_edit_attributes.html' %}
+    {% endif %}
 
   </table>
 

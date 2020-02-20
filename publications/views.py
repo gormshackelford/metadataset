@@ -919,6 +919,7 @@ def metadata(request, subject, publication_pk):
                             instance.save()
                 return redirect('metadata', subject=subject.slug, publication_pk=publication_pk)
     context = {
+        'user_can_edit_attributes': user_subject.can_edit_attributes,
         'subject': subject,
         'publication': publication,
         'publication_population_formset': publication_population_formset,
@@ -938,7 +939,7 @@ def attributes(request, subject):
     user = request.user
     data = request.POST or None
     subject = Subject.objects.get(slug=subject)
-    user_subject = get_object_or_404(UserSubject, user=user, subject=subject)  # Check if this user has permission to work on this subject.
+    user_subject = get_object_or_404(UserSubject, user=user, subject=subject, can_edit_attributes=True)  # Check if this user has permission to work on this subject.
     attribute = subject.attribute  # The root attribute for this subject (each subject can have its own classification of attributes)
     attributes = Attribute.objects.get(pk=attribute.pk).get_children()
     FormSet = modelformset_factory(Attribute, form=AttributeForm, extra=1, can_delete=True)
@@ -974,7 +975,7 @@ def attribute(request, subject, attribute_pk):
     user = request.user
     data = request.POST or None
     subject = Subject.objects.get(slug=subject)
-    user_subject = get_object_or_404(UserSubject, user=user, subject=subject)  # Check if this user has permission to work on this subject.
+    user_subject = get_object_or_404(UserSubject, user=user, subject=subject, can_edit_attributes=True)  # Check if this user has permission to work on this subject.
     attribute = Attribute.objects.get(pk=attribute_pk)
     options = attribute.get_children()
     FormSet = modelformset_factory(Attribute, form=AttributeOptionForm, extra=1, can_delete=True)
@@ -1266,6 +1267,7 @@ def experiment(request, subject, publication_pk, experiment_index):
                         instance.save()
             return redirect('experiment', subject=subject.slug, publication_pk=publication_pk, experiment_index=experiment_index)
     context = {
+        'user_can_edit_attributes': user_subject.can_edit_attributes,
         'subject': subject,
         'publication': publication,
         'experiment': experiment,
@@ -1801,6 +1803,7 @@ def population(request, subject, publication_pk, experiment_index, population_in
         return redirect('population', subject=subject.slug, publication_pk=publication_pk, experiment_index=experiment_index, population_index=population_index)
 
     context = {
+        'user_can_edit_attributes': user_subject.can_edit_attributes,
         'subject': subject,
         'publication': publication,
         'experiment': experiment,
@@ -1975,6 +1978,7 @@ def outcome(request, subject, publication_pk, experiment_index, population_index
                         instance.save()
             return redirect('outcome', subject=subject.slug, publication_pk=publication_pk, experiment_index=experiment_index, population_index=population_index, outcome_index=outcome_index)
     context = {
+        'user_can_edit_attributes': user_subject.can_edit_attributes,
         'subject': subject,
         'publication': publication,
         'experiment': experiment,
