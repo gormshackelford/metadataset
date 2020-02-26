@@ -16,9 +16,11 @@ if __name__ == '__main__':
 
 import re
 from ast import literal_eval
-from publications.models import Publication
+from publications.models import Publication, Subject
 
-for publication in Publication.objects.all():
+#for publication in Publication.objects.all():
+subject = Subject.objects.get(subject="spartina")
+for publication in Publication.objects.filter(subject=subject):
     #if (publication.citation == ""):
 
     citation = ""

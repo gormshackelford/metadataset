@@ -2827,7 +2827,7 @@ def get_status(user, subject):
         if all_full_texts_count != 0:
             all_full_texts_completed_percent = int(all_full_texts_completed_count / all_full_texts_count * 100)
         else:
-            full_texts_completed_percent = 100
+            all_full_texts_completed_percent = 100
 
         # Count the publications that have been included or excluded at full-text stage by this user and the user_for_comparison (for Kappa analysis).
         full_texts_assessed_by_user_2_count = None
