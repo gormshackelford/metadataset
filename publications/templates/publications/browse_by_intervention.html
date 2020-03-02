@@ -18,7 +18,15 @@
   <h1>Browse {{ state }} by intervention</h1>
 
   {% if interventions_count > 0 %}
-    <p>Click <span class="red monospace">+++</span> to expand or <span class="red monospace">---</span> to collapse each level in this classification. Classes with "n.e.c." are "not elsewhere classified".</p>
+    <p>
+      Click <span class="red monospace">+++</span> to expand or <span class="red
+      monospace">---</span> to collapse each level in this classification.
+      Classes with "n.e.c." are "not elsewhere classified". Click <a
+      target="_blank"
+      href="{% url 'browse_by_intervention' subject=subject.slug state=state set=set download='CSV' %}">
+      here</a> to download a CSV file with the number of publications per
+      intervention.
+    </p>
     <p>
       <a class="show_all">Expand all</a> | <a class="hide_all">Collapse all</a>
       {% if state == 'publications' %} |

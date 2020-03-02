@@ -45,6 +45,20 @@
   <br />
   <p><a href="{% url 'edit_publication' subject=subject.slug publication_pk=publication.pk %}">Edit this title/abstract</a></p>
 
+  <h2>Titles/abstracts for Kappa analysis</h2>
+  <p>Select a person from this menu, if you want to assess the titles/abstracts that this person has already assessed (for Kappa analysis). Then click "Set your assessment order" to assess these titles/abstracts, in a random order.</p>
+  <p>
+    {{ user_subject_form_1.user_for_comparison }}
+    <input type="submit" name="set_assessment_order" value="Set your assessment order" />
+  </p>
+  {% if abstracts_assessed_by_both_users_count %}
+    <p>
+      You have assessed {{ abstracts_assessed_by_both_users_count }} of {{ abstracts_assessed_by_user_2_count }} titles/abstracts assessed by this person ({{ abstracts_assessed_by_both_users_percent_of_user_2 }}%). This is {{ abstracts_assessed_by_both_users_percent }}% of the {{ publications_count }} titles/abstracts that need to be assessed.
+    </p>
+  {% endif %}
+
+  <br />
+
   <h1 id="stage_2">
     Stage 2: Full text
     {% if full_text_is_relevant == 'True' %}
@@ -206,10 +220,10 @@
   </p>
 
   <h2>Full texts for Kappa analysis</h2>
-  <p>Select the person with whom you want to work, and then use these navigation buttons to work on full texts that have already been assessed by that person.</p>
+  <p>Select a person from this menu, and then use these navigation buttons to work on full texts that have already been assessed by that person.</p>
   <p>
     <input type="submit" name="previous_for_kappa" value="&nbsp; < &nbsp;" />
-    <input type="submit" name="next_for_kappa" value="&nbsp; > &nbsp;" />&nbsp;&nbsp; Full texts assessed by {{ user_subject_form.user_for_comparison }}
+    <input type="submit" name="next_for_kappa" value="&nbsp; > &nbsp;" />&nbsp;&nbsp; Full texts assessed by {{ user_subject_form_2.user_for_comparison }}
   </p>
   {% if full_texts_assessed_by_both_users_count %}
     <p>

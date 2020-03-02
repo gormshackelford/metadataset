@@ -582,11 +582,15 @@ def publication(request, subject, publication_pk):
         item.save()
 
     # Form for this user_subject (for Kappa analysis)
-    user_subject_form = UserSubjectForm(data=data, instance=user_subject, prefix="user_subject_form")
+    # This form is used twice, at different places in the template, and with different logic if request.POST (see below). That is why we have two versions of this form, instead of using a formset.
+    user_subject_form_1 = UserSubjectForm(data=data, instance=user_subject, prefix="user_subject_form_1")
+    user_subject_form_2 = UserSubjectForm(data=data, instance=user_subject, prefix="user_subject_form_2")
     # User_for_comparison choices for the form (users that have permission to work on this subject)
     user_subjects = UserSubject.objects.filter(subject=subject)
-    user_subject_form.fields['user_for_comparison'] = ModelChoiceField(queryset=User.objects.filter(usersubject__in=user_subjects))
-    user_subject_form.fields['user_for_comparison'].required = False
+    user_subject_form_1.fields['user_for_comparison'] = ModelChoiceField(queryset=User.objects.filter(usersubject__in=user_subjects))
+    user_subject_form_1.fields['user_for_comparison'].required = False
+    user_subject_form_2.fields['user_for_comparison'] = ModelChoiceField(queryset=User.objects.filter(usersubject__in=user_subjects))
+    user_subject_form_2.fields['user_for_comparison'].required = False
     # Form for this assessment
     if Assessment.objects.filter(publication=publication, user=user, subject=subject).exists():
         assessment = Assessment.objects.get(publication=publication, user=user, subject=subject)
@@ -769,8 +773,30 @@ def publication(request, subject, publication_pk):
                             if Assessment.objects.filter(publication=publication, user=user).exists():
                                 Assessment.objects.filter(publication=publication, user=user).delete()
                 return redirect('publication', subject=subject.slug, publication_pk=publication_pk)
+        if 'set_assessment_order' in request.POST:
+            with transaction.atomic():
+                form = user_subject_form_1
+                if form.is_valid():
+                    instance = form.save(commit=False)
+                    instance.user = user
+                    instance.subject = subject
+                    instance.save()
+                    user_for_comparison = instance.user_for_comparison
+                    if user != user_for_comparison:
+                        assessment_status_of_user = AssessmentStatus.objects.get(user=user, subject=subject)
+                        assessment_status_of_user_for_comparison = AssessmentStatus.objects.get(user=user_for_comparison, subject=subject)
+                        completed_assessments_of_user = literal_eval(assessment_status_of_user.completed_assessments)
+                        completed_assessments_of_user_for_comparison = literal_eval(assessment_status_of_user_for_comparison.completed_assessments)
+                        if completed_assessments_of_user_for_comparison:  # If the user_for_comparison has completed any assessments
+                            next_assessments = list(set(completed_assessments_of_user_for_comparison) - set(completed_assessments_of_user))
+                            shuffle(next_assessments)
+                            assessment_status_of_user.assessment_order = completed_assessments_of_user + next_assessments  # get_status will later append all other publication pks to this list.
+                            next_assessment = next_assessments[0]
+                            assessment_status_of_user.next_assessment = next_assessment
+                            assessment_status_of_user.save()
+                            return redirect('publication', subject=subject.slug, publication_pk=next_assessment)
         if 'next_for_kappa' in request.POST or 'previous_for_kappa' in request.POST:
-            form = user_subject_form
+            form = user_subject_form_2
             if form.is_valid():
                 instance = form.save(commit=False)
                 instance.user = user
@@ -790,7 +816,8 @@ def publication(request, subject, publication_pk):
         'publication': publication,
         'assessment_form': assessment_form,
         'full_text_assessment_form': full_text_assessment_form,
-        'user_subject_form': user_subject_form,
+        'user_subject_form_1': user_subject_form_1,
+        'user_subject_form_2': user_subject_form_2,
         'experiment_formset': formset,
         'is_relevant': is_relevant,
         'full_text_is_relevant': full_text_is_relevant,
@@ -1999,7 +2026,7 @@ def outcome(request, subject, publication_pk, experiment_index, population_index
     return render(request, 'publications/outcome.html', context)
 
 
-def browse_by_intervention(request, subject, state, set='default'):
+def browse_by_intervention(request, subject, state, set='default', download='none'):
     user = request.user
     subject = Subject.objects.get(slug=subject)
     if user.is_authenticated:
@@ -2015,12 +2042,61 @@ def browse_by_intervention(request, subject, state, set='default'):
         interventions = Intervention.objects.filter(pk=intervention.pk).get_descendants(include_self=True)
         if (set == 'default'):
             publications = Publication.objects.filter(subject__in=subjects)
-            interventions = interventions.distinct().filter(experiment__publication__in=publications).get_ancestors(include_self=True)
+            interventions = interventions.filter(experiment__publication__in=publications).get_ancestors(include_self=True)
     if (state == 'data'):
         path_to_shiny = get_path_to_shiny(request)
         data = Data.objects.filter(subject__in=subjects)
         interventions = Intervention.objects.filter(experiment__data__in=data).get_ancestors(include_self=True)
     interventions_count = interventions.count()
+    # If the request is to download a CSV file with the number of interventions per publication
+    if (download == 'CSV'):
+        # Create the HttpResponse object with the appropriate CSV header.
+        response = HttpResponse(content_type='text/csv; charset=utf-8')
+        response['Content-Disposition'] = 'attachment; filename="publications_per_intervention.csv"'
+        # Write the CSV
+        writer = csv.writer(response, quoting=csv.QUOTE_ALL)
+        writer.writerow(['level_0', 'level_1', 'level_2', 'level_3', 'level_4', 'level_5', 'level_6', 'level_7', 'number_of_publications'])
+        for intervention in interventions:
+            level = intervention.level
+            if intervention.code is not None and intervention.code != "":
+                code = "{code} ".format(code = intervention.code)
+            else:
+                code = ""
+            if (level == 0):
+                level_0 = str(subject).capitalize()
+            else:
+                level_0 = ""
+            if (level == 1):
+                level_1 = "{code}{intervention}".format(code = code, intervention = intervention)
+            else:
+                level_1 = ""
+            if (level == 2):
+                level_2 = "{code}{intervention}".format(code = code, intervention = intervention)
+            else:
+                level_2 = ""
+            if (level == 3):
+                level_3 = "{code}{intervention}".format(code = code, intervention = intervention)
+            else:
+                level_3 = ""
+            if (level == 4):
+                level_4 = "{code}{intervention}".format(code = code, intervention = intervention)
+            else:
+                level_4 = ""
+            if (level == 5):
+                level_5 = "{code}{intervention}".format(code = code, intervention = intervention)
+            else:
+                level_5 = ""
+            if (level == 6):
+                level_6 = "{code}{intervention}".format(code = code, intervention = intervention)
+            else:
+                level_6 = ""
+            if (level == 7):
+                level_7 = "{code}{intervention}".format(code = code, intervention = intervention)
+            else:
+                level_7 = ""
+            publications_count = Publication.objects.distinct().filter(subject__in=subjects, experiment__intervention__in=intervention.get_descendants(include_self=True)).values_list('pk', flat=True).count()
+            writer.writerow([level_0, level_1, level_2, level_3, level_4, level_5, level_6, level_7, publications_count])
+        return response
     context = {
         'subject': subject,  # Browse within this subject
         'interventions': interventions,
@@ -2049,7 +2125,7 @@ def browse_by_outcome(request, subject, state, set='default'):
     path_to_shiny = ''
     if (state == 'publications'):
         outcome = subject.outcome  # The root outcome for this subject (each subject can have its own classification of outcomes)
-        outcomes = Outcome.objects.filter(pk=outcome.pk).get_descendants(include_self=True)
+        outcomes = Outcome.objects.get(pk=outcome.pk).get_descendants(include_self=True)
         if (set == 'default'):
             publications = Publication.objects.filter(subject__in=subjects)
             outcomes = outcomes.distinct().filter(
@@ -2829,7 +2905,11 @@ def get_status(user, subject):
         else:
             all_full_texts_completed_percent = 100
 
-        # Count the publications that have been included or excluded at full-text stage by this user and the user_for_comparison (for Kappa analysis).
+        # Count the publications that have been included or excluded by this user and the user_for_comparison (for Kappa analysis).
+        abstracts_assessed_by_user_2_count = None
+        abstracts_assessed_by_both_users_count = None
+        abstracts_assessed_by_both_users_percent = None
+        abstracts_assessed_by_both_users_percent_of_user_2 = None
         full_texts_assessed_by_user_2_count = None
         full_texts_assessed_by_both_users_count = None
         full_texts_assessed_by_both_users_percent = None
@@ -2838,6 +2918,32 @@ def get_status(user, subject):
         if user_subject.user_for_comparison:
             user_1 = user
             user_2 = user_subject.user_for_comparison
+
+            # Titles/abstracts (Stage 1)
+            # Publications that user_1 assessed at Stage 2
+            user_1_publications = Publication.objects.filter(
+                subject=subject,
+                assessment__in=Assessment.objects.filter(user=user_1)
+            )
+            # Publications that user_2 assessed at Stage 2
+            user_2_publications = Publication.objects.filter(
+                subject=subject,
+                assessment__in=Assessment.objects.filter(user=user_2)
+            )
+            abstracts_assessed_by_user_2_count = user_2_publications.values_list('pk', flat=True).count()
+            # Publications that both users assessed at Stage 1
+            abstracts_assessed_by_both_users = user_1_publications & user_2_publications
+            abstracts_assessed_by_both_users_count = abstracts_assessed_by_both_users.values_list('pk', flat=True).count()
+            if publications_count != 0:
+                abstracts_assessed_by_both_users_percent = round(abstracts_assessed_by_both_users_count / publications_count * 100)
+            else:
+                abstracts_assessed_by_both_users_percent = 100
+            if abstracts_assessed_by_user_2_count != 0:
+                abstracts_assessed_by_both_users_percent_of_user_2 = round(abstracts_assessed_by_both_users_count / abstracts_assessed_by_user_2_count * 100)
+            else:
+                abstracts_assessed_by_both_users_percent_of_user_2 = 100
+
+            # Full texts (Stage 2)
             # Publications that user_1 assessed at Stage 2
             user_1_publications = Publication.objects.filter(
                 subject=subject,
@@ -2870,6 +2976,10 @@ def get_status(user, subject):
             'publications_count': publications_count,
             'publications_assessed_count': publications_assessed_count,
             'publications_assessed_percent': publications_assessed_percent,
+            'abstracts_assessed_by_user_2_count': abstracts_assessed_by_user_2_count,
+            'abstracts_assessed_by_both_users_count': abstracts_assessed_by_both_users_count,
+            'abstracts_assessed_by_both_users_percent': abstracts_assessed_by_both_users_percent,
+            'abstracts_assessed_by_both_users_percent_of_user_2': abstracts_assessed_by_both_users_percent_of_user_2,
             'full_texts_count': full_texts_count,  # "relevant publications" (at title/abstract stage) = "full texts" (publications that need to be screened at full-text stage)
             'full_texts_assessed_count': full_texts_assessed_count,
             'full_texts_assessed_percent': full_texts_assessed_percent,
