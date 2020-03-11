@@ -788,10 +788,14 @@ def publication(request, subject, publication_pk):
                         completed_assessments_of_user = literal_eval(assessment_status_of_user.completed_assessments)
                         completed_assessments_of_user_for_comparison = literal_eval(assessment_status_of_user_for_comparison.completed_assessments)
                         if completed_assessments_of_user_for_comparison:  # If the user_for_comparison has completed any assessments
-                            next_assessments = list(set(completed_assessments_of_user_for_comparison) - set(completed_assessments_of_user))
-                            shuffle(next_assessments)
-                            assessment_status_of_user.assessment_order = completed_assessments_of_user + next_assessments  # get_status will later append all other publication pks to this list.
-                            next_assessment = next_assessments[0]
+                            assessments_for_comparison = list(set(completed_assessments_of_user_for_comparison) - set(completed_assessments_of_user))
+                            shuffle(assessments_for_comparison)
+                            new_assessment_order = completed_assessments_of_user + assessments_for_comparison
+                            publication_pks = Publication.objects.filter(subject=subject).values_list('pk', flat=True)
+                            publication_pks = list(publication_pks)
+                            new_assessment_order = new_assessment_order + list(set(publication_pks) - set(new_assessment_order))
+                            assessment_status_of_user.assessment_order = new_assessment_order
+                            next_assessment = assessments_for_comparison[0]
                             assessment_status_of_user.next_assessment = next_assessment
                             assessment_status_of_user.save()
                             return redirect('publication', subject=subject.slug, publication_pk=next_assessment)
