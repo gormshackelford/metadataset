@@ -220,7 +220,7 @@
   </p>
 
   <h2>Full texts for Kappa analysis</h2>
-  <p>Select a person from this menu, and then use these navigation buttons to work on full texts that have already been assessed by that person.</p>
+  <p>Select a person from this menu, and then use these navigation buttons to work on full texts that have already been assessed by that person. These may include publications that you excluded but the other person included at Stage 1.</p>
   <p>
     <input type="submit" name="previous_for_kappa" value="&nbsp; < &nbsp;" />
     <input type="submit" name="next_for_kappa" value="&nbsp; > &nbsp;" />&nbsp;&nbsp; Full texts assessed by {{ user_subject_form_2.user_for_comparison }}
@@ -232,6 +232,7 @@
   {% endif %}
 
   <h2>All full texts</h2>
+  <p>These may include publications that you excluded but another person included at Stage 1.</p>
   <p>
     {{ all_full_texts_assessed_count }} of {{ all_full_texts_count }} assessed ({{ all_full_texts_assessed_percent}}%)<br />
     {{ all_full_texts_completed_count }} of {{ all_full_texts_count }} completed ({{ all_full_texts_completed_percent}}%)<br />
