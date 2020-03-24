@@ -3086,9 +3086,12 @@ def full_text_navigation(request, subject, direction, state, users, publication_
             ))
             if (users.count() > 1):
                 # Exclude publications that have been assessed by at least one person (even if they have not been assessed by other people).
-                publications = publications.exclude(assessment__in=Assessment.objects.filter(
+                if publications.exclude(assessment__in=Assessment.objects.filter(
                     subject=subject, user__in=users, is_completed=True
-                ))
+                )).exists():
+                    publications = publications.exclude(assessment__in=Assessment.objects.filter(
+                        subject=subject, user__in=users, is_completed=True
+                    ))
     elif (state == 'not_assessed'):
         # Publications for this subject that were included at title/abstract stage but have not yet been assigned an intervention or excluded at full-text stage
         if publications.filter(assessment__in=Assessment.objects.filter(
@@ -3099,11 +3102,16 @@ def full_text_navigation(request, subject, direction, state, users, publication_
             ))
             if (users.count() > 1):
                 # Exclude publications that have been assessed by at least one person (even if they have not been assessed by other people).
-                publications = publications.exclude(assessment__in=Assessment.objects.filter(
+                if publications.exclude(assessment__in=Assessment.objects.filter(
                     subject=subject, user__in=users
                 ).filter(
                     Q(full_text_is_relevant=True) | Q(full_text_is_relevant=False)
-                ))
+                )).exists():
+                    publications = publications.exclude(assessment__in=Assessment.objects.filter(
+                        subject=subject, user__in=users
+                    ).filter(
+                        Q(full_text_is_relevant=True) | Q(full_text_is_relevant=False)
+                    ))
     elif (state == 'kappa'):
         # If screening full texts for Kappa analysis (publications that the user_for_comparison has already assessed at full-text stage)
         user_for_comparison = user_subject.user_for_comparison

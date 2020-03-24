@@ -13,8 +13,6 @@ config.json
 config_with_docker.json
 config_without_docker.json
 config.py
-copy_from_user_to_user.py
-delete_from_user.py
 geckodriver.log
 metadataset/whoosh_index
 Notes.txt

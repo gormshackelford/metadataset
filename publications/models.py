@@ -205,7 +205,7 @@ class Attribute(MPTTModel):
     note = models.TextField(blank=True)
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, blank=True, null=True, on_delete=models.SET_NULL)
 
     def save(self, *args, **kwargs):
         max_length = 255  # For MySQL, unique/indexed fields must be < 256.
