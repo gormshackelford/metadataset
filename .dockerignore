@@ -6,8 +6,8 @@ cache_data.py
 config.json
 config_without_docker.json
 config.py
-copy_from_user_to_user.py
-delete_from_user.py
+db_dump.sh
+db_restore.sh
 geckodriver.log
 metadataset/whoosh_index
 Notes.txt

@@ -13,6 +13,8 @@ config.json
 config_with_docker.json
 config_without_docker.json
 config.py
+db_dump.sh
+db_restore.sh
 geckodriver.log
 metadataset/whoosh_index
 Notes.txt

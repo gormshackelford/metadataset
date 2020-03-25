@@ -2180,7 +2180,8 @@ def this_intervention(request, subject, state, intervention_pk, outcome_pk='defa
         outcomes = Outcome.objects.filter(pk=outcome_pk).get_descendants(include_self=True)
     if state == 'publications':
         # Publications for this intervention (and its descendants)
-        publications = Publication.objects.filter(subject__in=subjects)
+        assessments = Assessment.objects.filter(subject__in=subjects, full_text_is_relevant=True)
+        publications = Publication.objects.filter(subject__in=subjects, assessment__in=assessments)
         publications = publications.distinct().filter(experiment__intervention__in=interventions)
         # Filter these publications by outcome
         if outcome_pk != 'default':
@@ -2287,7 +2288,8 @@ def this_outcome(request, subject, state, outcome_pk, intervention_pk='default')
         publication_population_outcomes = PublicationPopulationOutcome.objects.filter(outcome__in=outcomes)
         experiment_population_outcomes = ExperimentPopulationOutcome.objects.filter(outcome__in=outcomes)
         # Publications for these records
-        publications = Publication.objects.distinct().filter(subject__in=subjects)
+        assessments = Assessment.objects.filter(subject__in=subjects, full_text_is_relevant=True)
+        publications = Publication.objects.distinct().filter(subject__in=subjects, assessment__in=assessments)
         publications = publications.distinct().filter(
                 Q(experiment__experimentpopulation__experimentpopulationoutcome__in=experiment_population_outcomes) |
                 Q(publicationpopulation__publicationpopulationoutcome__in=publication_population_outcomes)
@@ -2377,7 +2379,8 @@ def publications_x(request, subject, intervention_pk='default', outcome_pk='defa
             subjects = subject.get_descendants(include_self=True).exclude(is_public=False)
     else:
         subjects = subject.get_descendants(include_self=True).exclude(is_public=False)
-    publications = Publication.objects.filter(subject__in=subjects)
+    assessments = Assessment.objects.filter(subject__in=subjects, full_text_is_relevant=True)
+    publications = Publication.objects.filter(subject__in=subjects, assessment__in=assessments)
     if iso_a3 != 'default':
         if iso_a3 != '-99':  # Disputed territories that are not our Countries model: Kosovo, Northern Cyprus, and Somaliland
             country = Country.objects.get(iso_alpha_3=iso_a3)
