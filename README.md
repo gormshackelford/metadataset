@@ -65,7 +65,7 @@ Copy and paste the following into `config.json` and then exit/save (`Ctrl + X`).
     "DB_PASSWORD": "[your_db_user_password]",
     "DB_HOST": "127.0.0.1",
     "ALLOWED_HOSTS": "['127.0.0.1', 'www.metadataset.com', 'dev.metadataset.com']",
-    "DEBUG": "True",
+    "DEBUG": "False",
     "SECURE_SSL_REDIRECT": "False"
 }
 ```
@@ -196,4 +196,4 @@ Include /etc/letsencrypt/options-ssl-apache.conf
 Check that your server allows traffic via https on port 443 (for example, on Google Compute Engine, there is a checkbox for enabling https). Change `config.json` to redirect from http to https: "SECURE_SSL_REDIRECT": "True". Then restart Apache with `sudo apache2ctl restart`. You should now see the https version of the website when you go to your domain name in your browser (e.g., with the padlock symbol).
 
 # Copyright
-Metadataset is copyright (c) 2020 Gorm Shackelford, but it is Open Source and licensed under the MIT License. Thanks to Stefan Haselwimmer for developing the README file and server architecture for www.x-risk.net, on which this file is based.
+Metadataset is copyright (c) 2020 Gorm Shackelford, but it is Open Source and licensed under the MIT License. Thanks to Stefan Haselwimmer for developing the README file and server architecture for www.x-risk.net (https://github.com/x-risk/x-risk), on which this README file is based.

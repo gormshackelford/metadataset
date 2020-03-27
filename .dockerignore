@@ -5,7 +5,6 @@ cache_analysis.py
 cache_data.py
 config.json
 config_without_docker.json
-config.py
 db_dump.sh
 db_restore.sh
 geckodriver.log
