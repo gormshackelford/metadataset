@@ -12,18 +12,12 @@ https://docs.djangoproject.com/en/2.0/ref/settings/
 
 import os
 import json
-import config
+from ast import literal_eval
 
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-
-# The SSL certificate is installed for production, but not for development.
-SECURE_SSL_REDIRECT = bool(config.SECURE_SSL_REDIRECT)
-
-# Debug is off for production, but on for development.
-DEBUG = bool(config.DEBUG)
 
 # Load the configuration file (config.json, not config.py)
 config_file = os.path.join(BASE_DIR, "config.json")
@@ -31,10 +25,13 @@ with open(config_file, 'r') as f:
     config = json.load(f)
 
 
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/2.0/howto/deployment/checklist/
+# The SSL certificate is installed for production, but not for development.
+SECURE_SSL_REDIRECT = literal_eval(config['SECURE_SSL_REDIRECT'])
 
-ALLOWED_HOSTS = ['127.0.0.1', 'www.metadataset.com', 'dev.metadataset.com']
+# Debug is off for production, but on for development.
+DEBUG = literal_eval(config['DEBUG'])
+
+ALLOWED_HOSTS = literal_eval(config['ALLOWED_HOSTS'])
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = config['SECRET_KEY']

@@ -290,7 +290,7 @@ with transaction.atomic():
             # There should only be one set of start and end dates, so do not
             # copy if it already exists. If merge_or_overwrite == "overwrite",
             # it will already have been deleted, above.
-            if not Date.objects.filter(publication=publication, user=user).exists():
+            if Date.objects.filter(publication=publication, user=user).exists() == False:
                 dates = Date.objects.filter(publication=publication, user=user_to_copy)
                 for date in dates:
                     date = deepcopy(date)
