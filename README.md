@@ -145,7 +145,7 @@ You may need to restart Apache after making changes.
 sudo apache2ctl restart
 ```
 
-## Install an SSL certificate and enable https
+## Installing an SSL certificate and enabling https
 Comment out the following line in `001-metadataset.conf`:
 ```
 # WSGIDaemonProcess...
