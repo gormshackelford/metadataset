@@ -59,6 +59,7 @@ urlpatterns = [
     path('subject/<subject>/browse-by-intervention/<state>/<set>/download/<download>/', views.browse_by_intervention, name='browse_by_intervention'),
     path('subject/<subject>/browse-by-outcome/<state>/', views.browse_by_outcome, name='browse_by_outcome'),
     path('subject/<subject>/browse-by-outcome/<state>/<set>/', views.browse_by_outcome, name='browse_by_outcome'),
+    path('subject/<subject>/browse-by-outcome/<state>/<set>/download/<download>/', views.browse_by_outcome, name='browse_by_outcome'),
     path('subject/<subject>/add-publication/', views.add_publication, name='add_publication'),
     path('subject/<subject>/edit-publication/<int:publication_pk>/', views.edit_publication, name='edit_publication'),
     path('subject/<subject>/publication/<int:publication_pk>/', views.publication, name='publication'),

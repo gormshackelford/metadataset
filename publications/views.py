@@ -2057,7 +2057,7 @@ def browse_by_intervention(request, subject, state, set='default', download='non
         data = Data.objects.filter(subject__in=subjects)
         interventions = Intervention.objects.filter(experiment__data__in=data).get_ancestors(include_self=True)
     interventions_count = interventions.count()
-    # If the request is to download a CSV file with the number of interventions per publication
+    # If the request is to download a CSV file with the number of publications per intervention
     if (download == 'CSV'):
         # Create the HttpResponse object with the appropriate CSV header.
         response = HttpResponse(content_type='text/csv; charset=utf-8')
@@ -2121,7 +2121,7 @@ def browse_by_intervention(request, subject, state, set='default', download='non
     return render(request, 'publications/browse_by_intervention.html', context)
 
 
-def browse_by_outcome(request, subject, state, set='default'):
+def browse_by_outcome(request, subject, state, set='default', download='none'):
     user = request.user
     subject = Subject.objects.get(slug=subject)
     if user.is_authenticated:
@@ -2146,6 +2146,60 @@ def browse_by_outcome(request, subject, state, set='default'):
         data = Data.objects.filter(subject__in=subjects)
         outcomes = Outcome.objects.filter(experimentpopulationoutcome__data__in=data).get_ancestors(include_self=True)
     outcomes_count = outcomes.count()
+    # If the request is to download a CSV file with the number of publications per outcome
+    if (download == 'CSV'):
+        # Create the HttpResponse object with the appropriate CSV header.
+        response = HttpResponse(content_type='text/csv; charset=utf-8')
+        response['Content-Disposition'] = 'attachment; filename="publications_per_outcome.csv"'
+        # Write the CSV
+        writer = csv.writer(response, quoting=csv.QUOTE_ALL)
+        writer.writerow(['level_0', 'level_1', 'level_2', 'level_3', 'level_4', 'level_5', 'level_6', 'level_7', 'number_of_publications'])
+        for outcome in outcomes:
+            level = outcome.level
+            if outcome.code is not None and outcome.code != "":
+                code = "{code} ".format(code = outcome.code)
+            else:
+                code = ""
+            if (level == 0):
+                level_0 = str(subject).capitalize()
+            else:
+                level_0 = ""
+            if (level == 1):
+                level_1 = "{code}{outcome}".format(code = code, outcome = outcome)
+            else:
+                level_1 = ""
+            if (level == 2):
+                level_2 = "{code}{outcome}".format(code = code, outcome = outcome)
+            else:
+                level_2 = ""
+            if (level == 3):
+                level_3 = "{code}{outcome}".format(code = code, outcome = outcome)
+            else:
+                level_3 = ""
+            if (level == 4):
+                level_4 = "{code}{outcome}".format(code = code, outcome = outcome)
+            else:
+                level_4 = ""
+            if (level == 5):
+                level_5 = "{code}{outcome}".format(code = code, outcome = outcome)
+            else:
+                level_5 = ""
+            if (level == 6):
+                level_6 = "{code}{outcome}".format(code = code, outcome = outcome)
+            else:
+                level_6 = ""
+            if (level == 7):
+                level_7 = "{code}{outcome}".format(code = code, outcome = outcome)
+            else:
+                level_7 = ""
+            publications_count = Publication.objects.filter(
+                subject__in=subjects
+            ).filter(
+                Q(experiment__experimentpopulation__experimentpopulationoutcome__outcome__in=outcome.get_descendants(include_self=True)) |
+                Q(publicationpopulation__publicationpopulationoutcome__outcome__in=outcome.get_descendants(include_self=True))
+            ).values_list('pk', flat=True).distinct().count()
+            writer.writerow([level_0, level_1, level_2, level_3, level_4, level_5, level_6, level_7, publications_count])
+        return response
     context = {
         'subject': subject,  # Browse within this subject
         'outcomes': outcomes,
