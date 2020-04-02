@@ -129,9 +129,12 @@ class DataXCountrySerializer(serializers.HyperlinkedModelSerializer):
 
 
 class DataPublicationSerializer(serializers.HyperlinkedModelSerializer):
+    EAV_publication = DataEAVSerializer(many=True, read_only=True)
+    xcountry_publication = DataXCountrySerializer(many=True, read_only=True)
+
     class Meta:
         model = Publication
-        fields = ('title', 'authors', 'year', 'journal', 'volume', 'issue', 'pages', 'doi', 'citation')
+        fields = ('title', 'authors', 'year', 'journal', 'volume', 'issue', 'pages', 'doi', 'citation', 'pk', 'EAV_publication', 'xcountry_publication')
 
 
 class DataStudySerializer(serializers.HyperlinkedModelSerializer):
