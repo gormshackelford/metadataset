@@ -4,6 +4,7 @@ from django.contrib.sites.shortcuts import get_current_site
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.db import transaction
 from django.db.models import Q
+from django.db.models.functions import Coalesce
 from django.forms import modelformset_factory, ModelChoiceField
 from django.http import HttpResponse
 from django.shortcuts import render, redirect, get_object_or_404
@@ -2383,6 +2384,8 @@ def this_outcome(request, subject, state, outcome_pk, intervention_pk='default')
         data = data.filter(experiment_population_outcome__outcome__in=outcomes)
         # Filter these data by intervention
         if intervention_pk != 'default':
+            this_intervention = Intervention.objects.get(pk=intervention_pk)
+            interventions = Intervention.objects.filter(pk=intervention_pk).get_descendants(include_self=True)
             data = data.filter(experiment__intervention__in=interventions)
             # Pass this path to the template for evidence-atlas.js to generate dynamic links by intervention and outcome.
             path = "{path_to_shiny}?subject={subject}&intervention={intervention}&outcome={outcome}&country=".format(path_to_shiny=path_to_shiny, subject=subject.pk, intervention=this_intervention.pk, outcome=this_outcome.pk)
@@ -2394,15 +2397,18 @@ def this_outcome(request, subject, state, outcome_pk, intervention_pk='default')
         interventions = Intervention.objects.distinct().filter(
                 experiment__data__in=data
             ).get_ancestors(include_self=True)
-
-        # Countries for these data
-        # Countries by experiment
-        experiments = Experiment.objects.filter(data__in=data)
-        countries = XCountry.objects.filter(experiment_index__in=experiments)
-        q = countries.values_list('country__iso_alpha_3', 'experiment_index__data').distinct()
-        countries = list(chain(q))  # A list of tuples in the form [(country, publication)]. Chain is imported from itertools.
-        countries = set(countries)  # Delete duplicate records, where a publication has the same country in both publication_country and experiment_country: set = unique tuples (and the list is now a dict)
-        count_by_country = Counter(item[0] for item in countries)  # item[0] is country in (country, publication) and this counts the number of tuples for each country. Counter is imported from collections.
+        # Get the metadata that were entered at the lowest level (publication >
+        # intervention > population > outcome) using Coalesce.
+        data_countries = data.annotate(country_codes=Coalesce(
+            'experiment_population_outcome__xcountry_outcome__country__iso_alpha_3',
+            'experiment_population__xcountry_population__country__iso_alpha_3',
+            'experiment__xcountry_experiment__country__iso_alpha_3',
+            'publication__xcountry_publication__country__iso_alpha_3'
+        )).filter()
+        data_countries = data_countries.values_list('country_codes', 'pk')
+        # Convert to a list of tuples and count the tuples for each country.
+        data_countries = set(chain(data_countries))
+        count_by_country = Counter(item[0] for item in data_countries)  # item[0] is country in (country, pk) and this counts the number of tuples for each country. Counter is imported from collections.
         count_by_country = json.dumps(count_by_country)  # Convert to JSON for use by JavaScript in the template
         count = data.count()
 
@@ -3091,7 +3097,8 @@ def get_path_to_shiny(request):
     current_site = get_current_site(request)
     domain = current_site.domain
     if domain == "dev.metadataset.com":
-        path_to_shiny = "http://shiny.metadataset.com/meta-analysis/"
+        path_to_shiny = "http://metadataset.shinyapps.io/meta-analysis/"
+        #path_to_shiny = "http://shiny.metadataset.com/meta-analysis/"
     else:
         path_to_shiny = "http://metadataset.shinyapps.io/meta-analysis/"
     return(path_to_shiny)
