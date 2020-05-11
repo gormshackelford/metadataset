@@ -33,10 +33,10 @@ before running this script.
 
 
 # Specify the subject.
-subject = "cassava"
+subject = "nuttall's waterweed"
 
 # Specify the users.
-user = "cassava@metadataset.com"  # User to whom the assessments will be copied
+user = "phil.martin.research@gmail.com"  # User to whom the assessments will be copied
 user_to_copy = "ges47@cam.ac.uk"  # User from whom the assessments will be copied
 
 
@@ -56,10 +56,10 @@ user. The recommended default settings are:
 merge_or_overwrite_included_full_texts = False
 merge_or_overwrite = "overwrite"
 """
-#merge_or_overwrite_included_full_texts = True
-merge_or_overwrite_included_full_texts = False
+merge_or_overwrite_included_full_texts = True
+#merge_or_overwrite_included_full_texts = False
 
-# Also choose one of these two options and comment the other. See above for an
+# Also uncomment one of these options and comment the other. See above for an
 # explanation.
 #merge_or_overwrite = "merge"
 merge_or_overwrite = "overwrite"

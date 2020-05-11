@@ -27,7 +27,7 @@ together for Kappa analysis.
 """
 
 # Specify the subject.
-subject = "cassava"
+subject = "nuttall's waterweed"
 subject = Subject.objects.get(subject=subject)
 
 # Specify the user.
