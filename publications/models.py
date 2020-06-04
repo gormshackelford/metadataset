@@ -223,6 +223,7 @@ class Attribute(MPTTModel):
 
     class Meta:
         unique_together = ('attribute', 'parent')
+        ordering = ['attribute']
 
     class MPTTMeta:
         order_insertion_by = ['attribute']
@@ -628,6 +629,9 @@ class EAV(models.Model):
 
     def __str__(self):
         return self.attribute.attribute
+
+    class Meta:
+        unique_together = (('attribute', 'user', 'publication'), ('attribute', 'user', 'experiment'), ('attribute', 'user', 'population'), ('attribute', 'user', 'outcome'))
 
 
 #TODO: Build an interface for saving the results of analyses from the Shiny app, which will use this model.
