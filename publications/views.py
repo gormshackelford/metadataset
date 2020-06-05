@@ -1569,7 +1569,7 @@ def population(request, subject, publication_pk, experiment_index, population_in
                                         )
                                         x_country.save()
                                     elif attribute in attributes.values_list('attribute', flat=True):
-                                        attribute = Attribute.objects.get(attribute=attribute)
+                                        attribute = attributes.get(attribute=attribute)
                                         eav = EAV(
                                             attribute = attribute,
                                             user = user,
