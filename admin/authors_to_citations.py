@@ -21,7 +21,6 @@ from publications.models import Publication, Subject
 #for publication in Publication.objects.all():
 subject = Subject.objects.get(subject="spartina")
 for publication in Publication.objects.filter(subject=subject):
-    #if (publication.citation == ""):
 
     citation = ""
 

@@ -15,13 +15,15 @@ if __name__ == '__main__':
 
 
 import pandas as pd
-from publications.models import Design
+from publications.models import Country
 
 # Load a csv file with the list to be added to the database.
-csv = "publications/data/designs.csv"
+csv = "./publications/data/un_m49_countries.csv"
 df = pd.read_csv(csv, encoding="utf-8")
 
 for result in df.itertuples():
-    design = result.Design
-    record = Design(design=design)
+    country = result.country
+    un_m49 = result.un_m49
+    iso_alpha_3 = result.iso_alpha_3
+    record = Country(country=country, un_m49=un_m49, iso_alpha_3=iso_alpha_3)
     record.save()

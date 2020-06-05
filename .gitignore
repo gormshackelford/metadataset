@@ -6,9 +6,6 @@ __pycache__
 .DS_Store
 
 .env
-bibliography.csv
-cache_analysis.py
-cache_data.py
 config.json
 config_with_docker.json
 config_without_docker.json
@@ -17,8 +14,6 @@ db_restore.sh
 geckodriver.log
 metadataset/whoosh_index
 Notes.txt
-publications/data/
-publications/ris_to_database.py
 s3_credentials.csv
 venv/
 web_scraping/

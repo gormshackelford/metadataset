@@ -15,15 +15,21 @@ if __name__ == '__main__':
 
 
 import pandas as pd
-from publications.models import Country
+from publications.models import Crop
 
 # Load a csv file with the list to be added to the database.
-csv = "publications/data/un_m49_countries.csv"
+csv = "./publications/data/agriculture/crops.csv"
 df = pd.read_csv(csv, encoding="utf-8")
 
-for result in df.itertuples():
-    country = result.country
-    un_m49 = result.un_m49
-    iso_alpha_3 = result.iso_alpha_3
-    record = Country(country=country, un_m49=un_m49, iso_alpha_3=iso_alpha_3)
-    record.save()
+for row in df.itertuples():
+    level1 = row.Level1
+    level1, created = Crop.objects.get_or_create(crop=level1)
+    level2 = row.Level2
+    if not pd.isnull(level2):
+        level2, created = Crop.objects.get_or_create(crop=level2, parent=level1)
+    level3 = row.Level3
+    if not pd.isnull(level3):
+        level3, created = Crop.objects.get_or_create(crop=level3, parent=level2)
+    level4 = row.Level4
+    if not pd.isnull(level4):
+        level4, created = Crop.objects.get_or_create(crop=level4, parent=level3)
