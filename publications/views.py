@@ -142,7 +142,7 @@ class DataViewSet(viewsets.ReadOnlyModelViewSet):
             'experiment', 'experiment__intervention', 'experiment__EAV_experiment', 'experiment__EAV_experiment__attribute', 'experiment__EAV_experiment__value_as_factor', 'experiment__xcountry_experiment', 'experiment__xcountry_experiment__country', 'experiment__study_experiment', 'experiment__experimentdesign_set',
             'experiment_population', 'experiment_population__population', 'experiment_population__EAV_population', 'experiment_population__EAV_population__attribute', 'experiment_population__EAV_population__value_as_factor', 'experiment_population__xcountry_population', 'experiment_population__xcountry_population__country', 'experiment_population__study_population',
             'experiment_population_outcome', 'experiment_population_outcome__outcome', 'experiment_population_outcome__EAV_outcome', 'experiment_population_outcome__EAV_outcome__attribute', 'experiment_population_outcome__EAV_outcome__value_as_factor', 'experiment_population_outcome__xcountry_outcome', 'experiment_population_outcome__xcountry_outcome__country', 'experiment_population_outcome__study_outcome',
-            'publication__xcountry_publication', 'publication__EAV_publication'
+            'publication__xcountry_publication', 'publication__EAV_publication', 'publication__subject'
         )
 
 
