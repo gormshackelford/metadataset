@@ -2317,13 +2317,18 @@ def this_intervention(request, subject, state, intervention_pk, outcome_pk='defa
                 experimentpopulationoutcome__data__in=data
             ).get_ancestors(include_self=True)
 
-        # Countries for these data
-        experiments = Experiment.objects.filter(data__in=data)
-        countries = XCountry.objects.filter(experiment_index__in=experiments)
-        q = countries.values_list('country__iso_alpha_3', 'experiment_index__data').distinct()
-        countries = list(chain(q))  # A list of tuples in the form [(country, publication)]. Chain is imported from itertools.
-        countries = set(countries)  # Delete duplicate records, where a publication has the same country in both publication_country and experiment_country: set = unique tuples (and the list is now a dict)
-        count_by_country = Counter(item[0] for item in countries)  # item[0] is country in (country, publication) and this counts the number of tuples for each country. Counter is imported from collections.
+        # Get the metadata that were entered at the lowest level (publication >
+        # intervention > population > outcome) using Coalesce.
+        data_countries = data.annotate(country_codes=Coalesce(
+            'experiment_population_outcome__xcountry_outcome__country__iso_alpha_3',
+            'experiment_population__xcountry_population__country__iso_alpha_3',
+            'experiment__xcountry_experiment__country__iso_alpha_3',
+            'publication__xcountry_publication__country__iso_alpha_3'
+        )).filter()
+        data_countries = data_countries.values_list('country_codes', 'pk')
+        # Convert to a list of tuples and count the tuples for each country.
+        data_countries = set(chain(data_countries))
+        count_by_country = Counter(item[0] for item in data_countries)  # item[0] is country in (country, pk) and this counts the number of tuples for each country. Counter is imported from collections.
         count_by_country = json.dumps(count_by_country)  # Convert to JSON for use by JavaScript in the template
         count = data.count()
 
