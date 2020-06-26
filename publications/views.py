@@ -22,6 +22,7 @@ from .forms import AssessmentForm, AttributeForm, AttributeOptionForm, Coordinat
 from .models import Assessment, AssessmentStatus, Attribute, Coordinates, Country, Crop, Data, Date, Design, EAV, Experiment, ExperimentDesign, ExperimentPopulation, ExperimentPopulationOutcome, Intervention, Outcome, Publication, PublicationPopulation, PublicationPopulationOutcome, Study, Subject, User, UserSubject, XCountry
 from .serializers import AttributeSerializer, CountrySerializer, DataSerializer, DesignSerializer, EAVSerializer, ExperimentSerializer, ExperimentDesignSerializer, ExperimentPopulationSerializer, ExperimentPopulationOutcomeSerializer, InterventionSerializer, OutcomeSerializer, PublicationSerializer, PublicationPopulationSerializer, PublicationPopulationOutcomeSerializer, SubjectSerializer, UserSerializer
 from .decorators import group_required
+from publications.column_names import coordinates_cols, date_cols, study_cols, integer_cols, decimal_cols, minutes_seconds_cols, year_cols, month_cols, day_cols, data_cols, generic_metadata_cols, col_names
 from openpyxl import Workbook, load_workbook
 from openpyxl.utils.cell import get_column_letter
 from openpyxl.worksheet.datavalidation import DataValidation
@@ -34,6 +35,9 @@ from rest_framework import viewsets
 import reversion
 import csv
 import json
+import pandas as pd
+import re
+import traceback
 
 
 class AttributeViewSet(viewsets.ReadOnlyModelViewSet):
@@ -139,10 +143,10 @@ class DataViewSet(viewsets.ReadOnlyModelViewSet):
             queryset = queryset.filter(experiment__user=user)
         return queryset.prefetch_related(
             'publication',
-            'experiment', 'experiment__intervention', 'experiment__EAV_experiment', 'experiment__EAV_experiment__attribute', 'experiment__EAV_experiment__value_as_factor', 'experiment__xcountry_experiment', 'experiment__xcountry_experiment__country', 'experiment__study_experiment', 'experiment__experimentdesign_set',
-            'experiment_population', 'experiment_population__population', 'experiment_population__EAV_population', 'experiment_population__EAV_population__attribute', 'experiment_population__EAV_population__value_as_factor', 'experiment_population__xcountry_population', 'experiment_population__xcountry_population__country', 'experiment_population__study_population',
-            'experiment_population_outcome', 'experiment_population_outcome__outcome', 'experiment_population_outcome__EAV_outcome', 'experiment_population_outcome__EAV_outcome__attribute', 'experiment_population_outcome__EAV_outcome__value_as_factor', 'experiment_population_outcome__xcountry_outcome', 'experiment_population_outcome__xcountry_outcome__country', 'experiment_population_outcome__study_outcome',
-            'publication__xcountry_publication', 'publication__EAV_publication', 'publication__subject'
+            'experiment', 'experiment__intervention', 'experiment__EAV_experiment', 'experiment__EAV_experiment__attribute', 'experiment__EAV_experiment__value_as_factor', 'experiment__xcountry_experiment', 'experiment__xcountry_experiment__country', 'experiment__coordinates_experiment', 'experiment__date_experiment', 'experiment__study_experiment', 'experiment__experimentdesign_set',
+            'experiment_population', 'experiment_population__population', 'experiment_population__EAV_population', 'experiment_population__EAV_population__attribute', 'experiment_population__EAV_population__value_as_factor', 'experiment_population__xcountry_population', 'experiment_population__xcountry_population__country', 'experiment_population__coordinates_population', 'experiment_population__date_population', 'experiment_population__study_population',
+            'experiment_population_outcome', 'experiment_population_outcome__outcome', 'experiment_population_outcome__EAV_outcome', 'experiment_population_outcome__EAV_outcome__attribute', 'experiment_population_outcome__EAV_outcome__value_as_factor', 'experiment_population_outcome__xcountry_outcome', 'experiment_population_outcome__xcountry_outcome__country', 'experiment_population_outcome__coordinates_outcome', 'experiment_population_outcome__date_outcome', 'experiment_population_outcome__study_outcome',
+            'publication__EAV_publication', 'publication__EAV_publication__attribute', 'publication__EAV_publication__value_as_factor', 'publication__xcountry_publication', 'publication__coordinates_publication', 'publication__date_publication', 'publication__subject'
         )
 
 
@@ -1176,6 +1180,8 @@ def experiment(request, subject, publication_pk, experiment_index):
     # Forms
     experiment_form = ExperimentForm2(data=data, instance=experiment, prefix="experiment_form")
     experiment_form.fields['intervention'] = TreeNodeChoiceField(queryset=Intervention.objects.filter(pk=intervention.pk).get_descendants(include_self=True), level_indicator = "---")
+    data_upload_form = DataUploadForm(request.POST, request.FILES)
+    error = ""
     # Formsets
     ExperimentDesignFormSet = modelformset_factory(ExperimentDesign, form=ExperimentDesignForm, extra=5, max_num=5, can_delete=True)
     experiment_design_formset = ExperimentDesignFormSet(data=data, queryset=ExperimentDesign.objects.filter(experiment=experiment), prefix="experiment_design_formset")
@@ -1224,96 +1230,108 @@ def experiment(request, subject, publication_pk, experiment_index):
             form.fields['value_as_number'].disabled = True
             form.fields['value_as_factor'] = TreeNodeChoiceField(queryset=attribute.get_children(), level_indicator="")
     if request.method == 'POST':
-        with transaction.atomic():
-            form = experiment_form
-            if form.is_valid():
-                form.save()
-            formset = experiment_population_formset
-            if formset.is_valid():
-                instances = formset.save(commit=False)
-                if 'delete' in request.POST:
-                    for obj in formset.deleted_objects:
-                        obj.delete()
-                else:
-                    for instance in instances:
-                        instance.experiment = experiment
-                        instance.save()
-            formset = experiment_design_formset
-            if formset.is_valid():
-                instances = formset.save(commit=False)
-                if 'delete' in request.POST:
-                    for obj in formset.deleted_objects:
-                        obj.delete()
-                else:
-                    for instance in instances:
-                        instance.experiment = experiment
-                        instance.save()
-            formset = x_country_formset
-            if formset.is_valid():
-                instances = formset.save(commit=False)
-                if 'delete' in request.POST:
-                    for obj in formset.deleted_objects:
-                        obj.delete()
-                else:
-                    for instance in instances:
-                        instance.experiment = experiment
-                        instance.experiment_index = experiment
-                        instance.publication_index = publication
-                        instance.user = user
-                        instance.save()
-            formset = coordinates_formset
-            if formset.is_valid():
-                instances = formset.save(commit=False)
-                if 'delete' in request.POST:
-                    for obj in formset.deleted_objects:
-                        obj.delete()
-                else:
-                    for instance in instances:
-                        instance.experiment = experiment
-                        instance.publication_index = publication
-                        instance.experiment_index = experiment
-                        instance.user = user
-                        instance.save()
-            formset = date_formset
-            if formset.is_valid():
-                instances = formset.save(commit=False)
-                if 'delete' in request.POST:
-                    for obj in formset.deleted_objects:
-                        obj.delete()
-                else:
-                    for instance in instances:
-                        instance.experiment = experiment
-                        instance.publication_index = publication
-                        instance.experiment_index = experiment
-                        instance.user = user
-                        instance.save()
-            formset = study_formset
-            if formset.is_valid():
-                instances = formset.save(commit=False)
-                if 'delete' in request.POST:
-                    for obj in formset.deleted_objects:
-                        obj.delete()
-                else:
-                    for instance in instances:
-                        instance.experiment = experiment
-                        instance.publication_index = publication
-                        instance.experiment_index = experiment
-                        instance.user = user
-                        instance.save()
-            formset = EAV_formset
-            if formset.is_valid():
-                instances = formset.save(commit=False)
-                if 'delete' in request.POST:
-                    for obj in formset.deleted_objects:
-                        obj.delete()
-                else:
-                    for instance in instances:
-                        instance.experiment = experiment
-                        instance.user = user
-                        instance.publication_index = publication
-                        instance.experiment_index = experiment
-                        instance.save()
+        if 'save' in request.POST or 'delete' in request.POST:
+            with transaction.atomic():
+                form = experiment_form
+                if form.is_valid():
+                    form.save()
+                formset = experiment_population_formset
+                if formset.is_valid():
+                    instances = formset.save(commit=False)
+                    if 'delete' in request.POST:
+                        for obj in formset.deleted_objects:
+                            obj.delete()
+                    else:
+                        for instance in instances:
+                            instance.experiment = experiment
+                            instance.save()
+                formset = experiment_design_formset
+                if formset.is_valid():
+                    instances = formset.save(commit=False)
+                    if 'delete' in request.POST:
+                        for obj in formset.deleted_objects:
+                            obj.delete()
+                    else:
+                        for instance in instances:
+                            instance.experiment = experiment
+                            instance.save()
+                formset = x_country_formset
+                if formset.is_valid():
+                    instances = formset.save(commit=False)
+                    if 'delete' in request.POST:
+                        for obj in formset.deleted_objects:
+                            obj.delete()
+                    else:
+                        for instance in instances:
+                            instance.experiment = experiment
+                            instance.experiment_index = experiment
+                            instance.publication_index = publication
+                            instance.user = user
+                            instance.save()
+                formset = coordinates_formset
+                if formset.is_valid():
+                    instances = formset.save(commit=False)
+                    if 'delete' in request.POST:
+                        for obj in formset.deleted_objects:
+                            obj.delete()
+                    else:
+                        for instance in instances:
+                            instance.experiment = experiment
+                            instance.publication_index = publication
+                            instance.experiment_index = experiment
+                            instance.user = user
+                            instance.save()
+                formset = date_formset
+                if formset.is_valid():
+                    instances = formset.save(commit=False)
+                    if 'delete' in request.POST:
+                        for obj in formset.deleted_objects:
+                            obj.delete()
+                    else:
+                        for instance in instances:
+                            instance.experiment = experiment
+                            instance.publication_index = publication
+                            instance.experiment_index = experiment
+                            instance.user = user
+                            instance.save()
+                formset = study_formset
+                if formset.is_valid():
+                    instances = formset.save(commit=False)
+                    if 'delete' in request.POST:
+                        for obj in formset.deleted_objects:
+                            obj.delete()
+                    else:
+                        for instance in instances:
+                            instance.experiment = experiment
+                            instance.publication_index = publication
+                            instance.experiment_index = experiment
+                            instance.user = user
+                            instance.save()
+                formset = EAV_formset
+                if formset.is_valid():
+                    instances = formset.save(commit=False)
+                    if 'delete' in request.POST:
+                        for obj in formset.deleted_objects:
+                            obj.delete()
+                    else:
+                        for instance in instances:
+                            instance.experiment = experiment
+                            instance.user = user
+                            instance.publication_index = publication
+                            instance.experiment_index = experiment
+                            instance.save()
             return redirect('experiment', subject=subject.slug, publication_pk=publication_pk, experiment_index=experiment_index)
+
+        if 'upload' in request.POST:
+            error = get_upload_template(data_upload_form, subject, publication, experiment, user)
+            if error == "":
+                return redirect('experiment', subject=subject.slug, publication_pk=publication_pk, experiment_index=experiment_index)
+
+        elif 'download' in request.POST:
+            download_template = get_download_template(subject)
+            return(download_template)
+            return redirect('experiment', subject=subject.slug, publication_pk=publication_pk, experiment_index=experiment_index)
+
     context = {
         'user_can_edit_attributes': user_subject.can_edit_attributes,
         'subject': subject,
@@ -1327,9 +1345,735 @@ def experiment(request, subject, publication_pk, experiment_index):
         'date_formset': date_formset,
         'study_formset': study_formset,
         'EAV_formset': EAV_formset,
-        'x_country_formset': x_country_formset
+        'x_country_formset': x_country_formset,
+        'data_upload_form': data_upload_form,
+        'error': error,
+        'path_to_shiny': get_path_to_shiny(request)
     }
     return render(request, 'publications/experiment.html', context)
+
+
+def get_download_template(subject):
+    attribute = subject.attribute
+    attributes = Attribute.objects.get(pk=subject.attribute.pk).get_children().order_by('attribute')
+    for attribute in attributes.values_list('attribute', flat=True):
+        col_names.append(attribute)
+    col_names_dict = {}
+
+    # The template is an XLSX file that we create with openpyxl.
+    wb = Workbook()
+    ws_1 = wb.active
+    ws_1.title = "Data"
+    ws_2 = wb.create_sheet("Options")
+    i = 1
+    for name in col_names:
+        col_names_dict[name] = i
+        ws_1.cell(row=1, column=i).value = str(name)
+        i += 1
+
+    # XLSX data validation for integers
+    dv = DataValidation(type="whole", operator="greaterThan", formula1=0)
+    dv.error ='Please enter an integer.'
+    ws_1.add_data_validation(dv)
+    for col in integer_cols:
+        column_number = col_names_dict[col]
+        column_letter = get_column_letter(column_number)
+        dv.add("{column_letter}2:{column_letter}201".format(column_letter=column_letter))
+
+    # XLSX data validation for decimals
+    dv = DataValidation(type="decimal")
+    dv.error ='Please enter a number.'
+    ws_1.add_data_validation(dv)
+    for col in decimal_cols:
+        column_number = col_names_dict[col]
+        column_letter = get_column_letter(column_number)
+        dv.add("{column_letter}2:{column_letter}201".format(column_letter=column_letter))
+
+    # XLSX data validation for p_value (0 <= p_value <= 1)
+    dv = DataValidation(type="decimal", operator="between", formula1=0, formula2=1)
+    dv.error ='Please enter a number between 0 and 1.'
+    ws_1.add_data_validation(dv)
+    column_number = col_names_dict["p_value"]
+    column_letter = get_column_letter(column_number)
+    dv.add("{column_letter}2:{column_letter}201".format(column_letter=column_letter))
+
+    # XLSX data validation for correlation_coefficient (-1 <= correlation_coefficient <= 1)
+    dv = DataValidation(type="decimal", operator="between", formula1=-1, formula2=1)
+    dv.error ='Please enter a number between -1 and 1.'
+    ws_1.add_data_validation(dv)
+    column_number = col_names_dict["correlation_coefficient"]
+    column_letter = get_column_letter(column_number)
+    dv.add("{column_letter}2:{column_letter}201".format(column_letter=column_letter))
+
+    # XLSX data validation for minutes and seconds (0-60)
+    dv = DataValidation(type="decimal", operator="between", formula1=0, formula2=60)
+    dv.error ='Please enter a number between 0 and 60.'
+    ws_1.add_data_validation(dv)
+    for col in minutes_seconds_cols:
+        column_number = col_names_dict[col]
+        column_letter = get_column_letter(column_number)
+        dv.add("{column_letter}2:{column_letter}201".format(column_letter=column_letter))
+
+    # XLSX data validation for latitude_degrees (0-90)
+    dv = DataValidation(type="decimal", operator="between", formula1=0, formula2=90)
+    dv.error ='Please enter a number between 0 and 90.'
+    ws_1.add_data_validation(dv)
+    column_number = col_names_dict["latitude_degrees"]
+    column_letter = get_column_letter(column_number)
+    dv.add("{column_letter}2:{column_letter}201".format(column_letter=column_letter))
+
+    # XLSX data validation for longitude_degrees (0-180)
+    dv = DataValidation(type="decimal", operator="between", formula1=0, formula2=180)
+    dv.error ='Please enter a number between 0 and 180.'
+    ws_1.add_data_validation(dv)
+    column_number = col_names_dict["longitude_degrees"]
+    column_letter = get_column_letter(column_number)
+    dv.add("{column_letter}2:{column_letter}201".format(column_letter=column_letter))
+
+    # XLSX data validation for month (1-12)
+    dv = DataValidation(type="whole", operator="between", formula1=1, formula2=12)
+    dv.error ='Please enter an integer between 1 and 12.'
+    ws_1.add_data_validation(dv)
+    for col in month_cols:
+        column_number = col_names_dict[col]
+        column_letter = get_column_letter(column_number)
+        dv.add("{column_letter}2:{column_letter}201".format(column_letter=column_letter))
+
+    # XLSX data validation for day (1-31)
+    dv = DataValidation(type="whole", operator="between", formula1=1, formula2=31)
+    dv.error ='Please enter an integer between 1 and 31.'
+    ws_1.add_data_validation(dv)
+    for col in day_cols:
+        column_number = col_names_dict[col]
+        column_letter = get_column_letter(column_number)
+        dv.add("{column_letter}2:{column_letter}201".format(column_letter=column_letter))
+
+    # XLSX options for outcome
+    options = []
+    outcomes = Outcome.objects.filter(pk=subject.outcome.pk).get_descendants(include_self=False)
+    for outcome in outcomes:
+        option = ""
+        if outcome.level != 1:
+            ancestors = outcome.get_ancestors()
+            for ancestor in ancestors:
+                if ancestor.level == 1:
+                    option = str(ancestor) + " ---"
+                else:
+                    option = option + "---"
+            option = option + " " + str(outcome)
+            options.append(option)
+    column_number = col_names_dict["outcome"]
+    column_letter = get_column_letter(column_number)
+    i = 1
+    for option in options:
+        ws_2.cell(row=i, column=column_number).value = option
+        i += 1
+    dv = DataValidation(type="list", formula1="=Options!{column_letter}$1:{column_letter}${max_row}".format(column_letter=column_letter, max_row=len(options)))
+    dv.error ='Please select an option from the menu.'
+    ws_1.add_data_validation(dv)
+    dv.add("{column_letter}2:{column_letter}201".format(column_letter=column_letter))
+
+    # XLSX options for country
+    countries = Country.objects.all()
+    column_number = col_names_dict["country"]
+    column_letter = get_column_letter(column_number)
+    options = countries.values_list('country', flat=True)
+    i = 1
+    for option in options:
+        ws_2.cell(row=i, column=column_number).value = option
+        i += 1
+    dv = DataValidation(type="list", formula1="=Options!{column_letter}$1:{column_letter}${max_row}".format(column_letter=column_letter, max_row=len(options)))
+    dv.error ='Please select an option from the menu.'
+    ws_1.add_data_validation(dv)
+    dv.add("{column_letter}2:{column_letter}201".format(column_letter=column_letter))
+
+    # XLSX options for approximate_p_value
+    column_number = col_names_dict["approximate_p_value"]
+    column_letter = get_column_letter(column_number)
+    options = [
+        "< 0.0001",
+        "< 0.001",
+        "< 0.01",
+        "< 0.05",
+        "< 0.1",
+        "> 0.05",
+        "> 0.1",
+    ]
+    i = 1
+    for option in options:
+        ws_2.cell(row=i, column=column_number).value = option
+        i += 1
+    dv = DataValidation(type="list", formula1="=Options!{column_letter}$1:{column_letter}${max_row}".format(column_letter=column_letter, max_row=len(options)))
+    ws_1.add_data_validation(dv)
+    dv.add("{column_letter}2:{column_letter}201".format(column_letter=column_letter))
+
+    # XLSX options for is_significant
+    column_number = col_names_dict["is_significant"]
+    column_letter = get_column_letter(column_number)
+    options = [
+        "False",
+        "True"
+    ]
+    i = 1
+    for option in options:
+        ws_2.cell(row=i, column=column_number).value = option
+        i += 1
+    dv = DataValidation(type="list", formula1="=Options!{column_letter}$1:{column_letter}${max_row}".format(column_letter=column_letter, max_row=len(options)))
+    ws_1.add_data_validation(dv)
+    dv.add("{column_letter}2:{column_letter}201".format(column_letter=column_letter))
+
+    # XLSX options for latitude_direction
+    column_number = col_names_dict["latitude_direction"]
+    column_letter = get_column_letter(column_number)
+    options = [
+        "N",
+        "S"
+    ]
+    i = 1
+    for option in options:
+        ws_2.cell(row=i, column=column_number).value = option
+        i += 1
+    dv = DataValidation(type="list", formula1="=Options!{column_letter}$1:{column_letter}${max_row}".format(column_letter=column_letter, max_row=len(options)))
+    ws_1.add_data_validation(dv)
+    dv.add("{column_letter}2:{column_letter}201".format(column_letter=column_letter))
+
+    # XLSX options for longitude_direction
+    column_number = col_names_dict["longitude_direction"]
+    column_letter = get_column_letter(column_number)
+    options = [
+        "E",
+        "W"
+    ]
+    i = 1
+    for option in options:
+        ws_2.cell(row=i, column=column_number).value = option
+        i += 1
+    dv = DataValidation(type="list", formula1="=Options!{column_letter}$1:{column_letter}${max_row}".format(column_letter=column_letter, max_row=len(options)))
+    ws_1.add_data_validation(dv)
+    dv.add("{column_letter}2:{column_letter}201".format(column_letter=column_letter))
+
+    # XLSX options for user-defined attributes
+    for attribute in attributes:
+        column_number = col_names_dict[attribute.attribute]
+        column_letter = get_column_letter(column_number)
+        if attribute.get_children().exists():
+            options = attribute.get_children().values_list('attribute', flat=True)
+            i = 1
+            for option in options:
+                ws_2.cell(row=i, column=column_number).value = option
+                i += 1
+            dv = DataValidation(type="list", formula1="=Options!{column_letter}$1:{column_letter}${max_row}".format(column_letter=column_letter, max_row=len(options)))
+            dv.error ='Please select an option from the menu.'
+            ws_1.add_data_validation(dv)
+            dv.add("{column_letter}2:{column_letter}201".format(column_letter=column_letter))
+        elif attribute.type == "number":
+            dv = DataValidation(type="decimal")
+            dv.error ='Please enter a number.'
+            ws_1.add_data_validation(dv)
+            dv.add("{column_letter}2:{column_letter}201".format(column_letter=column_letter))
+
+    # Create a temporary file for the response
+    with NamedTemporaryFile() as tmp:
+        wb.save(tmp.name)
+        response = HttpResponse(content=tmp, content_type='application/vnd.ms-excel')
+        response['Content-Disposition'] = 'attachment; filename=data_upload_template.xlsx'
+        return response
+    return response
+
+
+def get_upload_template(form, subject, publication, experiment, user):
+    try:
+        attributes = Attribute.objects.get(pk=subject.attribute.pk).get_children()
+        outcomes = Outcome.objects.get(pk=subject.outcome.pk).get_descendants(include_self=True)
+        if form.is_valid():
+            file = form.cleaned_data.get('data_upload_file')
+            # For CSV files downloaded from the Shiny app
+            try:
+                df = pd.read_csv(file)
+                columns = list(df.columns)
+                df = df.rename(columns={"Country": "country"})
+            # For XLSX files downloaded from the Django app
+            except:
+                wb = load_workbook(file)
+                ws = wb["Data"]
+                data = ws.values
+                columns = next(data)[0:]
+                df = pd.DataFrame(data, columns=columns)
+                # The outcome column in the data upload template is a concatenation of
+                # population and outcome, in this format: "Population --- Outcome".
+                # This makes it simpler for users to complete the template, but this
+                # means that we need to parse this column here into separate columns for
+                # population and outcome.
+                def get_df_population(outcome):
+                    if outcome is not None:
+                        population = re.split("\s\-{3,}\s", outcome, 1)[0]
+                    else:
+                        population = outcome
+                    return(population)
+                df['population'] = list(df.apply(lambda row: get_df_population(row['outcome']), axis=1))
+                def get_df_outcome(outcome):
+                    if outcome is not None:
+                        outcome = re.split("\s\-{3,}\s", outcome, 1)[1]
+                    return(outcome)
+                df['outcome'] = list(df.apply(lambda row: get_df_outcome(row['outcome']), axis=1))
+            df_populations = df['population'][df['population'].notna()]  # Delete NA values (NaN or None).
+            df_populations = list(set(df_populations))  # Get unique values.
+
+            # Some metadata is user-defined (as "subject-specific covariates", which
+            # are the "attributes", above), but some metadata are generic across all
+            # subjects. We will concatenate these two forms of metadata here.
+            specific_metadata_cols = list(attributes.values_list('attribute', flat=True))
+            metadata_cols = specific_metadata_cols + generic_metadata_cols
+
+            all_cols = col_names + specific_metadata_cols + ['population']
+            df_cols = list(df.columns)
+            drop_cols = list(set(df_cols) - set(all_cols))
+            df = df.drop(columns=drop_cols)
+            df_cols = list(df.columns)
+            # Order the columns as expected for later (e.g., with metadata_cols
+            # between "notes" and "population").
+            col_order = []
+            for col in all_cols:
+                if col in df_cols:
+                    col_order.append(col)
+            df = df[col_order]
+
+            with transaction.atomic():
+                # Metadata can be entered at multiple levels (intervention > population
+                # > outcome). The metadata in the data upload template can be entered
+                # for each row, or it can be left blank for some or all rows. For each
+                # column, we check to see if the same metadata has been entered in all
+                # rows (not including blanks). If so, then we save that metadata at
+                # intervention level and delete that column.
+
+
+                # Intervention-level metadata
+
+
+                # Create instances for Coordinates, Date, and Study models (to be
+                # saved later, if metadata have been entered).
+                coordinates = Coordinates(
+                    user = user,
+                    experiment = experiment,
+                    publication_index = publication,
+                    experiment_index = experiment
+                )
+                date = Date(
+                    user = user,
+                    experiment = experiment,
+                    publication_index = publication,
+                    experiment_index = experiment
+                )
+                study = Study(
+                    user = user,
+                    experiment = experiment,
+                    publication_index = publication,
+                    experiment_index = experiment
+                )
+                for col, rows in df.iteritems():
+                    if col in metadata_cols:
+                        # Get unique values, including blanks (None or Nan).
+                        values = rows.unique()
+                        n_values = len(values)
+                        # Get unique values, not including blanks (None or Nan).
+                        values_notna = rows[rows.notna()].unique()
+                        n_values_notna = len(values_notna)
+                        # If all rows have the same value and are not blank
+                        if n_values == 1 and n_values_notna == 1:
+                            value = values[0]
+                            # Different types of metadata have different models in
+                            # the database. So we need to determine which model to
+                            # use for this column. For example, we use the "Country"
+                            # model if col == "country" or we will use the "EAV"
+                            # model if col is in the list of subject-specific
+                            # metadata.
+                            if col == "country":
+                                try:
+                                    values = value.split(" & ")
+                                except:
+                                    values = value
+                                for value in values:
+                                    country = Country.objects.get(country=value)
+                                    x_country = XCountry(
+                                        country = country,
+                                        user = user,
+                                        experiment = experiment,
+                                        publication_index = publication,
+                                        experiment_index = experiment
+                                    )
+                                    x_country.save()
+                            elif col in specific_metadata_cols:
+                                attribute = attributes.get(attribute=col)
+                                # If this EAV does not exist, save it.
+                                if not EAV.objects.filter(
+                                    attribute = attribute,
+                                    user = user,
+                                    experiment = experiment
+                                ).exists():
+                                    eav = EAV(
+                                        attribute = attribute,
+                                        user = user,
+                                        experiment = experiment,
+                                        publication_index = publication,
+                                        experiment_index = experiment
+                                    )
+                                    if attribute.type == "factor":
+                                        eav.value_as_factor = attribute.get_children().get(attribute=value)
+                                        eav.save()
+                                    elif attribute.type == "number":
+                                        try:
+                                            eav.value_as_number = value
+                                            eav.save()
+                                        except:
+                                            pass
+                            # For models with data from multiple columns
+                            elif col in coordinates_cols:
+                                if col == "latitude_direction" or col == "longitude_direction":
+                                    value = value.upper()
+                                setattr(coordinates, col, value)
+                            elif col in date_cols:
+                                setattr(date, col, value)
+                            elif col in study_cols:
+                                setattr(study, col, value)
+                            else:
+                                pass
+                        # If this column has been processed or is blank, delete
+                        # it, so that it is not processed at lower levels.
+                        if n_values <= 1:
+                            df = df.drop(columns=col)
+                # If metadata have been entered for this instance, save it.
+                if coordinates.latitude_degrees == None and coordinates.latitude_minutes == None and coordinates.latitude_seconds == None and coordinates.longitude_degrees == None and coordinates.longitude_minutes == None and coordinates.longitude_seconds == None:
+                    pass
+                else:
+                    coordinates.save()
+                # If metadata have been entered for this instance, save it.
+                if date.start_year == None and date.start_month == None and date.start_day == None:
+                    pass
+                else:
+                    date.save()
+                # If metadata have been entered for this instance, save it.
+                if study.study_name == None and study.study_id == None:
+                    pass
+                else:
+                    study.save()
+                # Create a backup of the df, so that we can restore it later.
+                intervention_df = df
+
+
+                # Population-level metadata
+
+
+                # For each population, get the subset of the df for that population.
+                for population in df_populations:
+                    df = intervention_df.copy()
+                    df = df[df['population'] == population].sort_index()
+                    population = outcomes.get(outcome=population)
+                    population_outcomes = population.get_descendants(include_self=True)
+                    # Create the ExperimentPopulation instance.
+                    experiment_population = ExperimentPopulation(
+                        experiment=experiment,
+                        population=population
+                    )
+                    experiment_population.save()
+
+                    # Create instances for Coordinates, Date, and Study models (to be
+                    # saved later, if metadata have been entered).
+                    coordinates = Coordinates(
+                        user = user,
+                        population = experiment_population,
+                        publication_index = publication,
+                        experiment_index = experiment,
+                        population_index = experiment_population
+                    )
+                    date = Date(
+                        user = user,
+                        population = experiment_population,
+                        publication_index = publication,
+                        experiment_index = experiment,
+                        population_index = experiment_population
+                    )
+                    study = Study(
+                        user = user,
+                        population = experiment_population,
+                        publication_index = publication,
+                        experiment_index = experiment,
+                        population_index = experiment_population
+                    )
+
+                    # Iterate over the columns.
+                    for col, rows in df.iteritems():
+                        if col in metadata_cols:
+                            # Get unique values, including blanks (None or Nan).
+                            values = rows.unique()
+                            n_values = len(values)
+                            # Get unique values, not including blanks (None or Nan).
+                            values_notna = rows[rows.notna()].unique()
+                            n_values_notna = len(values_notna)
+                            # If all rows have the same value and are not blank
+                            if n_values == 1 and n_values_notna == 1:
+                                value = values[0]
+                                # Different types of metadata have different models in
+                                # the database. So we need to determine which model to
+                                # use for this column. For example, we use the "Country"
+                                # model if col == "country" or we will use the "EAV"
+                                # model if col is in the list of subject-specific
+                                # metadata.
+                                if col == "country":
+                                    try:
+                                        values = value.split(" & ")
+                                    except:
+                                        values = value
+                                    for value in values:
+                                        country = Country.objects.get(country=value)
+                                        x_country = XCountry(
+                                            country = country,
+                                            user = user,
+                                            population = experiment_population,
+                                            publication_index = publication,
+                                            experiment_index = experiment,
+                                            population_index = experiment_population
+                                        )
+                                        x_country.save()
+                                elif col in specific_metadata_cols:
+                                    attribute = attributes.get(attribute=col)
+                                    # If this EAV does not exist, save it.
+                                    if not EAV.objects.filter(
+                                        attribute = attribute,
+                                        user = user,
+                                        population = experiment_population
+                                    ).exists():
+                                        eav = EAV(
+                                            attribute = attribute,
+                                            user = user,
+                                            population = experiment_population,
+                                            publication_index = publication,
+                                            experiment_index = experiment,
+                                            population_index = experiment_population
+                                        )
+                                        if attribute.type == "factor":
+                                            eav.value_as_factor = attribute.get_children().get(attribute=value)
+                                            eav.save()
+                                        elif attribute.type == "number":
+                                            try:
+                                                eav.value_as_number = value
+                                                eav.save()
+                                            except:
+                                                pass
+                                # For models with data from multiple columns
+                                elif col in coordinates_cols:
+                                    if col == "latitude_direction" or col == "longitude_direction":
+                                        value = value.upper()
+                                    setattr(coordinates, col, value)
+                                elif col in date_cols:
+                                    setattr(date, col, value)
+                                elif col in study_cols:
+                                    setattr(study, col, value)
+                                else:
+                                    pass
+                            # If this column has been processed or is blank, delete
+                            # it, so that it is not processed at lower levels.
+                            if n_values <= 1:
+                                df = df.drop(columns=col)
+                    # If metadata have been entered for this instance, save it.
+                    if coordinates.latitude_degrees == None and coordinates.latitude_minutes == None and coordinates.latitude_seconds == None and coordinates.longitude_degrees == None and coordinates.longitude_minutes == None and coordinates.longitude_seconds == None:
+                        pass
+                    else:
+                        coordinates.save()
+                    # If metadata have been entered for this instance, save it.
+                    if date.start_year == None and date.start_month == None and date.start_day == None:
+                        pass
+                    else:
+                        date.save()
+                    # If metadata have been entered for this instance, save it.
+                    if study.study_name == None and study.study_id == None:
+                        pass
+                    else:
+                        study.save()
+                    # Create a backup of the df, so that we can restore it later.
+                    population_df = df
+
+
+                    # Outcome-level metadata
+
+
+                    # Get the outcomes for this population.
+                    df_outcomes = df['outcome'][df['outcome'].notna()]  # Delete NA values (NaN or None).
+                    df_outcomes = list(set(df_outcomes))  # Get unique values.
+                    # For each outcome, get the subset of the df for that outcome.
+                    for outcome in df_outcomes:
+                        df = population_df.copy()
+                        df = df[df['outcome'] == outcome].sort_index()
+                        outcome = population_outcomes.get(outcome=outcome)
+                        # Create a column that contains a tuple of the value of each
+                        # metadata column for each row. We will use this to determine
+                        # how many instances to create for this outcome (we will
+                        # create one instance for each unique tuple).
+                        min = df.columns.get_loc('note')        # In the df, this column comes before the metadata_cols.
+                        max = df.columns.get_loc('population')  # In the df, this column comes after the metadata_cols.
+                        df['metadata'] = list(df.apply(lambda row: tuple(row[min+1:max]), axis=1))
+                        combinations = list(set(df['metadata']))
+                        # Create a backup of the df, so that we can restore it later.
+                        outcome_df = df
+                        for combination in combinations:
+                            df = outcome_df.copy()
+                            df = df[df['metadata'] == combination].sort_index()
+                            # Create the ExperimentPopulationOutcome instance.
+                            experiment_population_outcome = ExperimentPopulationOutcome(
+                                experiment_population=experiment_population,
+                                outcome=outcome
+                            )
+                            experiment_population_outcome.save()
+
+                            # Create instances for Coordinates, Date, and Study models (to be
+                            # saved later, if metadata have been entered).
+                            coordinates = Coordinates(
+                                user = user,
+                                outcome = experiment_population_outcome,
+                                publication_index = publication,
+                                experiment_index = experiment,
+                                population_index = experiment_population,
+                                outcome_index = experiment_population_outcome
+                            )
+                            date = Date(
+                                user = user,
+                                outcome = experiment_population_outcome,
+                                publication_index = publication,
+                                experiment_index = experiment,
+                                population_index = experiment_population,
+                                outcome_index = experiment_population_outcome
+                            )
+                            study = Study(
+                                user = user,
+                                outcome = experiment_population_outcome,
+                                publication_index = publication,
+                                experiment_index = experiment,
+                                population_index = experiment_population,
+                                outcome_index = experiment_population_outcome
+                            )
+
+                            # Iterate over the columns.
+                            for col, rows in df.iteritems():
+                                if col in metadata_cols:
+                                    # Get unique values, including blanks (None or Nan).
+                                    values = rows.unique()
+                                    n_values = len(values)
+                                    # Get unique values, not including blanks (None or Nan).
+                                    values_notna = rows[rows.notna()].unique()
+                                    n_values_notna = len(values_notna)
+                                    # If all rows have the same value and are not blank
+                                    if n_values == 1 and n_values_notna == 1:
+                                        value = values[0]
+                                        # Different types of metadata have different models in
+                                        # the database. So we need to determine which model to
+                                        # use for this column. For example, we use the "Country"
+                                        # model if col == "country" or we will use the "EAV"
+                                        # model if col is in the list of subject-specific
+                                        # metadata.
+                                        if col == "country":
+                                            try:
+                                                values = value.split(" & ")
+                                            except:
+                                                values = value
+                                            for value in values:
+                                                country = Country.objects.get(country=value)
+                                                x_country = XCountry(
+                                                    country = country,
+                                                    user = user,
+                                                    outcome = experiment_population_outcome,
+                                                    publication_index = publication,
+                                                    experiment_index = experiment,
+                                                    population_index = experiment_population,
+                                                    outcome_index = experiment_population_outcome
+                                                )
+                                                x_country.save()
+                                        elif col in specific_metadata_cols:
+                                            attribute = attributes.get(attribute=col)
+                                            # If this EAV does not exist, save it.
+                                            if not EAV.objects.filter(
+                                                attribute = attribute,
+                                                user = user,
+                                                outcome = experiment_population_outcome
+                                            ).exists():
+                                                eav = EAV(
+                                                    attribute = attribute,
+                                                    user = user,
+                                                    outcome = experiment_population_outcome,
+                                                    publication_index = publication,
+                                                    experiment_index = experiment,
+                                                    population_index = experiment_population,
+                                                    outcome_index = experiment_population_outcome
+                                                )
+                                                if attribute.type == "factor":
+                                                    eav.value_as_factor = attribute.get_children().get(attribute=value)
+                                                    eav.save()
+                                                elif attribute.type == "number":
+                                                    try:
+                                                        eav.value_as_number = value
+                                                        eav.save()
+                                                    except:
+                                                        pass
+                                        # For models with data from multiple columns
+                                        elif col in coordinates_cols:
+                                            if col == "latitude_direction" or col == "longitude_direction":
+                                                value = value.upper()
+                                            setattr(coordinates, col, value)
+                                        elif col in date_cols:
+                                            setattr(date, col, value)
+                                        elif col in study_cols:
+                                            setattr(study, col, value)
+                                        else:
+                                            pass
+                                    # If this column has been processed or is blank, delete
+                                    # it, so that it is not processed at lower levels.
+                                    if n_values <= 1:
+                                        df = df.drop(columns=col)
+                            # If metadata have been entered for this instance, save it.
+                            if coordinates.latitude_degrees == None and coordinates.latitude_minutes == None and coordinates.latitude_seconds == None and coordinates.longitude_degrees == None and coordinates.longitude_minutes == None and coordinates.longitude_seconds == None:
+                                pass
+                            else:
+                                coordinates.save()
+                            # If metadata have been entered for this instance, save it.
+                            if date.start_year == None and date.start_month == None and date.start_day == None:
+                                pass
+                            else:
+                                date.save()
+                            # If metadata have been entered for this instance, save it.
+                            if study.study_name == None and study.study_id == None:
+                                pass
+                            else:
+                                study.save()
+
+                            # Iterate over rows to save data.
+                            for i, row in df.iterrows():
+                                # For models with data from multiple columns, create instances to be saved later.
+                                data = Data(
+                                    subject = subject,
+                                    publication = publication,
+                                    experiment = experiment,
+                                    experiment_population = experiment_population,
+                                    experiment_population_outcome = experiment_population_outcome
+                                )
+                                for col, value in row[row.notna()].iteritems():
+                                    if col in data_cols:
+                                        if col == "is_significant":
+                                            if value == "Significant":
+                                                value = True
+                                            else:
+                                                value = False
+                                        setattr(data, col, value)
+                                # If data has been entered for the Data instance, save the instance (here we require both treatment_mean and control_mean, but this constraint is not enforced by the Data model, in case there are publications that report an effect size but not a treatment mean and control mean).
+                                if data.treatment_mean == None or data.control_mean == None:
+                                    pass
+                                else:
+                                    data.save()
+        return("")
+    except Exception as e:
+        error = ["Error:"]
+        error.append(str(e))
+        error.append("")
+        for line in traceback.format_exc().splitlines():
+            error.append(line)
+        return(error)
 
 
 @login_required
@@ -1352,7 +2096,6 @@ def population(request, subject, publication_pk, experiment_index, population_in
     # This population
     experiment_populations = ExperimentPopulation.objects.filter(experiment=experiment).order_by('pk')
     experiment_population = experiment_populations[population_index]
-    data_upload_form = DataUploadForm(request.POST, request.FILES)
     # Formsets
     ExperimentPopulationOutcomeFormSet = modelformset_factory(ExperimentPopulationOutcome, form=ExperimentPopulationOutcomeForm, extra=4, can_delete=True)
     experiment_population_outcome_formset = ExperimentPopulationOutcomeFormSet(data=data, queryset=ExperimentPopulationOutcome.objects.filter(experiment_population=experiment_population), prefix="experiment_population_outcome_formset")
@@ -1395,466 +2138,89 @@ def population(request, subject, publication_pk, experiment_index, population_in
         else:  # If factor options have been defined (which is not possible if the data type is a number)
             form.fields['value_as_number'].disabled = True
             form.fields['value_as_factor'] = TreeNodeChoiceField(queryset=attribute.get_children(), level_indicator="")
-    # Columns for file upload template
-    col_names = ['outcome', 'comparison', 'treatment_mean', 'control_mean', 'treatment_sd', 'control_sd', 'treatment_n', 'control_n', 'treatment_se', 'control_se', 'treatment_mean_before', 'control_mean_before', 'treatment_sd_before', 'control_sd_before', 'treatment_n_before', 'control_n_before', 'treatment_se_before', 'control_se_before', 'unit', 'lsd', 'is_significant', 'approximate_p_value', 'p_value', 'z_value', 'n', 'correlation_coefficient', 'note', 'country']
-    study_cols = ['study_id', 'study_name']
-    coordinates_cols = ['latitude_degrees', 'latitude_minutes', 'latitude_seconds', 'latitude_direction', 'longitude_degrees', 'longitude_minutes', 'longitude_seconds', 'longitude_direction']
-    date_cols = ['start_year', 'start_month', 'start_day', 'end_year', 'end_month', 'end_day']
-    col_names = col_names + coordinates_cols
-    col_names = col_names + date_cols
-    col_names = col_names + study_cols
-    integer_cols = ['treatment_n', 'control_n', 'treatment_n_before', 'control_n_before', 'n', 'study_id', 'start_year', 'end_year']
-    decimal_cols = ['treatment_mean', 'control_mean', 'treatment_sd', 'control_sd', 'treatment_se', 'control_se', 'treatment_mean_before', 'control_mean_before', 'treatment_sd_before', 'control_sd_before', 'treatment_se_before', 'control_se_before', 'lsd', 'z_value']
-    minutes_seconds_cols = ['latitude_minutes', 'latitude_seconds', 'longitude_minutes', 'longitude_seconds']
-    year_cols = ['start_year', 'end_year']
-    month_cols = ['start_month', 'end_month']
-    day_cols = ['start_day', 'end_day']
-    attribute = subject.attribute
-    attributes = Attribute.objects.get(pk=subject.attribute.pk).get_children().order_by('attribute')
-    for attribute in attributes.values_list('attribute', flat=True):
-        col_names.append(attribute)
-    col_names_dict = {}
-
     if request.method == 'POST':
-
-        if 'save' in request.POST or 'delete' in request.POST:
-            with transaction.atomic():
-                formset = experiment_population_outcome_formset
-                if formset.is_valid():
-                    instances = formset.save(commit=False)
-                    if 'delete' in request.POST:
-                        for obj in formset.deleted_objects:
-                            obj.delete()
-                    else:
-                        for instance in instances:
-                            instance.experiment_population = experiment_population
-                            instance.save()
-                formset = x_country_formset
-                if formset.is_valid():
-                    instances = formset.save(commit=False)
-                    if 'delete' in request.POST:
-                        for obj in formset.deleted_objects:
-                            obj.delete()
-                    else:
-                        for instance in instances:
-                            instance.population = experiment_population
-                            instance.user = user
-                            instance.publication_index = publication
-                            instance.experiment_index = experiment
-                            instance.population_index = experiment_population
-                            instance.save()
-                formset = coordinates_formset
-                if formset.is_valid():
-                    instances = formset.save(commit=False)
-                    if 'delete' in request.POST:
-                        for obj in formset.deleted_objects:
-                            obj.delete()
-                    else:
-                        for instance in instances:
-                            instance.population = experiment_population
-                            instance.user = user
-                            instance.publication_index = publication
-                            instance.experiment_index = experiment
-                            instance.population_index = experiment_population
-                            instance.save()
-                formset = date_formset
-                if formset.is_valid():
-                    instances = formset.save(commit=False)
-                    if 'delete' in request.POST:
-                        for obj in formset.deleted_objects:
-                            obj.delete()
-                    else:
-                        for instance in instances:
-                            instance.population = experiment_population
-                            instance.user = user
-                            instance.publication_index = publication
-                            instance.experiment_index = experiment
-                            instance.population_index = experiment_population
-                            instance.save()
-                formset = study_formset
-                if formset.is_valid():
-                    instances = formset.save(commit=False)
-                    if 'delete' in request.POST:
-                        for obj in formset.deleted_objects:
-                            obj.delete()
-                    else:
-                        for instance in instances:
-                            instance.population = experiment_population
-                            instance.user = user
-                            instance.publication_index = publication
-                            instance.experiment_index = experiment
-                            instance.population_index = experiment_population
-                            instance.save()
-                formset = EAV_formset
-                if formset.is_valid():
-                    instances = formset.save(commit=False)
-                    if 'delete' in request.POST:
-                        for obj in formset.deleted_objects:
-                            obj.delete()
-                    else:
-                        for instance in instances:
-                            instance.population = experiment_population
-                            instance.user = user
-                            instance.publication_index = publication
-                            instance.experiment_index = experiment
-                            instance.population_index = experiment_population
-                            instance.save()
-
-        if 'upload' in request.POST:
-            attributes = Attribute.objects.get(pk=subject.attribute.pk).get_children()
-            outcomes = Outcome.objects.get(pk=subject.outcome.pk).get_descendants(include_self=True)
-            form = data_upload_form
-            if form.is_valid():
-                file = form.cleaned_data.get('data_upload_file')
-                wb = load_workbook(file)
-                ws = wb["Data"]
-                col_names = ws[1]
-                with transaction.atomic():
-                    for row in ws.iter_rows(min_row=2):
-                        if row[0].value:  # If this row has an outcome
-                            for cell in row:
-                                if (cell.value is not None or cell.value == 0):
-                                    attribute = col_names[cell.column - 1].value
-                                    if attribute == "outcome":
-                                        outcome = cell.value
-                                        outcome = outcomes.filter(outcome=outcome).order_by('-level')[0]
-                                        experiment_population_outcome = ExperimentPopulationOutcome(
-                                            experiment_population = experiment_population,
-                                            outcome = outcome
-                                        )
-                                        experiment_population_outcome.save()
-                                        # For models with data from multiple cells, create instances to be saved later.
-                                        data = Data(
-                                            subject = subject,
-                                            publication = publication,
-                                            experiment = experiment,
-                                            experiment_population = experiment_population,
-                                            experiment_population_outcome = experiment_population_outcome
-                                        )
-                                        coordinates = Coordinates(
-                                            user = user,
-                                            outcome = experiment_population_outcome,
-                                            publication_index = publication,
-                                            experiment_index = experiment,
-                                            population_index = experiment_population,
-                                            outcome_index = experiment_population_outcome
-                                        )
-                                        date = Date(
-                                            user = user,
-                                            outcome = experiment_population_outcome,
-                                            publication_index = publication,
-                                            experiment_index = experiment,
-                                            population_index = experiment_population,
-                                            outcome_index = experiment_population_outcome
-                                        )
-                                        study = Study(
-                                            user = user,
-                                            outcome = experiment_population_outcome,
-                                            publication_index = publication,
-                                            experiment_index = experiment,
-                                            population_index = experiment_population,
-                                            outcome_index = experiment_population_outcome
-                                        )
-                                    elif attribute == "country":
-                                        country = cell.value
-                                        country = Country.objects.get(country=country)
-                                        x_country = XCountry(
-                                            country = country,
-                                            user = user,
-                                            outcome = experiment_population_outcome,
-                                            publication_index = publication,
-                                            experiment_index = experiment,
-                                            population_index = experiment_population,
-                                            outcome_index = experiment_population_outcome
-                                        )
-                                        x_country.save()
-                                    elif attribute in attributes.values_list('attribute', flat=True):
-                                        attribute = attributes.get(attribute=attribute)
-                                        eav = EAV(
-                                            attribute = attribute,
-                                            user = user,
-                                            outcome = experiment_population_outcome,
-                                            publication_index = publication,
-                                            experiment_index = experiment,
-                                            population_index = experiment_population,
-                                            outcome_index = experiment_population_outcome
-                                        )
-                                        if attribute.type == "factor":
-                                            value = attribute.get_children().get(attribute=cell.value)
-                                            eav.value_as_factor = value
-                                        elif attribute.type == "number":
-                                            eav.value_as_number = cell.value
-                                        eav.save()
-                                    # For models with data from multiple cells
-                                    elif attribute in coordinates_cols:
-                                        if attribute == "latitude_direction" or attribute == "longitude_direction":
-                                            cell.value = cell.value.upper()
-                                        setattr(coordinates, attribute, cell.value)
-                                    elif attribute in date_cols:
-                                        setattr(date, attribute, cell.value)
-                                    elif attribute in study_cols:
-                                        setattr(study, attribute, cell.value)
-                                    else:
-                                        setattr(data, attribute, cell.value)
-                            # For models with data from multiple cells, save the model instance only if data has been entered.
-                            # If data has been entered for the Data instance, save the instance (here we require both treatment_mean and control_mean, but this constraint is not enforced by the Data model, in case there are publications that report an effect size but not a treatment mean and control mean).
-                            if data.treatment_mean == None or data.control_mean == None:
-                                pass
-                            else:
-                                data.save()
-                            # If data has been entered for the Study instance, save it.
-                            if study.study_name == None and study.study_id == None:
-                                pass
-                            else:
-                                study.save()
-                            # If data has been entered for the Coordinates instance, save it.
-                            if coordinates.latitude_degrees == None and coordinates.latitude_minutes == None and coordinates.latitude_seconds == None and coordinates.longitude_degrees == None and coordinates.longitude_minutes == None and coordinates.longitude_seconds == None:
-                                pass
-                            else:
-                                coordinates.save()
-                            # If data has been entered for the Date instance, save it.
-                            if date.start_year == None and date.start_month == None and date.start_day == None:
-                                pass
-                            else:
-                                date.save()
-                        else:  # If this row does not have an outcome, create a new data point for the previous outcome (but do not create new covariates, since all data points for one outcome must have the same covariates).
-                            data = Data(
-                                subject = subject,
-                                publication = publication,
-                                experiment = experiment,
-                                experiment_population = experiment_population,
-                                experiment_population_outcome = experiment_population_outcome
-                            )
-                            for cell in row:
-                                if (cell.value is not None or cell.value == 0):
-                                    attribute = col_names[cell.column - 1].value
-                                    if attribute not in attributes.values_list('attribute', flat=True):
-                                        setattr(data, attribute, cell.value)
-                            # If data has been entered for the Data instance, save the instance (here we require both treatment_mean and control_mean, but this constraint is not enforced by the Data model, in case there are publications that report an effect size but not a treatment mean and control mean).
-                            if data.treatment_mean == None or data.control_mean == None:
-                                pass
-                            else:
-                                data.save()
-                        # If no data were entered for this outcome, delete this outcome.
-                        if not Data.objects.filter(
-                            subject = subject,
-                            publication = publication,
-                            experiment = experiment,
-                            experiment_population = experiment_population,
-                            experiment_population_outcome = experiment_population_outcome
-                        ).exists():
-                            experiment_population_outcome.delete()
-
-        elif 'download' in request.POST:
-            wb = Workbook()
-            ws_1 = wb.active
-            ws_1.title = "Data"
-            ws_2 = wb.create_sheet("Options")
-            i = 1
-            for name in col_names:
-                col_names_dict[name] = i
-                ws_1.cell(row=1, column=i).value = str(name)
-                i += 1
-
-            # XLSX data validation for integers
-            dv = DataValidation(type="whole", operator="greaterThan", formula1=0)
-            dv.error ='Please enter an integer.'
-            ws_1.add_data_validation(dv)
-            for col in integer_cols:
-                column_number = col_names_dict[col]
-                column_letter = get_column_letter(column_number)
-                dv.add("{column_letter}2:{column_letter}201".format(column_letter=column_letter))
-
-            # XLSX data validation for decimals
-            dv = DataValidation(type="decimal")
-            dv.error ='Please enter a number.'
-            ws_1.add_data_validation(dv)
-            for col in decimal_cols:
-                column_number = col_names_dict[col]
-                column_letter = get_column_letter(column_number)
-                dv.add("{column_letter}2:{column_letter}201".format(column_letter=column_letter))
-
-            # XLSX data validation for p_value (0 <= p_value <= 1)
-            dv = DataValidation(type="decimal", operator="between", formula1=0, formula2=1)
-            dv.error ='Please enter a number between 0 and 1.'
-            ws_1.add_data_validation(dv)
-            column_number = col_names_dict["p_value"]
-            column_letter = get_column_letter(column_number)
-            dv.add("{column_letter}2:{column_letter}201".format(column_letter=column_letter))
-
-            # XLSX data validation for correlation_coefficient (-1 <= correlation_coefficient <= 1)
-            dv = DataValidation(type="decimal", operator="between", formula1=-1, formula2=1)
-            dv.error ='Please enter a number between -1 and 1.'
-            ws_1.add_data_validation(dv)
-            column_number = col_names_dict["correlation_coefficient"]
-            column_letter = get_column_letter(column_number)
-            dv.add("{column_letter}2:{column_letter}201".format(column_letter=column_letter))
-
-            # XLSX data validation for minutes and seconds (0-60)
-            dv = DataValidation(type="decimal", operator="between", formula1=0, formula2=60)
-            dv.error ='Please enter a number between 0 and 60.'
-            ws_1.add_data_validation(dv)
-            for col in minutes_seconds_cols:
-                column_number = col_names_dict[col]
-                column_letter = get_column_letter(column_number)
-                dv.add("{column_letter}2:{column_letter}201".format(column_letter=column_letter))
-
-            # XLSX data validation for latitude_degrees (0-90)
-            dv = DataValidation(type="decimal", operator="between", formula1=0, formula2=90)
-            dv.error ='Please enter a number between 0 and 90.'
-            ws_1.add_data_validation(dv)
-            column_number = col_names_dict["latitude_degrees"]
-            column_letter = get_column_letter(column_number)
-            dv.add("{column_letter}2:{column_letter}201".format(column_letter=column_letter))
-
-            # XLSX data validation for longitude_degrees (0-180)
-            dv = DataValidation(type="decimal", operator="between", formula1=0, formula2=180)
-            dv.error ='Please enter a number between 0 and 180.'
-            ws_1.add_data_validation(dv)
-            column_number = col_names_dict["longitude_degrees"]
-            column_letter = get_column_letter(column_number)
-            dv.add("{column_letter}2:{column_letter}201".format(column_letter=column_letter))
-
-            # XLSX data validation for month (1-12)
-            dv = DataValidation(type="whole", operator="between", formula1=1, formula2=12)
-            dv.error ='Please enter an integer between 1 and 12.'
-            ws_1.add_data_validation(dv)
-            for col in month_cols:
-                column_number = col_names_dict[col]
-                column_letter = get_column_letter(column_number)
-                dv.add("{column_letter}2:{column_letter}201".format(column_letter=column_letter))
-
-            # XLSX data validation for day (1-31)
-            dv = DataValidation(type="whole", operator="between", formula1=1, formula2=31)
-            dv.error ='Please enter an integer between 1 and 31.'
-            ws_1.add_data_validation(dv)
-            for col in day_cols:
-                column_number = col_names_dict[col]
-                column_letter = get_column_letter(column_number)
-                dv.add("{column_letter}2:{column_letter}201".format(column_letter=column_letter))
-
-            # XLSX options for outcome
-            outcomes = Outcome.objects.filter(pk=experiment_population.population.pk).get_descendants(include_self=True)
-            column_number = col_names_dict["outcome"]
-            column_letter = get_column_letter(column_number)
-            options = outcomes.values_list('outcome', flat=True)
-            i = 1
-            for option in options:
-                ws_2.cell(row=i, column=column_number).value = option
-                i += 1
-            dv = DataValidation(type="list", formula1="=Options!{column_letter}$1:{column_letter}${max_row}".format(column_letter=column_letter, max_row=len(options)))
-            dv.error ='Please select an option from the menu.'
-            ws_1.add_data_validation(dv)
-            dv.add("{column_letter}2:{column_letter}201".format(column_letter=column_letter))
-
-            # XLSX options for country
-            countries = Country.objects.all()
-            column_number = col_names_dict["country"]
-            column_letter = get_column_letter(column_number)
-            options = countries.values_list('country', flat=True)
-            i = 1
-            for option in options:
-                ws_2.cell(row=i, column=column_number).value = option
-                i += 1
-            dv = DataValidation(type="list", formula1="=Options!{column_letter}$1:{column_letter}${max_row}".format(column_letter=column_letter, max_row=len(options)))
-            dv.error ='Please select an option from the menu.'
-            ws_1.add_data_validation(dv)
-            dv.add("{column_letter}2:{column_letter}201".format(column_letter=column_letter))
-
-            # XLSX options for approximate_p_value
-            column_number = col_names_dict["approximate_p_value"]
-            column_letter = get_column_letter(column_number)
-            options = [
-                "< 0.0001",
-                "< 0.001",
-                "< 0.01",
-                "< 0.05",
-                "< 0.1",
-                "> 0.05",
-                "> 0.1",
-            ]
-            i = 1
-            for option in options:
-                ws_2.cell(row=i, column=column_number).value = option
-                i += 1
-            dv = DataValidation(type="list", formula1="=Options!{column_letter}$1:{column_letter}${max_row}".format(column_letter=column_letter, max_row=len(options)))
-            ws_1.add_data_validation(dv)
-            dv.add("{column_letter}2:{column_letter}201".format(column_letter=column_letter))
-
-            # XLSX options for is_significant
-            column_number = col_names_dict["is_significant"]
-            column_letter = get_column_letter(column_number)
-            options = [
-                "False",
-                "True"
-            ]
-            i = 1
-            for option in options:
-                ws_2.cell(row=i, column=column_number).value = option
-                i += 1
-            dv = DataValidation(type="list", formula1="=Options!{column_letter}$1:{column_letter}${max_row}".format(column_letter=column_letter, max_row=len(options)))
-            ws_1.add_data_validation(dv)
-            dv.add("{column_letter}2:{column_letter}201".format(column_letter=column_letter))
-
-            # XLSX options for latitude_direction
-            column_number = col_names_dict["latitude_direction"]
-            column_letter = get_column_letter(column_number)
-            options = [
-                "N",
-                "S"
-            ]
-            i = 1
-            for option in options:
-                ws_2.cell(row=i, column=column_number).value = option
-                i += 1
-            dv = DataValidation(type="list", formula1="=Options!{column_letter}$1:{column_letter}${max_row}".format(column_letter=column_letter, max_row=len(options)))
-            ws_1.add_data_validation(dv)
-            dv.add("{column_letter}2:{column_letter}201".format(column_letter=column_letter))
-
-            # XLSX options for longitude_direction
-            column_number = col_names_dict["longitude_direction"]
-            column_letter = get_column_letter(column_number)
-            options = [
-                "E",
-                "W"
-            ]
-            i = 1
-            for option in options:
-                ws_2.cell(row=i, column=column_number).value = option
-                i += 1
-            dv = DataValidation(type="list", formula1="=Options!{column_letter}$1:{column_letter}${max_row}".format(column_letter=column_letter, max_row=len(options)))
-            ws_1.add_data_validation(dv)
-            dv.add("{column_letter}2:{column_letter}201".format(column_letter=column_letter))
-
-            # XLSX options for user-defined attributes
-            for attribute in attributes:
-                column_number = col_names_dict[attribute.attribute]
-                column_letter = get_column_letter(column_number)
-                if attribute.get_children().exists():
-                    options = attribute.get_children().values_list('attribute', flat=True)
-                    i = 1
-                    for option in options:
-                        ws_2.cell(row=i, column=column_number).value = option
-                        i += 1
-                    dv = DataValidation(type="list", formula1="=Options!{column_letter}$1:{column_letter}${max_row}".format(column_letter=column_letter, max_row=len(options)))
-                    dv.error ='Please select an option from the menu.'
-                    ws_1.add_data_validation(dv)
-                    dv.add("{column_letter}2:{column_letter}201".format(column_letter=column_letter))
-                elif attribute.type == "number":
-                    dv = DataValidation(type="decimal")
-                    dv.error ='Please enter a number.'
-                    ws_1.add_data_validation(dv)
-                    dv.add("{column_letter}2:{column_letter}201".format(column_letter=column_letter))
-
-            # Create a temporary file for the response
-            with NamedTemporaryFile() as tmp:
-                wb.save(tmp.name)
-                response = HttpResponse(content=tmp, content_type='application/vnd.ms-excel')
-                response['Content-Disposition'] = 'attachment; filename=data_upload_template.xlsx'
-                return response
-            return response
-        return redirect('population', subject=subject.slug, publication_pk=publication_pk, experiment_index=experiment_index, population_index=population_index)
-
+        with transaction.atomic():
+            formset = experiment_population_outcome_formset
+            if formset.is_valid():
+                instances = formset.save(commit=False)
+                if 'delete' in request.POST:
+                    for obj in formset.deleted_objects:
+                        obj.delete()
+                else:
+                    for instance in instances:
+                        instance.experiment_population = experiment_population
+                        instance.save()
+            formset = x_country_formset
+            if formset.is_valid():
+                instances = formset.save(commit=False)
+                if 'delete' in request.POST:
+                    for obj in formset.deleted_objects:
+                        obj.delete()
+                else:
+                    for instance in instances:
+                        instance.population = experiment_population
+                        instance.user = user
+                        instance.publication_index = publication
+                        instance.experiment_index = experiment
+                        instance.population_index = experiment_population
+                        instance.save()
+            formset = coordinates_formset
+            if formset.is_valid():
+                instances = formset.save(commit=False)
+                if 'delete' in request.POST:
+                    for obj in formset.deleted_objects:
+                        obj.delete()
+                else:
+                    for instance in instances:
+                        instance.population = experiment_population
+                        instance.user = user
+                        instance.publication_index = publication
+                        instance.experiment_index = experiment
+                        instance.population_index = experiment_population
+                        instance.save()
+            formset = date_formset
+            if formset.is_valid():
+                instances = formset.save(commit=False)
+                if 'delete' in request.POST:
+                    for obj in formset.deleted_objects:
+                        obj.delete()
+                else:
+                    for instance in instances:
+                        instance.population = experiment_population
+                        instance.user = user
+                        instance.publication_index = publication
+                        instance.experiment_index = experiment
+                        instance.population_index = experiment_population
+                        instance.save()
+            formset = study_formset
+            if formset.is_valid():
+                instances = formset.save(commit=False)
+                if 'delete' in request.POST:
+                    for obj in formset.deleted_objects:
+                        obj.delete()
+                else:
+                    for instance in instances:
+                        instance.population = experiment_population
+                        instance.user = user
+                        instance.publication_index = publication
+                        instance.experiment_index = experiment
+                        instance.population_index = experiment_population
+                        instance.save()
+            formset = EAV_formset
+            if formset.is_valid():
+                instances = formset.save(commit=False)
+                if 'delete' in request.POST:
+                    for obj in formset.deleted_objects:
+                        obj.delete()
+                else:
+                    for instance in instances:
+                        instance.population = experiment_population
+                        instance.user = user
+                        instance.publication_index = publication
+                        instance.experiment_index = experiment
+                        instance.population_index = experiment_population
+                        instance.save()
+            return redirect('population', subject=subject.slug, publication_pk=publication_pk, experiment_index=experiment_index, population_index=population_index)
     context = {
         'user_can_edit_attributes': user_subject.can_edit_attributes,
         'subject': subject,
@@ -1868,8 +2234,7 @@ def population(request, subject, publication_pk, experiment_index, population_in
         'date_formset': date_formset,
         'study_formset': study_formset,
         'EAV_formset': EAV_formset,
-        'x_country_formset': x_country_formset,
-        'data_upload_form': data_upload_form
+        'x_country_formset': x_country_formset
     }
     return render(request, 'publications/population.html', context)
 
@@ -2051,8 +2416,7 @@ def outcome(request, subject, publication_pk, experiment_index, population_index
         'date_formset': date_formset,
         'study_formset': study_formset,
         'EAV_formset': EAV_formset,
-        'x_country_formset': x_country_formset,
-        'path_to_shiny': get_path_to_shiny(request)
+        'x_country_formset': x_country_formset
     }
     return render(request, 'publications/outcome.html', context)
 

@@ -13,6 +13,7 @@
 {% block content %}
 
 <h1>Other publication-level metadata</h1>
+
 <p>
   <a href="{% url 'publication' subject=subject.slug publication_pk=publication.pk %}">This publication</a>
   > Other publication-level metadata
@@ -22,13 +23,14 @@
 </p>
 
 <form method="post" action="">{% csrf_token %}
+
   <table>
+
     <tr><th colspan="3">Populations</th></tr>
     <tr><td class="top" colspan="3">When you select and save a population, a link will appear for that population. Click that link to enter metadata for that population.</td></tr>
-    <tr>
-      <td colspan="2"></td>
-      <td class="centered">Select</td>
-    </tr>
+    <tr><td colspan="2"></td><td class="centered">Select</td></tr>
+    <tr><td colspan="2"></td><td class="centered"> - <input type="checkbox" class="publication_population_formset_checkbox" onClick="toggle(this, this.className)"> - </td></tr>
+
     {{ publication_population_formset.management_form }}
     {% for form in publication_population_formset %}
       <tr>
@@ -47,7 +49,7 @@
             {{ form.population }}
           {% endif %}
         </td>
-        <td class="centered">{{ form.DELETE }}</td>
+        <td class="centered">{{ form.DELETE|add_class:'publication_population_formset_checkbox' }}</td>
       </tr>
     {% endfor %}
     <tr>
@@ -59,10 +61,10 @@
     <tr><td class="empty" colspan="3">&nbsp;</td></tr>
 
     <tr><th colspan="3">Covariates for this publication</th></tr>
-    <tr>
-      <td colspan="2"></td>
-      <td class="centered">Select</td>
-    </tr>
+    <tr><td colspan="2"></td><td class="centered">Select</td></tr>
+    <tr><td colspan="2"></td><td class="centered"> - <input type="checkbox" class="covariate_formsets_checkbox" onClick="toggle(this, this.className)"> - </td></tr>
+    <tr><td class="empty" colspan="3">&nbsp;</td></tr>
+
     {{ x_country_formset.management_form }}
     {% for form in x_country_formset %}
       <tr>
@@ -75,9 +77,12 @@
           {% endif %}
         </td>
         <td>{{ form.country }}</td>
-        <td class="centered">{{ form.DELETE }}</td>
+        <td class="centered">{{ form.DELETE|add_class:'covariate_formsets_checkbox' }}</td>
       </tr>
     {% endfor %}
+
+    <tr><td class="empty" colspan="3">&nbsp;</td></tr>
+
     {{ coordinates_formset.management_form }}
     {% for form in coordinates_formset %}
     <tr>
@@ -90,7 +95,7 @@
         {% endif %}
       </td>
       <td>Latitude: {{ form.latitude_degrees|add_class:"coordinates" }} &#176; {{ form.latitude_minutes|add_class:"coordinates" }} ' {{ form.latitude_seconds|add_class:"coordinates" }} " {{ form.latitude_direction }}</td>
-      <td class="centered">{{ form.DELETE }}</td>
+      <td class="centered">{{ form.DELETE|add_class:'covariate_formsets_checkbox' }}</td>
     </tr>
     <tr>
       <td></td>
@@ -98,6 +103,9 @@
       <td></td>
     </tr>
     {% endfor %}
+
+    <tr><td class="empty" colspan="3">&nbsp;</td></tr>
+
     {{ date_formset.management_form }}
     {% for form in date_formset %}
       <tr>
@@ -108,7 +116,7 @@
           Start date:
         </td>
         <td>Year: {{ form.start_year }} Month: {{ form.start_month }} Day: {{ form.start_day }}</td>
-        <td class="centered">{{ form.DELETE }}</td>
+        <td class="centered">{{ form.DELETE|add_class:'covariate_formsets_checkbox' }}</td>
       </tr>
       <tr>
         <td>
@@ -118,6 +126,9 @@
         <td></td>
       </tr>
     {% endfor %}
+
+    <tr><td class="empty" colspan="3">&nbsp;</td></tr>
+
     {{ EAV_formset.management_form }}
     {% if EAV_formset.forms %}
       {% for form in EAV_formset %}
@@ -143,7 +154,7 @@
               {{ form.value_as_number }} {{ form.unit }}
             {% endif %}
           </td>
-          <td class="centered">{{ form.DELETE }}</td>
+          <td class="centered">{{ form.DELETE|add_class:'covariate_formsets_checkbox' }}</td>
         </tr>
       {% endfor %}
       <tr>

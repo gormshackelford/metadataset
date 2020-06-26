@@ -1,4 +1,4 @@
-from .models import Attribute, Country, Data, Design, EAV, Experiment, ExperimentDesign, ExperimentPopulation, ExperimentPopulationOutcome, Intervention, Outcome, Publication, PublicationPopulation, PublicationPopulationOutcome, Study, Subject, User, XCountry
+from .models import Attribute, Coordinates, Country, Data, Date, Design, EAV, Experiment, ExperimentDesign, ExperimentPopulation, ExperimentPopulationOutcome, Intervention, Outcome, Publication, PublicationPopulation, PublicationPopulationOutcome, Study, Subject, User, XCountry
 from rest_framework import serializers
 
 
@@ -120,6 +120,18 @@ class DataEAVSerializer(serializers.HyperlinkedModelSerializer):
         fields = ('attribute', 'value_as_factor', 'value_as_number')
 
 
+class DataCoordinatesSerializer(serializers.HyperlinkedModelSerializer):
+    class Meta:
+        model = Coordinates
+        fields = ('latitude_degrees', 'latitude_minutes', 'latitude_seconds', 'latitude_direction', 'longitude_degrees', 'longitude_minutes', 'longitude_seconds', 'longitude_direction')
+
+
+class DataDateSerializer(serializers.HyperlinkedModelSerializer):
+    class Meta:
+        model = Date
+        fields = ('start_year', 'start_month', 'start_day', 'end_year', 'end_month', 'end_day')
+
+
 class DataXCountrySerializer(serializers.HyperlinkedModelSerializer):
     country = serializers.SlugRelatedField(slug_field='country', read_only=True)
 
@@ -130,12 +142,14 @@ class DataXCountrySerializer(serializers.HyperlinkedModelSerializer):
 
 class DataPublicationSerializer(serializers.HyperlinkedModelSerializer):
     EAV_publication = DataEAVSerializer(many=True, read_only=True)
+    coordinates_publication = DataCoordinatesSerializer(many=True, read_only=True)
+    date_publication = DataDateSerializer(many=True, read_only=True)
     xcountry_publication = DataXCountrySerializer(many=True, read_only=True)
     subject = serializers.SlugRelatedField(slug_field='slug', read_only=True)
 
     class Meta:
         model = Publication
-        fields = ('title', 'authors', 'year', 'journal', 'volume', 'issue', 'pages', 'doi', 'citation', 'pk', 'subject', 'EAV_publication', 'xcountry_publication')
+        fields = ('title', 'authors', 'year', 'journal', 'volume', 'issue', 'pages', 'doi', 'citation', 'pk', 'subject', 'EAV_publication', 'coordinates_publication', 'date_publication', 'xcountry_publication')
 
 
 class DataStudySerializer(serializers.HyperlinkedModelSerializer):
@@ -157,6 +171,8 @@ class DataExperimentSerializer(serializers.HyperlinkedModelSerializer):
     EAV_experiment = DataEAVSerializer(many=True, read_only=True)
     study_experiment = DataStudySerializer(many=True, read_only=True)
     experimentdesign_set = DataExperimentDesignSerializer(many=True, read_only=True)  # Reverse foreign-key relationship (the default is the name of the model that has a foreign key to this model + "_set", unless a "related_name" is specified in that model.
+    coordinates_experiment = DataCoordinatesSerializer(many=True, read_only=True)
+    date_experiment = DataDateSerializer(many=True, read_only=True)
     xcountry_experiment = DataXCountrySerializer(many=True, read_only=True)
 
     class Meta:
@@ -168,6 +184,8 @@ class DataExperimentPopulationSerializer(serializers.HyperlinkedModelSerializer)
     population = serializers.SlugRelatedField(slug_field='outcome', read_only=True)
     EAV_population = DataEAVSerializer(many=True, read_only=True)
     study_population = DataStudySerializer(many=True, read_only=True)
+    coordinates_population = DataCoordinatesSerializer(many=True, read_only=True)
+    date_population = DataDateSerializer(many=True, read_only=True)
     xcountry_population = DataXCountrySerializer(many=True, read_only=True)
 
     class Meta:
@@ -179,6 +197,8 @@ class DataExperimentPopulationOutcomeSerializer(serializers.HyperlinkedModelSeri
     outcome = serializers.SlugRelatedField(slug_field='outcome', read_only=True)
     study_outcome = DataStudySerializer(many=True, read_only=True)
     EAV_outcome = DataEAVSerializer(many=True, read_only=True)
+    coordinates_outcome = DataCoordinatesSerializer(many=True, read_only=True)
+    date_outcome = DataDateSerializer(many=True, read_only=True)
     xcountry_outcome = DataXCountrySerializer(many=True, read_only=True)
 
     class Meta:

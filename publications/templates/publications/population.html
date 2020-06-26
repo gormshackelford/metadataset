@@ -35,7 +35,7 @@
     <tr><th colspan="3">Outcomes for this population</th></tr>
     <tr><td class="top" colspan="3">When you select and save an outcome, a link will appear for that outcome. Click that link to enter metadata for that outcome.</td></tr>
     <tr><td colspan="2"></td><td class="centered">Select</td></tr>
-    <tr><td colspan="2"></td><td class="centered"><input type="checkbox" class="experiment_population_outcome_formset_checkbox" onClick="toggle(this, this.className)"></td></tr>
+    <tr><td colspan="2"></td><td class="centered"> - <input type="checkbox" class="experiment_population_outcome_formset_checkbox" onClick="toggle(this, this.className)"> - </td></tr>
 
     {{ experiment_population_outcome_formset.management_form }}
     {% for form in experiment_population_outcome_formset %}
@@ -70,13 +70,11 @@
     <tr><td class="empty" colspan="3">&nbsp;</td></tr>
 
     <tr><th colspan="3">Covariates for this population</th></tr>
-    <tr>
-      <td class="top" colspan="3">If you entered this metadata at the <a href="{% url 'experiment' subject=subject.slug publication_pk=publication.pk experiment_index=experiment_index %}">intervention level</a> or higher, then you do not need to enter it here (at the population level). However, if there is metadata that applies only to this population, then you should enter it here. It will supercede the metadata at a higher level.</td>
-    </tr>
-    <tr>
-      <td colspan="2"></td>
-      <td class="centered">Select</td>
-    </tr>
+    <tr><td class="top" colspan="3">If you entered this metadata at the <a href="{% url 'experiment' subject=subject.slug publication_pk=publication.pk experiment_index=experiment_index %}">intervention level</a> or higher, then you do not need to enter it here (at the population level). However, if there is metadata that applies only to this population, then you should enter it here. It will supercede the metadata at a higher level.</td></tr>
+    <tr><td colspan="2"></td><td class="centered">Select</td></tr>
+    <tr><td colspan="2"></td><td class="centered"> - <input type="checkbox" class="covariate_formsets_checkbox" onClick="toggle(this, this.className)"> - </td></tr>
+    <tr><td class="empty" colspan="3">&nbsp;</td></tr>
+
     {{ x_country_formset.management_form }}
     {% for form in x_country_formset %}
       <tr>
@@ -89,7 +87,7 @@
           {% endif %}
         </td>
         <td>{{ form.country }}</td>
-        <td class="centered">{{ form.DELETE }}</td>
+        <td class="centered">{{ form.DELETE|add_class:'covariate_formsets_checkbox' }}</td>
       </tr>
     {% endfor %}
 
@@ -107,7 +105,7 @@
         {% endif %}
       </td>
       <td>Latitude: {{ form.latitude_degrees|add_class:"coordinates" }} &#176; {{ form.latitude_minutes|add_class:"coordinates" }} ' {{ form.latitude_seconds|add_class:"coordinates" }} " {{ form.latitude_direction }}</td>
-      <td class="centered">{{ form.DELETE }}</td>
+      <td class="centered">{{ form.DELETE|add_class:'covariate_formsets_checkbox' }}</td>
     </tr>
     <tr>
       <td></td>
@@ -128,7 +126,7 @@
           Start date:
         </td>
         <td>Year: {{ form.start_year }} Month: {{ form.start_month }} Day: {{ form.start_day }}</td>
-        <td class="centered">{{ form.DELETE }}</td>
+        <td class="centered">{{ form.DELETE|add_class:'covariate_formsets_checkbox' }}</td>
       </tr>
       <tr>
         <td>
@@ -151,7 +149,7 @@
           Study ID <a href="{% url 'notes' %}#study_id">(note)</a>:
         </td>
         <td>{{ form.study_id }}</td>
-        <td class="centered">{{ form.DELETE }}</td>
+        <td class="centered">{{ form.DELETE|add_class:'covariate_formsets_checkbox' }}</td>
       </tr>
       <tr>
         <td>
@@ -189,7 +187,7 @@
               {{ form.value_as_number }} {{ form.unit }}
             {% endif %}
           </td>
-          <td class="centered">{{ form.DELETE }}</td>
+          <td class="centered">{{ form.DELETE|add_class:'covariate_formsets_checkbox' }}</td>
         </tr>
       {% endfor %}
 
@@ -206,42 +204,6 @@
       {% include 'publications/can_edit_attributes.html' %}
     {% endif %}
 
-    <tr><td class="empty" colspan="3">&nbsp;</td></tr>
-
-    <tr><th colspan="3">Upload outcomes and data</th></tr>
-    <tr>
-      <td class="top bottom" colspan="3">
-        You can also upload outcomes and data from a spreadsheet (Microsoft Excel format). Click "Download XLSX template" for a blank template. When you upload this template, it will create one new outcome on this page for each row for which you have selected an outcome. If you have entered data and/or covariates in that row, it will also create one new data point for that outcome. For rows for which you have not selected an outcome, it will create another data point for the outcome in the row above, but it will not create covariates for that data point, which should be entered into the first row for each outcome. However, if there are covariates that are shared by all outcomes on this page, then they should be selected on this page, not entered into the template.
-      </td>
-    </tr>
-    <tr><td class="empty" colspan="3">&nbsp;</td></tr>
-    <tr>
-      <td>File for upload:</td>
-      <td>{{ data_upload_form.data_upload_file }}</td>
-      <td></td>
-    </tr>
-    <tr>
-      <td class="bottom"></td>
-      <td class="button bottom">
-          <input type="submit" name="upload" value="Upload XLSX" />
-          <input type="submit" name="download" value="Download XLSX template" />
-      </td>
-      <td></td>
-    </tr>
-
   </table>
-
-{% endblock %}
-
-{% block javascript %}
-
-  <script type="text/javascript" >
-    function toggle(select_all_checkbox, select_all_checkbox_class) {
-        checkboxes = document.getElementsByClassName(select_all_checkbox_class);
-        for (var i = 0, n = checkboxes.length; i < n; i++) {
-            checkboxes[i].checked = select_all_checkbox.checked;
-        }
-    }
-  </script>
 
 {% endblock %}

@@ -1,5 +1,7 @@
 {% extends 'publications/base.html' %}
 
+{% load metadataset_tags %}
+
 {% block title %}
   Outcome-level metadata | Metadataset | www.metadataset.com
 {% endblock %}
@@ -27,10 +29,9 @@
     <tr><td class="empty" colspan="2">&nbsp;</td></tr>
 
     <tr><th colspan="2">Outcomes for this population</th></tr>
-    <tr>
-      <td></td>
-      <td class="centered">Select</td>
-    </tr>
+    <tr><td></td><td class="centered">Select</td></tr>
+    <tr><td></td><td class="centered"> - <input type="checkbox" class="formset_checkbox" onClick="toggle(this, this.className)"> - </td></tr>
+
     {{ formset.management_form }}
     {% for form in formset %}
       <tr>
@@ -40,7 +41,7 @@
           {% endfor %}
           {{ form.outcome }}
         </td>
-        <td class="centered">{{ form.DELETE }}</td>
+        <td class="centered">{{ form.DELETE|add_class:'formset_checkbox' }}</td>
       </tr>
     {% endfor %}
     <tr>

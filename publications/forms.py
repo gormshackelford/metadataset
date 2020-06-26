@@ -282,7 +282,9 @@ class AttributeForm(forms.ModelForm):
             "response_ratio", "log_response_ratio", "v_from_sd_and_n",
             "mean_difference", "significance_from_lsd", "selected_significance",
             "p_from_significance", "selected_p", "z_from_p", "selected_z",
-            "v_from_z", "selected_v", "study", "es_and_v", "selected_v_mads"
+            "v_from_z", "selected_v", "study", "es_and_v", "selected_v_mads",
+            # Terms that are used in the upload template, which could cause conflicts
+            "metadata"
         ]
         for attribute in reserved_attributes:
             if attribute.upper() == data.upper():

@@ -333,7 +333,14 @@ class PublicationPopulationOutcome(models.Model):
         return self.publication_population.publication.title
 
 
-# We define one "experment" (i.e. one "study") as one "intervention" that is described in one "publication". We use the "PICO" terminology for describing experiments ("P" = "Population", "I" = "Intervention", "C" = "Comparison", and "O" = "Outcome"). In our data model, one experiment can have multiple "populations" and one "population" can have multiple "outcomes" (e.g., effects of intercropping [intervention] on crop yield [population = crop; outcome = crop yield] and soil nutrients [population = soil; outcome = soil nitrogen; outcome = soil phosphorus]).
+# We define one "experment" as one "intervention" that is described in one
+# "publication". We use the "PICO" terminology for describing experiments ("P" =
+# "Population", "I" = "Intervention", "C" = "Comparison", and "O" = "Outcome").
+# In our data model, one experiment can have multiple "populations" and one
+# "population" can have multiple "outcomes" (e.g., effects of intercropping
+# [intervention] on crop yield [population = crop; outcome = crop yield] and
+# soil nutrients [population = soil; outcome = soil nitrogen; outcome = soil
+# phosphorus]).
 class Experiment(models.Model):
     publication = models.ForeignKey(Publication, on_delete=models.CASCADE)
     intervention = models.ForeignKey(Intervention, blank=True, null=True, on_delete=models.CASCADE)
