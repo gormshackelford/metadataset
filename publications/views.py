@@ -15,6 +15,7 @@ from django.utils.encoding import force_bytes, force_text
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from ast import literal_eval
 from collections import Counter
+from copy import deepcopy
 from itertools import chain
 from random import shuffle
 from .tokens import account_activation_token
@@ -1356,8 +1357,9 @@ def experiment(request, subject, publication_pk, experiment_index):
 def get_download_template(subject):
     attribute = subject.attribute
     attributes = Attribute.objects.get(pk=subject.attribute.pk).get_children().order_by('attribute')
+    all_cols = deepcopy(col_names)
     for attribute in attributes.values_list('attribute', flat=True):
-        col_names.append(attribute)
+        all_cols.append(attribute)
     col_names_dict = {}
 
     # The template is an XLSX file that we create with openpyxl.
@@ -1366,7 +1368,7 @@ def get_download_template(subject):
     ws_1.title = "Data"
     ws_2 = wb.create_sheet("Options")
     i = 1
-    for name in col_names:
+    for name in all_cols:
         col_names_dict[name] = i
         ws_1.cell(row=1, column=i).value = str(name)
         i += 1
