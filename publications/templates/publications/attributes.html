@@ -11,8 +11,12 @@
 {% block content %}
 
 <h1>Other covariates</h1>
-<p>Please be careful when changing this metadata. Your changes will affect all
-  users.</p>
+<p>
+  Please be careful when changing these covariates. Your changes will affect all
+  users. If the covariates or factor levels do not appear in alphabetical order,
+  or if you have any other problems, please <a href="{% url 'attributes' subject=subject.slug refresh='refresh' %}">
+  click here</a> to refresh the database (this may take a minute or two).
+</p>
 
 <form method="post" action="">{% csrf_token %}
   <table>

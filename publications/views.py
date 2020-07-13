@@ -980,7 +980,7 @@ def metadata(request, subject, publication_pk):
 
 
 @login_required
-def attributes(request, subject):
+def attributes(request, subject, refresh=None):
     """
     On this page, the user adds/edits attributes for this subject.
     """
@@ -1008,6 +1008,8 @@ def attributes(request, subject):
                                 instance.unit = 'NA for factors'
                             instance.save()
                     return redirect('attributes', subject=subject.slug)
+    if refresh is not None:
+        Attribute.objects.rebuild()
     context = {
         'subject': subject,
         'formset': formset
