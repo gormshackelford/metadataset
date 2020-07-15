@@ -2605,7 +2605,7 @@ def browse_by_outcome(request, subject, state, set='default', download='none'):
     return render(request, 'publications/browse_by_outcome.html', context)
 
 
-def this_intervention(request, subject, state, intervention_pk, outcome_pk='default'):
+def this_intervention(request, subject, state, intervention_pk, outcome_pk='default', download='none'):
     user = request.user
     subject = Subject.objects.get(slug=subject)
     if user.is_authenticated:
@@ -2664,6 +2664,79 @@ def this_intervention(request, subject, state, intervention_pk, outcome_pk='defa
         count_by_country = json.dumps(count_by_country)  # Convert to JSON for use by JavaScript in the template
         count = publications.count()
 
+        if download == 'csv':
+            # Create the HttpResponse object with the appropriate CSV header.
+            response = HttpResponse(content_type='text/csv; charset=utf-8')
+            response['Content-Disposition'] = 'attachment; filename="bibliography.csv"'
+            # Write the CSV
+            writer = csv.writer(response, quoting=csv.QUOTE_ALL)
+            writer.writerow(['Subject: {subject}'.format(subject=str(subject).capitalize())])
+            writer.writerow(['Selected intervention: {intervention}'.format(intervention=this_intervention)])
+            selected_outcome = this_outcome if this_outcome is not None else "None"
+            writer.writerow(['Selected outcome: {outcome}'.format(outcome=selected_outcome)])
+            writer.writerow([])
+            writer.writerow(['Publication', 'Authors', 'Year', 'Title', 'Journal', 'Volume', 'Issue', 'Pages', 'DOI', 'Country', 'Start year', 'End year', 'Intervention', 'Blocked', 'Replicated', 'Randomised', 'Controlled', 'Correlated'])
+            experiments = Experiment.objects.filter(publication__in=publications, intervention__in=interventions)
+            separator = ', '
+            for publication in publications:
+                try:
+                    authors = separator.join(publication.author_list)
+                except:
+                    authors = publication.authors
+                if XCountry.objects.filter(publication=publication).exists():
+                    publication_countries = XCountry.objects.filter(publication=publication)
+                    publication_countries = set(publication_countries.values_list('country__country', flat=True))
+                    publication_countries = separator.join(publication_countries)
+                else:
+                    publication_countries = ""
+                if Date.objects.filter(publication=publication).exists():
+                    publication_dates = Date.objects.filter(publication=publication)
+                else:
+                    publication_dates = ""
+                publication_experiments = experiments.filter(publication=publication)
+                for experiment in publication_experiments:
+                    blocked = ""
+                    replicated = ""
+                    randomised = ""
+                    controlled = ""
+                    correlated = ""
+                    if ExperimentDesign.objects.filter(experiment=experiment).exists():
+                        designs = ExperimentDesign.objects.filter(experiment=experiment).values_list('design__design', flat=True)
+                        designs = list(designs)
+                        blocked = "TRUE" if "Blocked" in designs else "FALSE"
+                        replicated = "TRUE" if "Replicated" in designs else "FALSE"
+                        randomised = "TRUE" if "Randomised" in designs else "FALSE"
+                        controlled = "TRUE" if "Controlled" in designs else "FALSE"
+                        correlated = "TRUE" if "Correlated (site comparison)" in designs else "FALSE"
+                    if XCountry.objects.filter(experiment_index=experiment).exists():
+                        countries = XCountry.objects.filter(experiment_index=experiment)
+                        countries = set(countries.values_list('country__country', flat=True))
+                        countries = separator.join(countries)
+                    else:
+                        countries = publication_countries
+                    if Date.objects.filter(experiment_index=experiment).exists():
+                        dates = Date.objects.filter(experiment_index=experiment)
+                    else:
+                        dates = publication_dates
+                    if dates != "":
+                        start_years = set(dates.values_list('start_year', flat=True))
+                        start_years = [x for x in start_years if x is not None]
+                        try:
+                            start_year = min(start_years)
+                        except:
+                            start_year = ""
+                        end_years = set(dates.values_list('end_year', flat=True))
+                        end_years = [x for x in end_years if x is not None]
+                        try:
+                            end_year = max(end_years)
+                        except:
+                            end_year = ""
+                    else:
+                        start_year = ""
+                        end_year = ""
+                    writer.writerow([publication.pk, authors, publication.year, publication.title, publication.journal, publication.volume, publication.issue, publication.pages, publication.doi, countries, start_year, end_year, experiment.intervention, blocked, replicated, randomised, controlled, correlated])
+            return response
+
     if state == 'data':
         path_to_shiny = get_path_to_shiny(request)
 
@@ -2718,7 +2791,7 @@ def this_intervention(request, subject, state, intervention_pk, outcome_pk='defa
     return render(request, 'publications/this_intervention.html', context)
 
 
-def this_outcome(request, subject, state, outcome_pk, intervention_pk='default'):
+def this_outcome(request, subject, state, outcome_pk, intervention_pk='default', download='none'):
     user = request.user
     subject = Subject.objects.get(slug=subject)
     if user.is_authenticated:
@@ -2768,6 +2841,51 @@ def this_outcome(request, subject, state, outcome_pk, intervention_pk='default')
         count_by_country = Counter(item[0] for item in countries)  # item[0] is country in (country, publication) and this counts the number of tuples for each country. Counter is imported from collections.
         count_by_country = json.dumps(count_by_country)  # Convert to JSON for use by JavaScript in the template
         count = publications.count()
+
+        if download == 'csv':
+            # Create the HttpResponse object with the appropriate CSV header.
+            response = HttpResponse(content_type='text/csv; charset=utf-8')
+            response['Content-Disposition'] = 'attachment; filename="bibliography.csv"'
+            # Write the CSV
+            writer = csv.writer(response, quoting=csv.QUOTE_ALL)
+            writer.writerow(['Subject: {subject}'.format(subject=str(subject).capitalize())])
+            selected_intervention = this_intervention if this_intervention is not None else "None"
+            writer.writerow(['Selected intervention: {intervention}'.format(intervention=selected_intervention)])
+            writer.writerow(['Selected outcome: {outcome}'.format(outcome=this_outcome)])
+            writer.writerow([])
+            writer.writerow(['Publication', 'Authors', 'Year', 'Title', 'Journal', 'Volume', 'Issue', 'Pages', 'DOI', 'Country', 'Start year', 'End year', 'Outcome'])
+            separator = ', '
+            for publication in publications:
+                try:
+                    authors = separator.join(publication.author_list)
+                except:
+                    authors = publication.authors
+                countries = XCountry.objects.filter(publication_index=publication)
+                countries = set(countries.values_list('country__country', flat=True))
+                countries = separator.join(countries)
+                if Date.objects.filter(publication_index=publication).exists():
+                    dates = Date.objects.filter(publication=publication)
+                    start_years = set(dates.values_list('start_year', flat=True))
+                    start_years = [x for x in start_years if x is not None]
+                    try:
+                        start_year = min(start_years)
+                    except:
+                        start_year = ""
+                    end_years = set(dates.values_list('end_year', flat=True))
+                    end_years = [x for x in end_years if x is not None]
+                    try:
+                        end_year = max(end_years)
+                    except:
+                        end_year = ""
+                else:
+                    start_year = ""
+                    end_year = ""
+                experiment_population_outcomes = ExperimentPopulationOutcome.objects.filter(experiment_population__experiment__publication=publication, outcome__in=outcomes).values_list('outcome__outcome', flat=True)
+                publication_population_outcomes = PublicationPopulationOutcome.objects.filter(publication_population__publication=publication, outcome__in=outcomes).values_list('outcome__outcome', flat=True)
+                publication_outcomes = set(list(experiment_population_outcomes) + list(publication_population_outcomes))
+                for outcome in publication_outcomes:
+                    writer.writerow([publication.pk, authors, publication.year, publication.title, publication.journal, publication.volume, publication.issue, publication.pages, publication.doi, countries, start_year, end_year, outcome])
+            return response
 
     if state == 'data':
         path_to_shiny = get_path_to_shiny(request)

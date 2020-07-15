@@ -33,6 +33,7 @@ urlpatterns = [
     path('subject/<subject>/kappa/', views.kappa, name='kappa'),
 
     # Filter publications
+
     # Filter by intervention
     path('subject/<subject>/publications/intervention/<int:intervention_pk>/', views.publications_x, name='publications_x'),
     # Filter by intervention and outcome
@@ -41,6 +42,7 @@ urlpatterns = [
     path('subject/<subject>/publications/intervention/<int:intervention_pk>/outcome/<int:outcome_pk>/<iso_a3>/', views.publications_x, name='publications_x'),
     # Filter by intervention and country (iso_a3)
     path('subject/<subject>/publications/intervention/<int:intervention_pk>/<iso_a3>/', views.publications_x, name='publications_x'),
+
     # Filter by outcome
     path('subject/<subject>/publications/outcome/<int:outcome_pk>/', views.publications_x, name='publications_x'),
     # Filter by outcome and country (iso_a3)
@@ -48,12 +50,16 @@ urlpatterns = [
 
     # Filter by intervention
     path('subject/<subject>/intervention/<int:intervention_pk>/<state>/', views.this_intervention, name='this_intervention'),
+    path('subject/<subject>/intervention/<int:intervention_pk>/<state>/<download>/', views.this_intervention, name='this_intervention'),
     # Filter by intervention and outcome
     path('subject/<subject>/intervention/<int:intervention_pk>/outcome/<int:outcome_pk>/<state>/', views.this_intervention, name='this_intervention'),
+    path('subject/<subject>/intervention/<int:intervention_pk>/outcome/<int:outcome_pk>/<state>/<download>/', views.this_intervention, name='this_intervention'),
     # Filter by outcome
     path('subject/<subject>/outcome/<int:outcome_pk>/<state>/', views.this_outcome, name='this_outcome'),
+    path('subject/<subject>/outcome/<int:outcome_pk>/<state>/<download>/', views.this_outcome, name='this_outcome'),
     # Filter by outcome and intervention
     path('subject/<subject>/outcome/<int:outcome_pk>/intervention/<int:intervention_pk>/<state>/', views.this_outcome, name='this_outcome'),
+    path('subject/<subject>/outcome/<int:outcome_pk>/intervention/<int:intervention_pk>/<state>/<download>/', views.this_outcome, name='this_outcome'),
 
     path('subject/<subject>/browse-by-intervention/<state>/', views.browse_by_intervention, name='browse_by_intervention'),
     path('subject/<subject>/browse-by-intervention/<state>/<set>/', views.browse_by_intervention, name='browse_by_intervention'),

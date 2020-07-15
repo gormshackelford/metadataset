@@ -13,6 +13,7 @@
 
 {% block content %}
 
+  {% load metadataset_tags %}
   {% load mptt_tags %}
 
   <h1>{{ state|capfirst }} for this outcome</h1>
@@ -22,10 +23,16 @@
         <a href="{% url 'publications_x' subject=subject.slug intervention_pk=this_intervention.pk outcome_pk=this_outcome.pk %}">
           {{ count }} publication{% if count != 1 %}s{% endif %}
         </a>
+        {% if user_subject %}
+          (<a onclick="return confirm('This could take some time. Please do not leave this page or close this tab.')" href="{% url 'this_outcome' subject=subject.slug intervention_pk=this_intervention.pk outcome_pk=this_outcome.pk state='publications' download='csv' %}">CSV</a>)
+        {% endif %}
       {% else %}
         <a href="{% url 'publications_x' subject=subject.slug outcome_pk=this_outcome.pk %}">
           {{ count }} publication{% if count != 1 %}s{% endif %}
         </a>
+        {% if user_subject %}
+          (<a onclick="return confirm('This could take some time. Please do not leave this page or close this tab.')" href="{% url 'this_outcome' subject=subject.slug outcome_pk=this_outcome.pk state='publications' download='csv' %}">CSV</a>)
+        {% endif %}
       {% endif %}
     </p>
   {% elif state == 'data' %}
