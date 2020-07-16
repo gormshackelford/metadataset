@@ -24,14 +24,16 @@
           {{ count }} publication{% if count != 1 %}s{% endif %}
         </a>
         {% if user_subject %}
-          (<a onclick="return confirm('This could take some time. Please do not leave this page or close this tab.')" href="{% url 'this_intervention' subject=subject.slug intervention_pk=this_intervention.pk outcome_pk=this_outcome.pk state='publications' download='csv' %}">CSV</a>)
+          (download CSV: <a onclick="return confirm('This could take some time. Please do not leave this page or close this tab.')" href="{% url 'this_intervention' subject=subject.slug intervention_pk=this_intervention.pk outcome_pk=this_outcome.pk state='publications' download='csv' %}">by intervention</a>
+          | <a href="{% url 'this_intervention' subject=subject.slug intervention_pk=this_intervention.pk outcome_pk=this_outcome.pk state='publications' download='csv_by_country' %}">by country</a>)
         {% endif %}
       {% else %}
         <a href="{% url 'publications_x' subject=subject.slug intervention_pk=this_intervention.pk %}">
           {{ count }} publication{% if count != 1 %}s{% endif %}
         </a>
         {% if user_subject %}
-          (<a onclick="return confirm('This could take some time. Please do not leave this page or close this tab.')" href="{% url 'this_intervention' subject=subject.slug intervention_pk=this_intervention.pk state='publications' download='csv' %}">CSV</a>)
+          (download CSV: <a onclick="return confirm('This could take some time. Please do not leave this page or close this tab.')" href="{% url 'this_intervention' subject=subject.slug intervention_pk=this_intervention.pk state='publications' download='csv' %}">by intervention</a>
+          | <a href="{% url 'this_intervention' subject=subject.slug intervention_pk=this_intervention.pk state='publications' download='csv_by_country' %}">by country</a>)
         {% endif %}
       {% endif %}
     </p>

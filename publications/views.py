@@ -2661,6 +2661,16 @@ def this_intervention(request, subject, state, intervention_pk, outcome_pk='defa
         countries = list(chain(q))  # A list of tuples in the form [(country, publication)]. Chain is imported from itertools.
         countries = set(countries)  # Delete duplicate records, where a publication has the same country in both publication_country and experiment_country: set = unique tuples (and the list is now a dict)
         count_by_country = Counter(item[0] for item in countries)  # item[0] is country in (country, publication) and this counts the number of tuples for each country. Counter is imported from collections.
+        if download == 'csv_by_country':
+            # Create the HttpResponse object with the appropriate CSV header.
+            response = HttpResponse(content_type='text/csv; charset=utf-8')
+            response['Content-Disposition'] = 'attachment; filename="count_by_country.csv"'
+            # Write the CSV
+            writer = csv.writer(response, quoting=csv.QUOTE_ALL)
+            writer.writerow(['iso_a3', 'count_by_country'])
+            for country in count_by_country:
+                writer.writerow([country, count_by_country[country]])
+            return response
         count_by_country = json.dumps(count_by_country)  # Convert to JSON for use by JavaScript in the template
         count = publications.count()
 
@@ -2839,6 +2849,16 @@ def this_outcome(request, subject, state, outcome_pk, intervention_pk='default',
         countries = list(chain(q))  # A list of tuples in the form [(country, publication)]. Chain is imported from itertools.
         countries = set(countries)  # Delete duplicate records, where a publication has the same country in both publication_country and experiment_country: set = unique tuples (and the list is now a dict)
         count_by_country = Counter(item[0] for item in countries)  # item[0] is country in (country, publication) and this counts the number of tuples for each country. Counter is imported from collections.
+        if download == 'csv_by_country':
+            # Create the HttpResponse object with the appropriate CSV header.
+            response = HttpResponse(content_type='text/csv; charset=utf-8')
+            response['Content-Disposition'] = 'attachment; filename="count_by_country.csv"'
+            # Write the CSV
+            writer = csv.writer(response, quoting=csv.QUOTE_ALL)
+            writer.writerow(['iso_a3', 'count_by_country'])
+            for country in count_by_country:
+                writer.writerow([country, count_by_country[country]])
+            return response
         count_by_country = json.dumps(count_by_country)  # Convert to JSON for use by JavaScript in the template
         count = publications.count()
 
