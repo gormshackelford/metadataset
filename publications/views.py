@@ -2059,11 +2059,6 @@ def get_upload_template(form, subject, publication, experiment, user):
                                 )
                                 for col, value in row[row.notna()].iteritems():
                                     if col in data_cols:
-                                        if col == "is_significant":
-                                            if value == "Significant":
-                                                value = True
-                                            else:
-                                                value = False
                                         setattr(data, col, value)
                                 # If data has been entered for the Data instance, save the instance (here we require both treatment_mean and control_mean, but this constraint is not enforced by the Data model, in case there are publications that report an effect size but not a treatment mean and control mean).
                                 if data.treatment_mean == None or data.control_mean == None:
