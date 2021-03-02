@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.contrib.auth import login, authenticate
 from django.contrib.auth.decorators import login_required
 from django.contrib.sites.shortcuts import get_current_site
@@ -39,6 +40,7 @@ import json
 import pandas as pd
 import re
 import traceback
+import urllib
 
 
 class AttributeViewSet(viewsets.ReadOnlyModelViewSet):
@@ -245,6 +247,7 @@ def subject(request, subject):
     return render(request, 'publications/subject.html', context)
 
 
+@group_required("user_can_browse")
 def publications(request, subject, state='all', users='all_users', download='none'):
     user = request.user
     subject = Subject.objects.get(slug=subject)
@@ -466,13 +469,12 @@ def signup(request):
         form = SignUpForm(request.POST)
         if form.is_valid():
 
-            """
             ''' Begin reCAPTCHA validation '''
 
             recaptcha_response = request.POST.get('g-recaptcha-response')
             url = 'https://www.google.com/recaptcha/api/siteverify'
             values = {
-                'secret': config.GOOGLE_RECAPTCHA_SECRET_KEY,
+                'secret': settings.GOOGLE_RECAPTCHA_SECRET_KEY,
                 'response': recaptcha_response
             }
             data = urllib.parse.urlencode(values).encode()
@@ -481,24 +483,23 @@ def signup(request):
             result = json.loads(response.read().decode())
 
             ''' End reCAPTCHA validation '''
-            """
 
-#            if result['success']:
-            user = form.save()
-            user.refresh_from_db()  # Load the profile instance created by the signal.
-            user.profile.institution = form.cleaned_data.get('institution')
-            user.is_active = False
-            user.save()
-            current_site = get_current_site(request)
-            subject = 'Metadataset'
-            message = render_to_string('publications/confirm_email.html', {
-                'user': user,
-                'domain': current_site.domain,
-                'uid': urlsafe_base64_encode(force_bytes(user.pk)).decode(),
-                'token': account_activation_token.make_token(user),
-            })
-            user.email_user(subject, message)
-            return redirect('email_sent')
+            if result['success']:
+                user = form.save()
+                user.refresh_from_db()  # Load the profile instance created by the signal.
+                user.profile.institution = form.cleaned_data.get('institution')
+                user.is_active = False
+                user.save()
+                current_site = get_current_site(request)
+                subject = 'Metadataset'
+                message = render_to_string('publications/confirm_email.html', {
+                    'user': user,
+                    'domain': current_site.domain,
+                    'uid': urlsafe_base64_encode(force_bytes(user.pk)).decode(),
+                    'token': account_activation_token.make_token(user),
+                })
+                user.email_user(subject, message)
+                return redirect('email_sent')
     else:
         form = SignUpForm()
     return render(request, 'publications/signup.html', {'form': form})
@@ -2420,6 +2421,7 @@ def outcome(request, subject, publication_pk, experiment_index, population_index
     return render(request, 'publications/outcome.html', context)
 
 
+@group_required("user_can_browse")
 def browse_by_intervention(request, subject, state, set='default', download='none'):
     user = request.user
     subject = Subject.objects.get(slug=subject)
@@ -2506,6 +2508,7 @@ def browse_by_intervention(request, subject, state, set='default', download='non
     return render(request, 'publications/browse_by_intervention.html', context)
 
 
+@group_required("user_can_browse")
 def browse_by_outcome(request, subject, state, set='default', download='none'):
     user = request.user
     subject = Subject.objects.get(slug=subject)
@@ -2600,6 +2603,7 @@ def browse_by_outcome(request, subject, state, set='default', download='none'):
     return render(request, 'publications/browse_by_outcome.html', context)
 
 
+@group_required("user_can_browse")
 def this_intervention(request, subject, state, intervention_pk, outcome_pk='default', download='none'):
     user = request.user
     subject = Subject.objects.get(slug=subject)
@@ -2796,6 +2800,7 @@ def this_intervention(request, subject, state, intervention_pk, outcome_pk='defa
     return render(request, 'publications/this_intervention.html', context)
 
 
+@group_required("user_can_browse")
 def this_outcome(request, subject, state, outcome_pk, intervention_pk='default', download='none'):
     user = request.user
     subject = Subject.objects.get(slug=subject)
@@ -2956,6 +2961,7 @@ def this_outcome(request, subject, state, outcome_pk, intervention_pk='default',
     return render(request, 'publications/this_outcome.html', context)
 
 
+@group_required("user_can_browse")
 def publications_x(request, subject, intervention_pk='default', outcome_pk='default', iso_a3='default'):
     user = request.user
     subject = Subject.objects.get(slug=subject)

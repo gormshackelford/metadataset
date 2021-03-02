@@ -6,7 +6,12 @@ __pycache__
 .DS_Store
 
 .env
+admin/data_for_ROSES.py
+admin/delete_metadata.py
+admin/delete_users.py
 config.json
+config_offline.json
+config_online.json
 config_with_docker.json
 config_without_docker.json
 db_dump.sh
