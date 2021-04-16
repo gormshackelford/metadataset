@@ -1,5 +1,5 @@
 Django==2.0.2
-django-debug-toolbar==1.9.1
+django-debug-toolbar==1.11.1
 django-haystack==2.8.1
 django-mptt==0.9.0
 django-mptt-urls==2.0.3
