@@ -7,9 +7,27 @@
 {% block css %}
   {% load staticfiles %}
   <link href="{% static 'css/sidebar.css' %}" rel="stylesheet">
+  <link href="{% static 'css/stylesheet.css' %}" rel="stylesheet">
 {% endblock %}
 
 {% block content %}
+<style>
+  .button {
+  border: none;
+  color: white;
+  padding: 15px 32px;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+  font-size: 16px;
+  margin: 4px 2px;
+  cursor: pointer;
+}
+
+.button1 {background-color: #4CAF50;} /* Green */
+.button2 {background-color: #008CBA;} /* Blue */
+.button3 {background-color: #ff6666;} /* Red */
+</style>
 
 <h1>Dynamic meta-analysis</h1>
 <p>
@@ -20,10 +38,11 @@
   <a href="{% url 'about' %}">dynamic meta-analysis</a>.
 </p>
 <p>
-  This is <span class="red">work in progress</span>. Please contact us if you
-  would like to get access to the data while this is still a work in progress.
+  To access the data via our prototype app, which supports dynamic meta-analysis, please click the buttons below based on the subject you are interested in.
 </p>
-
+<a target = "_blank" href="https://metadataset.shinyapps.io/meta-analysis/?subject=3" class="button button1">Invasive Species</a>
+<a target = "_blank" href="https://metadataset.shinyapps.io/meta-analysis/?subject=6" class="button button2">Cover crops</a>
+<a target = "_blank" href="https://metadataset.shinyapps.io/meta-analysis/?subject=1" class="button button3">Cassava</a>
 {% endblock %}
 
 {% block sidebar %}
