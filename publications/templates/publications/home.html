@@ -20,13 +20,10 @@
   text-decoration: none;
   display: inline-block;
   font-size: 16px;
+  width: 25%;
   margin: 4px 2px;
   cursor: pointer;
 }
-
-.button1 {background-color: #4CAF50;} /* Green */
-.button2 {background-color: #008CBA;} /* Blue */
-.button3 {background-color: #ff6666;} /* Red */
 </style>
 
 <h1>Dynamic meta-analysis</h1>
@@ -38,11 +35,22 @@
   <a href="{% url 'about' %}">dynamic meta-analysis</a>.
 </p>
 <p>
-  To access the data via our prototype app, which supports dynamic meta-analysis, please click the buttons below based on the subject you are interested in.
+  Metadataset enables users to dynamically interact with a global evidence base, to find
+  evidence that is relevant to their decisions. As well as browsing our evidence
+  maps to find publications on a specific intervention, outcome, or country,
+  you can use a prototype app (see below) to undertake a new method of interactive evidence synthesis that we call
+  "dynamic meta-analysis". The prototype app is currently set up to allow users to receive customised summaries of evidence on 
+  the subjects of invasive species, cover crops, and cassava. The app has several filters and options to interrogate and interact with
+  our database of scientific studies that have tested interventions (e.g., studies on interventions to eradicate certain invasive species).
 </p>
-<a target = "_blank" href="https://metadataset.shinyapps.io/meta-analysis/?subject=3" class="button button1">Invasive Species</a>
-<a target = "_blank" href="https://metadataset.shinyapps.io/meta-analysis/?subject=6" class="button button2">Cover crops</a>
-<a target = "_blank" href="https://metadataset.shinyapps.io/meta-analysis/?subject=1" class="button button3">Cassava</a>
+
+<p>
+  To access the evidence base and interact with it via our prototype app with dynamic meta-analysis, 
+  please click the buttons below based on the subject you are interested in.
+</p>
+<a target = "_blank" href="https://metadataset.shinyapps.io/meta-analysis/?subject=3" class="button">Invasive Species</a>
+<a target = "_blank" href="https://metadataset.shinyapps.io/meta-analysis/?subject=6" class="button">Cover crops</a>
+<a target = "_blank" href="https://metadataset.shinyapps.io/meta-analysis/?subject=1" class="button">Cassava</a>
 {% endblock %}
 
 {% block sidebar %}
