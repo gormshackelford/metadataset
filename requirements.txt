@@ -8,7 +8,7 @@ django-reversion==3.0.0
 djangorestframework==3.13.1
 gunicorn==19.9.0
 mysqlclient==2.1.1
-numpy==1.19.5
+numpy==1.22.0
 openpyxl==3.0.5
 pandas==1.1.5
 RISparser==0.4.2
