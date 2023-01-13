@@ -133,7 +133,7 @@ class ExperimentForm1(forms.ModelForm):
 
     class Meta:
         model = Experiment
-        exclude = ['location', 'methods', 'results', 'publication', 'user']
+        exclude = ['location', 'methods', 'shortresults','longresults', 'publication', 'user']
 
 
 # ExperimentForm1 excludes methods and location and is used for publication.html, whereas ExperimentForm2 includes methods and location and is used for experiment.html.
@@ -149,8 +149,11 @@ class ExperimentForm2(forms.ModelForm):
             'methods': forms.Textarea(attrs={
                 'placeholder': "e.g., 'Herbicide (glyphosate) was sprayed on four treatment plots but not on four control plots. Plots were 2 x 2 meters.'"
             }),
-            'results': forms.Textarea(attrs={
-                'placeholder': "e.g., 'The density of the ...'"
+            'shortresults': forms.Textarea(attrs={
+                'placeholder': "e.g., 'resulted in... [SUMMARY OF ALL KEY RESULTS]'"
+            }),
+            'longresults': forms.Textarea(attrs={
+                'placeholder': "e.g., 'In addition, ... [EXTRA RESULTS, IMPLEMENTATION OPTIONS, CONFLICTING RESULTS]'"
             })
         }
 
@@ -280,7 +283,7 @@ class AttributeForm(forms.ModelForm):
             "lsd", "is_significant", "approximate_p_value", "p_value", "z_value",
             "correlation_coefficient", "effect_size", "effect_size_unit",
             "other_effect_size_unit", "lower_limit", "upper_limit", "confidence",
-            "se", "variance", "methods", "location", "results", "design",
+            "se", "variance", "methods", "shortresults", "location", "longresults", "design",
             "treatment_sd_from_se", "control_sd_from_se", "lower_is_better",
             "response_ratio", "log_response_ratio", "v_from_sd_and_n",
             "mean_difference", "significance_from_lsd", "selected_significance",
