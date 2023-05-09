@@ -6,6 +6,7 @@ from .models import Intervention, Outcome
 import mptt_urls
 
 
+
 urlpatterns = [
     path('', views.home, name='home'),
 #    path('search/', include('haystack.urls')),
@@ -32,6 +33,8 @@ urlpatterns = [
     path('subject/<subject>/publications/<state>/users/<users>/download/<download>/', views.publications, name='publications'),
     path('subject/<subject>/kappa/', views.kappa, name='kappa'),
 
+    path(r'^', include('django.contrib.auth.urls')),
+    
     # Filter publications
 
     # Filter by intervention
