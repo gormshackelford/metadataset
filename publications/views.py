@@ -519,7 +519,7 @@ def email_not_confirmed(request):
 
 def confirm_email(request, uidb64, token):
     try:
-        uid = urlsafe_base64_decode(uidb64)
+        uid = urlsafe_base64_decode(uidb64).decode()
         user = User.objects.get(pk=uid)
     except (TypeError, ValueError, OverflowError, User.DoesNotExist):
         user = None
