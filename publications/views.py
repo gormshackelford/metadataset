@@ -488,7 +488,7 @@ def signup(request):
                 user = form.save()
                 user.refresh_from_db()  # Load the profile instance created by the signal.
                 user.profile.institution = form.cleaned_data.get('institution')
-                user.is_active = False
+                user.is_active = True
                 user.save()
                 current_site = get_current_site(request)
                 subject = 'Metadataset'
