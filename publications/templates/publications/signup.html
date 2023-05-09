@@ -14,6 +14,9 @@
   <p>If you are based at an academic institution, please use your institutional email address.</p>
 
   <form method="post">{% csrf_token %}
+    <div style="display:none">
+      <input type="hidden" value="{{ csrf_token }}" name="csrfmiddlewaretoken">
+    </div>
     <table>
       {% for field in form %}
         <tr>

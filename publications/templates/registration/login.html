@@ -6,6 +6,9 @@
     <form method="post" action="{% url 'login' %}">
 
     {% csrf_token %}
+    <div style="display:none">
+      <input type="hidden" value="{{ csrf_token }}" name="csrfmiddlewaretoken">
+    </div>
         <table>
           <tr>
             <td>{{ form.username.label_tag }}</td>
