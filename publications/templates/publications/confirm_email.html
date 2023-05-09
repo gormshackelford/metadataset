@@ -6,11 +6,11 @@ Thank you for signing up to www.metadataset.com
 
 Please click this link to confirm your email address:
 
-<a href="http://{{ domain }}{% url 'confirm_email' uidb64=uid token=token %}">http://{{ domain }}{% url 'confirm_email' uidb64=uid token=token %}</a>
+<a href="http://{{ domain }}{% url 'confirm_email:confirm_email' uidb64=uid token=token %}">http://{{ domain }}{% url 'confirm_email:confirm_email' uidb64=uid token=token %}</a>
 
 If the link does not work, copy and paste this address into your browser:
 
-http://{{ domain }}{% url 'confirm_email' uidb64=uid token=token %}
+http://{{ domain }}{% url 'confirm_email:confirm_email' uidb64=uid token=token %}
 
 Best wishes,
 Metadataset Team
