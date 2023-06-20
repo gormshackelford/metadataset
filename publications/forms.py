@@ -5,7 +5,7 @@ from django.core.exceptions import NON_FIELD_ERRORS
 from django.forms.widgets import NumberInput
 from ast import literal_eval
 from mptt.forms import TreeNodeChoiceField
-from .models import Assessment, Attribute, Coordinates, Data, Date, EAV, Experiment, ExperimentDesign, ExperimentPopulation, ExperimentPopulationOutcome, Intervention, Outcome, Profile, Publication, PublicationPopulation, PublicationPopulationOutcome, Study, User, UserSubject, XCountry
+from .models import Assessment, Attribute, Coordinates, Data, Date, EAV, Experiment, ExperimentDesign, ExperimentPopulation, ExperimentPopulationOutcome, Intervention, Outcome, Profile, Publication, PublicationPopulation, PublicationPopulationOutcome, Study, User, UserSubject, XCountry, INTENTIONCHOICES
 
 
 class SignUpForm(UserCreationForm):
@@ -133,7 +133,7 @@ class ExperimentForm1(forms.ModelForm):
 
     class Meta:
         model = Experiment
-        exclude = ['location', 'methods', 'shortresults','longresults', 'publication', 'user']
+        exclude = ['location', 'methods', 'shortresults','longresults','studyintention', 'publication', 'user']
 
 
 # ExperimentForm1 excludes methods and location and is used for publication.html, whereas ExperimentForm2 includes methods and location and is used for experiment.html.
@@ -154,7 +154,8 @@ class ExperimentForm2(forms.ModelForm):
             }),
             'longresults': forms.Textarea(attrs={
                 'placeholder': "e.g., 'In addition, ... [EXTRA RESULTS, IMPLEMENTATION OPTIONS, CONFLICTING RESULTS]'"
-            })
+            }),
+            'studyintention': forms.Select(attrs={'class': 'form-control col-sm-2'})
         }
 
 
@@ -283,7 +284,7 @@ class AttributeForm(forms.ModelForm):
             "lsd", "is_significant", "approximate_p_value", "p_value", "z_value",
             "correlation_coefficient", "effect_size", "effect_size_unit",
             "other_effect_size_unit", "lower_limit", "upper_limit", "confidence",
-            "se", "variance", "methods", "shortresults", "location", "longresults", "design",
+            "se", "variance", "methods", "shortresults","studyintention", "location", "longresults", "design",
             "treatment_sd_from_se", "control_sd_from_se", "lower_is_better",
             "response_ratio", "log_response_ratio", "v_from_sd_and_n",
             "mean_difference", "significance_from_lsd", "selected_significance",

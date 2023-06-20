@@ -11,6 +11,9 @@ from urllib.parse import quote_plus
 from ast import literal_eval
 import itertools
 
+INTENTIONCHOICES = (('mitigate impacts of invasive population','Mitigate impacts of invasive population'), ('eradicate invasive population','Eradicate invasive population'), 
+                  ('prevent spread of invasive population','Prevent spread of invasive population'), ('multiple aims','Multiple aims'), ('study aim unclear','Study aim unclear'))
+
 
 class UserManager(BaseUserManager):
     """Define a model manager for User model with no username field."""
@@ -348,6 +351,7 @@ class Experiment(models.Model):
     methods = models.TextField(blank=True, null=True)
     shortresults = models.TextField(blank=True,null=True)
     longresults = models.TextField(blank=True,null=True)
+    studyintention = models.CharField(max_length=255, choices=INTENTIONCHOICES, default = INTENTIONCHOICES[0])
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
